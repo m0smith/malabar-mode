@@ -1,0 +1,24 @@
+<assembly>
+  <id>dist</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <baseDirectory>mvn</baseDirectory>
+  <dependencySets>
+    <dependencySet>
+      <useProjectArtifact>true</useProjectArtifact>
+      <outputDirectory>java/lib</outputDirectory>
+    </dependencySet>
+  </dependencySets>
+  <fileSets>
+    <fileSet>
+      <directory>src/main/lisp</directory>
+      <outputDirectory>lisp</outputDirectory>
+    </fileSet>
+  </fileSets>
+  <files>
+    <file>
+      <source>LICENSE.txt</source>
+    </file>
+  </files>
+</assembly>
