@@ -1,4 +1,4 @@
-;;; malabar.el --- A better Java mode for Emacs
+;;; malabar-mode.el --- A better Java mode for Emacs
 ;;
 ;; Copyright (c) 2009 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
