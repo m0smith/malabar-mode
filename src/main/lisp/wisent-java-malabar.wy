@@ -1,0 +1,653 @@
+%languagemode  java-mode
+
+%start compilationUnit
+
+%start enumMemberDeclarations
+%start classBodyDeclarations
+%start classBodyDeclaration
+%start memberDeclaration
+%start fieldDeclaration
+%start methodDeclaration
+%start typeDeclaration
+%start annotations_opt
+%start modifiers_opt
+%start typeBound
+%start typeParameters
+%start typeParameter
+%start type
+
+;; Keywords
+%type <keyword>
+
+%keyword ABSTRACT "abstract"
+    
+%keyword ASSERT "assert"
+    
+%keyword BOOLEAN "boolean"
+    
+%keyword BREAK "break"
+    
+%keyword BYTE "byte"
+    
+%keyword CASE "case"
+    
+%keyword CATCH "catch"
+    
+%keyword CHAR "char"
+    
+%keyword CLASS "class"
+    
+%keyword CONST "const"
+
+%keyword CONTINUE "continue"
+
+%keyword DEFAULT "default"
+
+%keyword DO "do"
+
+%keyword DOUBLE "double"
+
+%keyword ELSE "else"
+
+%keyword ENUM "enum"
+
+%keyword EXTENDS "extends"
+
+%keyword FINAL "final"
+
+%keyword FINALLY "finally"
+
+%keyword FLOAT "float"
+
+%keyword FOR "for"
+
+%keyword GOTO "goto"
+
+%keyword IF "if"
+
+%keyword IMPLEMENTS "implements"
+
+%keyword IMPORT "import"
+
+%keyword INSTANCEOF "instanceof"
+
+%keyword INT "int"
+
+%keyword INTERFACE "interface"
+
+%keyword LONG "long"
+
+%keyword NATIVE "native"
+
+%keyword NEW "new"
+
+%keyword PACKAGE "package"
+
+%keyword PRIVATE "private"
+
+%keyword PROTECTED "protected"
+
+%keyword PUBLIC "public"
+
+%keyword RETURN "return"
+
+%keyword SHORT "short"
+
+%keyword STATIC "static"
+
+%keyword STRICTFP "strictfp"
+
+%keyword SUPER "super"
+
+%keyword SWITCH "switch"
+
+%keyword SYNCHRONIZED "synchronized"
+
+%keyword THIS "this"
+
+%keyword THROW "throw"
+
+%keyword THROWS "throws"
+
+%keyword TRANSIENT "transient"
+
+%keyword TRY "try"
+
+%keyword VOID "void"
+
+%keyword VOLATILE "volatile"
+
+%keyword WHILE "while"
+
+%keyword TRUE "true"
+
+%keyword FALSE "false"
+
+%keyword NULL "null"
+
+%type <symbol> syntax "\\sw\\(\\sw\\|\\s_\\)*"
+%token <symbol> IDENTIFIER
+
+%type <string>
+%token <string> STRING_LITERAL
+
+%type <number>
+%token <number> NUMBER_LITERAL
+
+%type <unicode> syntax "\\\\u[0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
+%token <unicode> unicodecharacter
+
+%type <block>
+%token <block> BRACE_BLOCK "(LBRACE RBRACE)"
+%token <block> PAREN_BLOCK "(LPAREN RPAREN)"
+%token <block> BRACK_BLOCK "(LBRACK RBRACK)"
+
+%token <open-paren> LBRACE "{"
+%token <close-paren> RBRACE "}"
+%token <open-paren> LPAREN "("
+%token <close-paren> RPAREN ")"
+%token <open-paren> LBRACK "["
+%token <close-paren> RBRACK "]"
+
+%type <punctuation>
+
+%token <punctuation> DOT         "."
+%token <punctuation> SEMICOLON   ";"
+%token <punctuation> COLON       ":"
+%token <punctuation> COMMA       ","
+%token <punctuation> AT          "@"
+
+%token <punctuation> LT          "<"
+%token <punctuation> GT          ">"
+
+%token <punctuation> NOT         "!"
+%token <punctuation> NOTEQ       "!="
+%token <punctuation> MOD         "%"
+%token <punctuation> MODEQ       "%="
+%token <punctuation> AND         "&"
+%token <punctuation> ANDAND      "&&"
+%token <punctuation> ANDEQ       "&="
+%token <punctuation> MULT        "*"
+%token <punctuation> MULTEQ      "*="
+%token <punctuation> PLUS        "+"
+%token <punctuation> PLUSPLUS    "++"
+%token <punctuation> PLUSEQ      "+="
+%token <punctuation> MINUS       "-"
+%token <punctuation> MINUSMINUS  "--"
+%token <punctuation> MINUSEQ     "-="
+%token <punctuation> DIV         "/"
+%token <punctuation> DIVEQ       "/="
+%token <punctuation> LSHIFT      "<<"
+%token <punctuation> LSHIFTEQ    "<<="
+%token <punctuation> LTEQ        "<="
+%token <punctuation> EQ          "="
+%token <punctuation> EQEQ        "=="
+%token <punctuation> GTEQ        ">="
+;; %token <punctuation> RSHIFT      ">>"
+;; %token <punctuation> RSHIFTEQ    ">>="
+;; %token <punctuation> URSHIFT     ">>>"
+;; %token <punctuation> URSHIFTEQ   ">>>="
+%token <punctuation> QUESTION    "?"
+%token <punctuation> XOR         "^"
+%token <punctuation> XOREQ       "^="
+%token <punctuation> OR          "|"
+%token <punctuation> OREQ        "|="
+%token <punctuation> OROR        "||"
+%token <punctuation> COMP        "~"
+
+%%
+
+;; This actually allows illegal Java syntax.  Watch me care
+compilationUnit
+  : annotations
+  | packageDeclaration
+  | importDeclaration
+  | typeDeclaration
+  ;
+
+packageDeclaration
+  : PACKAGE qualifiedName SEMICOLON
+    (PACKAGE-TAG $2 nil)
+  ;
+
+importDeclaration
+  : IMPORT STATIC qualifiedName DOT MULT SEMICOLON
+    (INCLUDE-TAG (concat $3 $4 $5) nil :modifiers $2)
+  | IMPORT STATIC qualifiedName SEMICOLON
+    (INCLUDE-TAG $3 nil :modifiers $2)
+  | IMPORT qualifiedName DOT MULT SEMICOLON
+    (INCLUDE-TAG (concat $2 $3 $4) nil)
+  | IMPORT qualifiedName SEMICOLON
+    (INCLUDE-TAG $2 nil)
+  ;
+
+typeDeclaration
+  : classDeclaration
+  | enumDeclaration
+  | annotationTypeDeclaration
+  | interfaceDeclaration
+  ;
+
+annotationTypeDeclaration
+  : annotations_opt modifiers_opt AT INTERFACE IDENTIFIER annotationTypeBody
+    (TYPE-TAG $5 'annotation $6 nil :typemodifiers $2 :typeannotations $1)
+  ;
+
+;; TODO
+annotationTypeBody
+  : BRACE_BLOCK
+    ()
+  ;
+
+interfaceDeclaration
+  : annotations_opt modifiers_opt INTERFACE IDENTIFIER typeParameters_opt extends_if_opt interfaceBody
+    (TYPE-TAG $4 $3 $7 $6 :typemodifiers $2 :typeparameters $5 :typeannotations $1)
+  ;
+
+extends_if_opt
+  : ;; EMPTY
+  | EXTENDS typeList
+    (nreverse $2)
+  ;
+
+;; TODO
+interfaceBody
+  : BRACE_BLOCK
+    ()
+  ;
+
+enumDeclaration
+  : annotations_opt modifiers_opt ENUM IDENTIFIER implements_opt enumBody
+    (TYPE-TAG $4 $3 $6 nil :typemodifiers $2 :typeannotations $1)
+  ;
+
+enumBody
+  : BRACE_BLOCK
+    (EXPANDFULL $1 enumMemberDeclarations)
+  ;
+
+enumMemberDeclarations
+  : ;; EMPTY
+  | enumConstants_opt COMMA enumMembers_opt
+  | enumConstants_opt enumMembers_opt
+  ;
+
+enumMembers_opt
+  : ;; EMPTY
+  | classBodyDeclarations
+    (nreverse $1)
+  ;
+
+enumConstants_opt
+  : ;; EMPTY
+  | enumConstants
+    (nreverse $1)
+  ;
+
+enumConstants
+  : enumConstants COMMA enumConstant
+    (cons $3 $1)
+  | enumConstant
+    (list $1)
+  ;
+
+enumConstant
+  : annotations_opt IDENTIFIER argumentList_opt classBody_opt
+    (TAG $2 'enum-constant :annotations $1 :argument-list $3 :body $4)
+  ;
+
+argumentList_opt
+  : ;; EMPTY
+  | argumentList
+  ;
+
+;; TODO
+argumentList
+  : PAREN_BLOCK
+    ()
+  ;
+
+classDeclaration
+  : annotations_opt modifiers_opt CLASS IDENTIFIER typeParameters_opt extends_opt implements_opt classBody
+    (TYPE-TAG $4 $3 $8 (if (or $6 $7) (cons $6 $7)) :typemodifiers $2 :typeparameters $5 :typeannotations $1)
+  ;
+
+extends_opt
+  : ;; EMPTY
+  | EXTENDS type
+    (identity $2)
+  ;
+
+implements_opt
+  : ;; EMPTY
+  | IMPLEMENTS typeList
+    (nreverse $2)
+  ;
+
+classBody_opt
+  : ;; EMPTY
+  | classBody
+  ;
+
+;; TODO
+classBody
+  : BRACE_BLOCK
+    (nreverse (EXPANDFULL $1 classBodyDeclarations))
+  ;
+
+classBodyDeclarations
+  : classBodyDeclarations classBodyDeclaration
+    (cons $2 $1)
+  | classBodyDeclaration
+    (list $1)
+  ;
+
+classBodyDeclaration
+  : STATIC block
+  | block
+  | memberDeclaration
+  ;
+
+;; TODO
+block
+  : BRACE_BLOCK
+    ()
+  ;
+
+memberDeclaration
+  : methodDeclaration
+ ;;  | constructorDeclaration
+  | fieldDeclaration
+ ;;  | classDeclaration
+ ;;  | interfaceDeclaration
+  ;
+
+;; constructorDeclaration
+;;   : annotations_opt modifiers_opt typeParameters_opt IDENTIFIER argumentList throws_opt block ;; Constructor
+;;     (FUNCTION-TAG $4 nil $5 :typemodifiers $2 :annotations $1 :throws $6 :body $7)
+;;   ;
+
+methodDeclaration
+  : annotations_opt modifiers_opt typeParameters_opt VOID IDENTIFIER argumentList throws_opt block
+    (FUNCTION-TAG $4 $3 $5 :typemodifiers $2 :annotations $1 :throws $6 :body $7)
+  | annotations_opt modifiers_opt typeParameters_opt type IDENTIFIER argumentList throws_opt block
+    (FUNCTION-TAG $4 $3 $5 :typemodifiers $2 :annotations $1 :throws $6 :body $7)
+  ;
+
+throws_opt
+  : ;; EMPTY
+  | THROWS qualifiedNameList
+    (nreverse $2)
+  ;
+    
+fieldDeclaration
+  : annotations_opt modifiers_opt type variableDeclarators SEMICOLON
+    (VARIABLE-TAG $4 $3 nil :typemodifiers $2 :annotations $1)
+  ;
+
+variableDeclarators
+  : variableDeclarators COMMA variableDeclarator
+    (progn
+      (setcdr (cdr (car $1)) (cdr $region2))
+      (cons $3 $1))
+  | variableDeclarator
+    (list $1)
+  ;
+
+variableDeclarator
+  : variableDeclaratorName EQ variableInitializer
+    (cons $1 $region)
+  | variableDeclaratorName
+    (cons $1 $region)
+  ;
+
+variableInitializer
+  : arrayInitializer
+  | expression
+  ;
+
+;; TODO
+arrayInitializer
+  : BRACK_BLOCK
+    ()
+  ;
+
+;; TODO
+expression
+  : expression term
+  | term
+  ;
+
+term
+  : literal
+  | operator
+  | primitiveType
+  | IDENTIFIER
+  | BRACK_BLOCK
+  | PAREN_BLOCK
+  | BRACE_BLOCK
+  | NEW
+  | CLASS
+  | THIS
+  | SUPER
+  ;
+
+literal
+  : STRING_LITERAL
+  | TRUE
+  | FALSE
+  | NULL
+  | NUMBER_LITERAL
+  ;
+
+operator
+  : NOT
+  | PLUS
+  | PLUSPLUS
+  | MINUS
+  | MINUSMINUS
+  | NOTEQ
+  | MOD
+  | MODEQ
+  | AND
+  | ANDAND
+  | ANDEQ
+  | MULT
+  | MULTEQ
+  | PLUSEQ
+  | MINUSEQ
+  | DOT
+  | DIV
+  | DIVEQ
+  | COLON
+  | LT
+  | LSHIFT
+  | LSHIFTEQ
+  | LTEQ
+  | EQ
+  | EQEQ
+  | GT
+  | GTEQ
+  ;; | RSHIFT
+  ;; | RSHIFTEQ
+  ;; | URSHIFT
+  ;; | URSHIFTEQ
+  | QUESTION
+  | XOR
+  | XOREQ
+  | OR
+  | OREQ
+  | OROR
+  | COMP
+  | INSTANCEOF
+  ;
+
+variableDeclaratorName
+  : IDENTIFIER dims_opt
+    (concat $1 $2)
+  ;
+
+dims_opt
+  : ;; EMPTY
+  | dims
+  ;
+
+dims
+  : dims BRACK_BLOCK
+    (concat $1 "[]")
+  | BRACK_BLOCK
+    (identity "[]")
+  ;
+
+typeParameters_opt
+  : ;; EMPTY
+  | typeParameters
+  ;
+
+typeParameters
+  : LT typeParameter_list GT
+    (nreverse $2)
+  ;
+
+typeParameter_list
+  : typeParameter_list COMMA typeParameter
+    (cons $3 $1)
+  | typeParameter
+    (list $1)
+  ;
+
+typeParameter
+  : IDENTIFIER EXTENDS typeBound
+    (list $1 :extends (nreverse $3))
+  | QUESTION EXTENDS typeBound
+    (list $1 :extends (nreverse $3))
+  | IDENTIFIER SUPER typeBound
+    (list $1 :super (nreverse $3))
+  | QUESTION SUPER typeBound
+    (list $1 :super (nreverse $3))
+  | IDENTIFIER
+  | QUESTION
+  ;
+
+typeBound
+  : typeBound AND type
+    (cons $3 $1)
+  | type
+    (list $1)
+  ;
+
+typeList
+  : typeList COMMA type
+    (cons $3 $1)
+  | type
+    (list $1)
+  ;
+
+type
+  : primitiveType dims_opt
+    (concat $1 $2)
+  | referenceType
+  ;
+
+referenceType
+  : type DOT IDENTIFIER typeParameters_opt dims_opt
+    (list (concat $1 $2 $4) :typeparameters $3)
+  | IDENTIFIER typeParameters_opt dims
+    (list (concat $1 $3) :typeparameters $2)
+  | IDENTIFIER typeParameters_opt
+    (list $1 :typeparameters $2)
+  ;
+
+primitiveType
+  :   BOOLEAN
+  |   CHAR
+  |   BYTE
+  |   SHORT
+  |   INT
+  |   LONG
+  |   FLOAT
+  |   DOUBLE
+  ;
+
+modifiers_opt
+  : ;; EMPTY
+  | modifiers
+    (nreverse $1)
+  ;
+
+modifiers
+  : modifiers modifier
+    (cons $2 $1)
+  | modifier
+    (list $1)
+  ;
+
+modifier
+  : PUBLIC
+  | PROTECTED
+  | PRIVATE
+  | STATIC
+  | ABSTRACT
+  | FINAL
+  | NATIVE
+  | SYNCHRONIZED
+  | TRANSIENT
+  | VOLATILE
+  | STRICTFP
+  ;
+
+annotations_opt
+  : ;; EMPTY
+  | annotations
+    (nreverse $1)
+  ;
+
+annotations
+  : annotations annotation
+    (cons $2 $1)
+  | annotation
+    (list $1)
+  ;
+
+annotation
+  : AT qualifiedName PAREN_BLOCK ;; TODO: content of block?
+    (list $2)
+  | AT qualifiedName
+    (list $2)
+  ;
+
+qualifiedNameList
+  : qualifiedNameList COMMA qualifiedName
+    (cons $3 $1)
+  | qualifiedName
+    (list $1)
+  ;
+
+qualifiedName
+  : qualifiedName DOT IDENTIFIER
+    (concat $1 $2 $3)
+  | IDENTIFIER
+  ;
+
+%%
+;; Define the lexer for this grammar
+(define-lex wisent-java-malabar-lexer
+  "Lexical analyzer that handles Java buffers.
+It ignores whitespaces, newlines and comments."
+  semantic-lex-ignore-whitespace
+  semantic-lex-ignore-newline
+  semantic-lex-ignore-comments
+  ;;;; Auto-generated analyzers.
+  wisent-java-malabar-wy--<number>-regexp-analyzer
+  wisent-java-malabar-wy--<string>-sexp-analyzer
+  ;; Must detect keywords before other symbols
+  wisent-java-malabar-wy--<keyword>-keyword-analyzer
+  wisent-java-malabar-wy--<symbol>-regexp-analyzer
+  wisent-java-malabar-wy--<punctuation>-string-analyzer
+  wisent-java-malabar-wy--<block>-block-analyzer
+  ;; In theory, unicode chars should be turned into normal chars
+  ;; and then combined into regular ascii keywords and text.  This
+  ;; analyzer just keeps these things from making the lexer go boom.
+  wisent-java-malabar-wy--<unicode>-regexp-analyzer
+  ;;;;
+  semantic-lex-default-action)
