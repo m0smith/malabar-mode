@@ -1364,35 +1364,25 @@ do_statement
 foreach_statement
   : FOR LPAREN type variable_declarator_id
     COLON expression RPAREN statement
-    () ;; TODO: local declaration
+    (EXPANDTAG
+     (VARIABLE-TAG $4 $3 nil))
   | FOR LPAREN modifiers type variable_declarator_id
     COLON expression RPAREN statement
-    () ;; TODO: local declaration
- ;; Must check that first IDENTIFIER is `each' and second one is `in'.
-  | FOR IDENTIFIER LPAREN type variable_declarator_id
-    IDENTIFIER expression RPAREN statement
-    () ;; TODO: local declaration
- ;; Must check that first IDENTIFIER is `each' and second one is `in'.
-  | FOR IDENTIFIER LPAREN modifiers type variable_declarator_id
-    IDENTIFIER expression RPAREN statement
-    () ;; TODO: local declaration
+    (EXPANDTAG
+     (VARIABLE-TAG $5 $4 nil
+                   :typemodifiers $3))
   ;
 
 foreach_statement_no_short_if
   : FOR LPAREN type variable_declarator_id
     COLON expression RPAREN statement_no_short_if
-    () ;; TODO: local declaration
+    (EXPANDTAG
+     (VARIABLE-TAG $4 $3 nil))
   | FOR LPAREN modifiers type variable_declarator_id
     COLON expression RPAREN statement_no_short_if
-    () ;; TODO: local declaration
- ;; Must check that first IDENTIFIER is `each' and second one is `in'.
-  | FOR IDENTIFIER LPAREN type variable_declarator_id
-    IDENTIFIER expression RPAREN statement_no_short_if
-    () ;; TODO: local declaration
- ;; Must check that first IDENTIFIER is `each' and second one is `in'.
-  | FOR IDENTIFIER LPAREN modifiers type variable_declarator_id
-    IDENTIFIER expression RPAREN statement_no_short_if
-    () ;; TODO: local declaration
+    (EXPANDTAG
+     (VARIABLE-TAG $5 $4 nil
+                   :typemodifiers $3))
   ;
 
 for_statement
