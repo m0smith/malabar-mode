@@ -17,10 +17,42 @@
 ;;
 
 (require 'semantic-load)
+(require 'wisent-java)
+
+(define-mode-local-override semantic-get-local-variables
+  malabar-mode ()
+  "Get local variable declarations from the current context."
+  (let (result
+        ;; Ignore funny syntax while doing this.
+        semantic-unmatched-syntax-hook)
+    (while (not (semantic-up-context (point) 'function))
+      (save-excursion
+        (forward-char 1)
+        (let ((these-blocks (semantic-parse-region
+                             (point)
+                             (save-excursion (semantic-end-of-context) (point))
+                             ;; See this production in wisent-java.wy.
+                             'block_statements
+                             nil t)))
+          (dolist (block these-blocks)
+            (when (semantic-tag-type-members block)
+              (push (remove-if-not (lambda (tag)
+                                     (semantic-tag-of-class-p tag 'variable))
+                                   (semantic-tag-type-members block))
+                    result))))))
+    (apply 'append result)))
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
   ;; Funky stuff here
+  (malabar-semantic-setup)
   )
+
+(defun malabar-semantic-setup ()
+  ;; Nasty hardcode
+  (setq semantic-lex-depth 10)
+  (setq semantic-lex-analyzer 'wisent-java-lexer)
+  (wisent-java-wy--install-parser)
+  (remove-hook 'java-mode-hook 'wisent-java-default-setup))
 
 (provide 'malabar-mode)
