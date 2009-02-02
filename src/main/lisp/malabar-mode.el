@@ -17,7 +17,7 @@
 ;;
 
 (require 'semantic-load)
-(require 'wisent-java)
+(require 'wisent-malabar-java)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
