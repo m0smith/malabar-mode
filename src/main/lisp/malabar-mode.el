@@ -16,14 +16,11 @@
 ;; PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(require 'wisent-java-malabar-wy)
+(require 'semantic-load)
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
   ;; Funky stuff here
-  (setq semantic-lex-analyzer 'wisent-java-malabar-lexer)
-  (wisent-java-malabar-wy--install-parser)
-  (remove-hook 'java-mode-hook 'wisent-java-default-setup)
   )
 
 (provide 'malabar-mode)
