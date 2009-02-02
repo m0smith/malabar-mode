@@ -1,12 +1,12 @@
-;;; wisent-java.wy -- LALR grammar for Java
+;;; wisent-malabar-java.wy -- LALR grammar for Java, as used by malabar-mode
 ;;
 ;; Copyright (C) 2002, 2003, 2004, 2005, 2006 David Ponce
+;; Changes for malabar-mode (C) 2009 Espen Wiborg
 ;;
 ;; Author: David Ponce <david@dponce.com>
-;; Maintainer: David Ponce <david@dponce.com>
+;; Maintainer: Espen Wiborg <espenhw@grumblesmurf.org>
 ;; Created: 19 Feb 2002
 ;; Keywords: syntax
-;; X-RCS: $Id: wisent-java.wy,v 1.29 2006/05/31 12:49:05 ponced Exp $
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -49,12 +49,12 @@
 
 %{
   ;; Stack of enum names in scope.
-  (defvar wisent-java-wy--enums nil)
+  (defvar wisent-malabar-java-wy--enums nil)
   ;; Stack of anonymous class declarations found in an expression.
-  (defvar wisent-java-wy--anons nil)
+  (defvar wisent-malabar-java-wy--anons nil)
   }
 
-%package wisent-java-wy
+%package wisent-malabar-java-wy
 
 %languagemode java-mode
 
@@ -800,12 +800,12 @@ enum_declaration
  ;; Mid-rule action that stores the current enum name in scope for
  ;; later use when producing tags from `enum_constants' compound
  ;; declaration.
-    (push $3 wisent-java-wy--enums)
+    (push $3 wisent-malabar-java-wy--enums)
     enum_body
     (progn
       ;; Don't forget to remove the current enum name when leaving the
       ;; enum scope!  Should be error recovery safe.
-      (pop wisent-java-wy--enums)
+      (pop wisent-malabar-java-wy--enums)
       (EXPANDTAG
        (TYPE-TAG $3 $2 $6 (if $4 (cons nil $4))
                  :typemodifiers $1))
@@ -836,12 +836,12 @@ enum_constants
 enum_constant
   : IDENTIFIER enum_arguments_opt
     (EXPANDTAG
-     (TYPE-TAG $1 (car wisent-java-wy--enums) nil nil
+     (TYPE-TAG $1 (car wisent-malabar-java-wy--enums) nil nil
                :enum-constant-flag t)
      )
   | IDENTIFIER enum_arguments_opt class_body
     (EXPANDTAG
-     (TYPE-TAG $1 (car wisent-java-wy--enums) $3 nil
+     (TYPE-TAG $1 (car wisent-malabar-java-wy--enums) $3 nil
                :enum-constant-flag t)
      )
   ;
@@ -889,9 +889,9 @@ variable_declarator
     (cons (cons $1 $region) nil)
   | variable_declarator_id
  ;; Clean-up the stack of anonymous class declarations
-    (setq wisent-java-wy--anons nil)
+    (setq wisent-malabar-java-wy--anons nil)
     EQ variable_initializer
-    (cons (cons $1 $region) wisent-java-wy--anons)
+    (cons (cons $1 $region) wisent-malabar-java-wy--anons)
   ;
 
 variable_declarator_id
@@ -1519,32 +1519,32 @@ class_instance_creation_expression
   : NEW class_or_interface_type
     LPAREN argument_list_opt RPAREN class_body_opt
     (when $6
-      (setq wisent-java-wy--anons
-            (nconc wisent-java-wy--anons
+      (setq wisent-malabar-java-wy--anons
+            (nconc wisent-malabar-java-wy--anons
                    (EXPANDTAG
                     (TYPE-TAG (concat $2 "$") "class" $6 nil))))
       )
   | NEW type_arguments class_or_interface_type
     LPAREN argument_list_opt RPAREN class_body_opt
     (when $7
-      (setq wisent-java-wy--anons
-            (nconc wisent-java-wy--anons
+      (setq wisent-malabar-java-wy--anons
+            (nconc wisent-malabar-java-wy--anons
                    (EXPANDTAG
                     (TYPE-TAG (concat $3 "$") "class" $7 nil))))
       )
   | primary DOT NEW type_arguments_opt IDENTIFIER type_arguments_opt
     LPAREN argument_list_opt RPAREN class_body_opt
     (when $10
-      (setq wisent-java-wy--anons
-            (nconc wisent-java-wy--anons
+      (setq wisent-malabar-java-wy--anons
+            (nconc wisent-malabar-java-wy--anons
                    (EXPANDTAG
                     (TYPE-TAG (concat $5 "$") "class" $10 nil))))
       )
   | name DOT NEW type_arguments_opt IDENTIFIER type_arguments_opt
     LPAREN argument_list_opt RPAREN class_body_opt
     (when $10
-      (setq wisent-java-wy--anons
-            (nconc wisent-java-wy--anons
+      (setq wisent-malabar-java-wy--anons
+            (nconc wisent-malabar-java-wy--anons
                    (EXPANDTAG
                     (TYPE-TAG (concat $5 "$") "class" $10 nil))))
       )
@@ -2131,21 +2131,21 @@ member_values
 %%
 
 ;; Define the lexer for this grammar
-(define-lex wisent-java-lexer
+(define-lex wisent-malabar-java-lexer
   "Lexical analyzer that handles Java buffers.
 It ignores whitespaces, newlines and comments."
   semantic-lex-ignore-whitespace
   semantic-lex-ignore-newline
   semantic-lex-ignore-comments
   ;;;; Auto-generated analyzers.
-  wisent-java-wy--<number>-regexp-analyzer
-  wisent-java-wy--<string>-sexp-analyzer
+  wisent-malabar-java-wy--<number>-regexp-analyzer
+  wisent-malabar-java-wy--<string>-sexp-analyzer
   ;; Must detect keywords before other symbols
-  wisent-java-wy--<keyword>-keyword-analyzer
-  wisent-java-wy--<symbol>-regexp-analyzer
-  wisent-java-wy--<punctuation>-string-analyzer
-  wisent-java-wy--<block>-block-analyzer
+  wisent-malabar-java-wy--<keyword>-keyword-analyzer
+  wisent-malabar-java-wy--<symbol>-regexp-analyzer
+  wisent-malabar-java-wy--<punctuation>-string-analyzer
+  wisent-malabar-java-wy--<block>-block-analyzer
   ;;;;
   semantic-lex-default-action)
 
-;;; wisent-java.wy ends here
+;;; wisent-malabar-java.wy ends here
