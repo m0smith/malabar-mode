@@ -46,4 +46,22 @@ class Classpath
         }
         return classloader
     }
+
+    def getBytes(Class c) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        
+        InputStream input =
+            this.classLoader.getResourceAsStream(c.getName().replace('.', '/') + ".class")
+        if (input == null) {
+            throw new RuntimeException("Couldn't find class file for " + c)
+        }
+        
+        byte[] bytes = new byte[1024];
+        int read;
+        while ((read = input.read(bytes)) != -1) {
+            baos.write(bytes, 0, read)
+        }
+        input.close()
+        return baos.toByteArray()
+    }
 }
