@@ -27,7 +27,7 @@ class Classpath
     Classpath(entries) {
         this()
         entries.each{
-            if ((it as File).isDirectory())
+            if ((it as File).isDirectory() && !it.endsWith("/"))
               it = it + "/"
             this.urls << "file:" + it
         }
