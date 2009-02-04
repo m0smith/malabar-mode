@@ -51,7 +51,7 @@
 (defun malabar-semantic-setup ()
   ;; Nasty hardcode
   (setq semantic-lex-depth 10)
-  (setq semantic-lex-analyzer 'wisent-java-lexer)
+  (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
   (remove-hook 'java-mode-hook 'wisent-java-default-setup))
 
