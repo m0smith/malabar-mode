@@ -17,7 +17,7 @@
 ;;
 
 (require 'semantic-load)
-(require 'wisent-malabar-java)
+(require 'wisent-malabar-java-wy)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
@@ -52,7 +52,7 @@
   ;; Nasty hardcode
   (setq semantic-lex-depth 10)
   (setq semantic-lex-analyzer 'wisent-java-lexer)
-  (wisent-java-wy--install-parser)
+  (wisent-malabar-java-wy--install-parser)
   (remove-hook 'java-mode-hook 'wisent-java-default-setup))
 
 (provide 'malabar-mode)
