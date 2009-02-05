@@ -127,7 +127,7 @@ class Classpath
     def getMembers(String className) {
         Class c = this.classLoader.loadClass(className)
         print "("
-        getMembersInternal(c, [:] as Set)
+        getMembersInternal(c, [] as Set)
         println ")"
     }
     
@@ -207,20 +207,34 @@ class Classpath
             print " :declaring-class \"" + it.declaringClass.name + "\""
             println ")"
         }
+
+        def classPrinter = {
+            print "(class :name \"" + it.simpleName + "\""
+            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
+            print " :declaring-class \"" + it.declaringClass.name + "\""
+            println ")"
+        }
         
         c.declaredFields.each{
             if (!Modifier.isPrivate(it.modifiers))
                 fieldPrinter(it)
+        }
+
+        c.declaredClasses.each{
+            if (!Modifier.isPrivate(it.modifiers))
+                classPrinter(it)
         }
         
         c.declaredConstructors.each{
             if (!Modifier.isPrivate(it.modifiers))
                 constructorPrinter(it)
         }
+        
         c.declaredMethods.each{
             if (!Modifier.isPrivate(it.modifiers))
                 methodPrinter(it)
         }
+        
         if (c.isInterface()) {
             c.interfaces.each{
                 getMembersInternal(it, seenMethods)
