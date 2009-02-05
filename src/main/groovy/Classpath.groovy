@@ -24,6 +24,7 @@ class ClassInfo implements ClassVisitor, MethodVisitor
     }
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         currentMethod = "${name}${desc}"
+        methodParameters[currentMethod] = []
         return this
     }
     public void visitOuterClass(String owner, String name, String desc) {
@@ -50,7 +51,7 @@ class ClassInfo implements ClassVisitor, MethodVisitor
     public void visitCode() {}
     public void visitTryCatchBlock(Label a, Label b, Label c, String d) {}
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-        methodParameters[currentMethod] = [
+        methodParameters[currentMethod] << [
             name: name,
             desc: desc,
             signature: signature
@@ -143,7 +144,7 @@ class Classpath
                 }
                 print typeString(pt)
                 print " "
-                if (methodParameters && methodParameters[i]) {
+                if (methodParameters && methodParameters[++i]) {
                     print methodParameters[i].name
                 } else {
                     print "arg${i}"
@@ -155,9 +156,22 @@ class Classpath
         }
 
         def constructorPrinter = {
+            def methodParameters = cir.methodParameters[methodName + methodDescriptor(it)];
             print Modifier.toString(it.getModifiers())
-            print " " + it.declaringClass.simpleName
+            print " " + typeString(it.declaringClass)
             print "("
+            it.genericParameterTypes.eachWithIndex{ pt, i ->
+                if (i > 0) {
+                    print ", "
+                }
+                print typeString(pt)
+                print " "
+                if (methodParameters && methodParameters[++i]) {
+                    print methodParameters[i].name
+                } else {
+                    print "arg${i}"
+                }
+            }
             print ")"
             // Exceptions
             println ""
@@ -174,6 +188,7 @@ class Classpath
                 }
             }
         }
+        return cir
     }
 
     def typeString(type) {
@@ -200,5 +215,30 @@ class Classpath
         }
         
         return type.toString()
+    }
+
+    def methodDescriptor(Constructor cons) {
+        def str = "(";
+        cons.parameterTypes.eachWithIndex{ it, i ->
+            if (!it.isArray() && !it.isPrimitive()) {
+                str += "L";
+            }
+            if (!it.isPrimitive()) {
+                str += Type.getInternalName(it)
+            } else {
+                if (it == Boolean.TYPE) {
+                    str += "Z"
+                } else if (it == Long.TYPE) {
+                    str += "J"
+                } else {
+                    str += it.name.toUpperCase().charAt(0)
+                }
+            }
+            if (!it.isArray() && !it.isPrimitive()) {
+                str += ";"
+            }
+        }
+        str += ")V"
+        return str
     }
 }
