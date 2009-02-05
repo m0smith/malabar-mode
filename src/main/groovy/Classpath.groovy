@@ -124,71 +124,111 @@ class Classpath
         return new ClassReader(input);
     }
 
-    def getMethodSignatures(String className, String methodName) {
+    def getMembers(String className) {
         Class c = this.classLoader.loadClass(className)
-
-        ClassReader cr = getClassReader(className);
+        print "("
+        getMembersInternal(c, [:] as Set)
+        println ")"
+    }
+    
+    def getMembersInternal(Class c, Set seenMethods) {
+        ClassReader cr = getClassReader(c.name);
         ClassInfo cir = new ClassInfo();
         cr.accept(cir, false);
 
         def methodPrinter = {
-            def methodParameters = cir.methodParameters[methodName + Type.getMethodDescriptor(it)];
+            def desc = it.name + Type.getMethodDescriptor(it)
+            if (seenMethods.contains(desc))
+                return
+
+            seenMethods << desc
             
-            print Modifier.toString(it.getModifiers())
-            print " "
-            print typeString(it.genericReturnType)
-            print " ${methodName}("
+            def methodParameters = cir.methodParameters[desc];
+
+            print "(method"
+            print " :name \"" + it.name + "\""
+            print " :modifiers (" +  Modifier.toString(it.modifiers) + ")"
+            print " :returntype \"" + typeString(it.genericReturnType) + "\""
+            print " :arguments ("
             it.genericParameterTypes.eachWithIndex{ pt, i ->
-                if (i > 0) {
-                    print ", "
+                print "(:type \"" + typeString(pt) + "\""
+                if (methodParameters  && methodParameters[++i]) {
+                    print " :name \"" + methodParameters[i].name + "\""
                 }
-                print typeString(pt)
-                print " "
-                if (methodParameters && methodParameters[++i]) {
-                    print methodParameters[i].name
-                } else {
-                    print "arg${i}"
-                }
+                print ") "
             }
             print ")"
-            // Exceptions
-            println ""
+            if (it.genericExceptionTypes.length > 0) {
+                print " :throws (";
+                it.genericExceptionTypes.eachWithIndex{ ex, i ->
+                    print "\"" + typeString(ex) + "\""
+                }
+                print ") "
+            }
+            print " :declaring-class \"" + it.declaringClass.name + "\""
+            println ")"
         }
 
         def constructorPrinter = {
-            def methodParameters = cir.methodParameters[methodName + methodDescriptor(it)];
-            print Modifier.toString(it.getModifiers())
-            print " " + typeString(it.declaringClass)
-            print "("
+            def desc = "<init>" + methodDescriptor(it)
+            if (seenMethods.contains(desc))
+                return
+
+            seenMethods << desc
+            def methodParameters = cir.methodParameters[desc];
+            
+            print "(constructor"
+            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
+            print " :arguments"
+            print " ("
             it.genericParameterTypes.eachWithIndex{ pt, i ->
-                if (i > 0) {
-                    print ", "
-                }
-                print typeString(pt)
-                print " "
+                print "(:type \"" + typeString(pt) + "\""
                 if (methodParameters && methodParameters[++i]) {
-                    print methodParameters[i].name
-                } else {
-                    print "arg${i}"
+                    print " :name \"" + methodParameters[i].name + "\""
                 }
+                print ") "
             }
-            print ")"
-            // Exceptions
-            println ""
+            print ") " 
+            if (it.genericExceptionTypes.length > 0) {
+                print " :throws (";
+                it.genericExceptionTypes.eachWithIndex{ ex, i ->
+                    print "\"" + typeString(ex) + "\""
+                }
+                print ") "
+            }
+            print " :declaring-class \"" + it.declaringClass.name + "\""
+            println ")"
         }
 
-        if (methodName == "<init>") {
-            c.constructors.each{
+        def fieldPrinter = {
+            print "(field :name \"" + it.name + "\""
+            print " :type \"" + typeString(it.genericType) + "\""
+            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
+            print " :declaring-class \"" + it.declaringClass.name + "\""
+            println ")"
+        }
+        
+        c.declaredFields.each{
+            if (!Modifier.isPrivate(it.modifiers))
+                fieldPrinter(it)
+        }
+        
+        c.declaredConstructors.each{
+            if (!Modifier.isPrivate(it.modifiers))
                 constructorPrinter(it)
-            }
-        } else {
-            c.methods.each{
-                if (it.name == methodName) {
-                    methodPrinter(it)
-                }
+        }
+        c.declaredMethods.each{
+            if (!Modifier.isPrivate(it.modifiers))
+                methodPrinter(it)
+        }
+        if (c.isInterface()) {
+            c.interfaces.each{
+                getMembersInternal(it, seenMethods)
             }
         }
-        return cir
+        if (c.superclass != null) {
+            getMembersInternal(c.superclass, seenMethods)
+        }
     }
 
     def typeString(type) {
