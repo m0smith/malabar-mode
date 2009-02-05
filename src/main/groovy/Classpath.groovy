@@ -136,6 +136,45 @@ class Classpath
         ClassInfo cir = new ClassInfo();
         cr.accept(cir, false);
 
+        def quotify = {
+            return "\"${it}\""
+        }
+        
+        def printName = {
+            print " :name " + quotify(it.name)
+        }
+
+        def printModifiers = {
+            print " :modifiers (" + Modifier.toString(it.modifiers) + ")"
+        }
+
+        def printDeclaringClass = {
+            print " :declaring-class " + quotify(it.declaringClass.name)
+        }
+
+        def printArguments = { it, names ->
+            print " :arguments"
+            print " ("
+            it.genericParameterTypes.eachWithIndex{ pt, i ->
+                print "(:type " + quotify(typeString(pt))
+                if (names && names[++i]) {
+                    printName(names[i])
+                }
+                print ") "
+            }
+            print ") " 
+        }
+
+        def printExceptions = {
+            if (it.genericExceptionTypes.length > 0) {
+                print " :throws (";
+                it.genericExceptionTypes.each{ ex ->
+                    print " " + quotify(typeString(ex))
+                }
+                print ") "
+            }
+        }
+        
         def methodPrinter = {
             def desc = it.name + Type.getMethodDescriptor(it)
             if (seenMethods.contains(desc))
@@ -146,26 +185,12 @@ class Classpath
             def methodParameters = cir.methodParameters[desc];
 
             print "(method"
-            print " :name \"" + it.name + "\""
-            print " :modifiers (" +  Modifier.toString(it.modifiers) + ")"
-            print " :returntype \"" + typeString(it.genericReturnType) + "\""
-            print " :arguments ("
-            it.genericParameterTypes.eachWithIndex{ pt, i ->
-                print "(:type \"" + typeString(pt) + "\""
-                if (methodParameters  && methodParameters[++i]) {
-                    print " :name \"" + methodParameters[i].name + "\""
-                }
-                print ") "
-            }
-            print ")"
-            if (it.genericExceptionTypes.length > 0) {
-                print " :throws (";
-                it.genericExceptionTypes.eachWithIndex{ ex, i ->
-                    print "\"" + typeString(ex) + "\""
-                }
-                print ") "
-            }
-            print " :declaring-class \"" + it.declaringClass.name + "\""
+            printName(it)
+            printModifiers(it)
+            print " :returntype " + quotify(typeString(it.genericReturnType))
+            printArguments(it, methodParameters)
+            printDeclaringClass(it)
+            printExceptions(it)
             println ")"
         }
 
@@ -178,40 +203,26 @@ class Classpath
             def methodParameters = cir.methodParameters[desc];
             
             print "(constructor"
-            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
-            print " :arguments"
-            print " ("
-            it.genericParameterTypes.eachWithIndex{ pt, i ->
-                print "(:type \"" + typeString(pt) + "\""
-                if (methodParameters && methodParameters[++i]) {
-                    print " :name \"" + methodParameters[i].name + "\""
-                }
-                print ") "
-            }
-            print ") " 
-            if (it.genericExceptionTypes.length > 0) {
-                print " :throws (";
-                it.genericExceptionTypes.eachWithIndex{ ex, i ->
-                    print "\"" + typeString(ex) + "\""
-                }
-                print ") "
-            }
-            print " :declaring-class \"" + it.declaringClass.name + "\""
+            printModifiers(it)
+            printArguments(it.genericParameterTypes)
+            printExceptions(it)
+            printDeclaringClass(it)
             println ")"
         }
 
         def fieldPrinter = {
-            print "(field :name \"" + it.name + "\""
-            print " :type \"" + typeString(it.genericType) + "\""
-            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
-            print " :declaring-class \"" + it.declaringClass.name + "\""
+            print "(field "
+            printName(it)
+            print " :type " + quotify(typeString(it.genericType))
+            printModifiers(it)
+            printDeclaringClass(it)
             println ")"
         }
 
         def classPrinter = {
-            print "(class :name \"" + it.simpleName + "\""
-            print " :modifiers (" + Modifier.toString(it.getModifiers()) + ")"
-            print " :declaring-class \"" + it.declaringClass.name + "\""
+            print "(class :name " + quotify(it.simpleName)
+            printModifiers(it)
+            printDeclaringClass(it)
             println ")"
         }
         
