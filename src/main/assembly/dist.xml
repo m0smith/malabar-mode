@@ -3,11 +3,10 @@
   <formats>
     <format>zip</format>
   </formats>
-  <baseDirectory>mvn</baseDirectory>
   <dependencySets>
     <dependencySet>
       <useProjectArtifact>true</useProjectArtifact>
-      <outputDirectory>java/lib</outputDirectory>
+      <outputDirectory>lib</outputDirectory>
     </dependencySet>
   </dependencySets>
   <fileSets>
