@@ -1,6 +1,9 @@
+package org.grumblesmurf.malabar
+
 import org.codehaus.groovy.tools.RootLoader;
 import org.objectweb.asm.*;
 import java.lang.reflect.*;
+import java.util.jar.*;
 
 class ClassInfo implements ClassVisitor, MethodVisitor
 {
@@ -63,6 +66,24 @@ class ClassInfo implements ClassVisitor, MethodVisitor
     public void visitMultiANewArrayInsn(String a, int b) {}
 }
 
+class Utils 
+{
+    static printAsLispList(List list) {
+        print "("
+        list.each {
+            if (it instanceof String) {
+                print '"' + it + '"'
+            } else if (it instanceof List) {
+                printAsLispList(it)
+            } else {
+                print it
+            }
+            print " "
+        }
+        print ")"
+    }
+}
+
 class Classpath 
 {
     def bootUrls = [];
@@ -97,7 +118,63 @@ class Classpath
     }
     
     private classloader;
+
+    def classMap = [:]
     
+    def getClasses(String unqualifiedName) {
+        if (classMap.isEmpty()) {
+            def classnamecollector = { fileName, path ->
+                def classbinaryname = fileName[0..-7];
+                def simplename = classbinaryname[classbinaryname.lastIndexOf('$') + 1..-1]
+                def pkgname = path.replace('/', '.')
+                                
+                if (!classMap.containsKey(simplename)) {
+                    classMap[simplename] = []
+                }
+                classMap[simplename] << pkgname + "." + classbinaryname
+            }
+            
+            def classcollector = { 
+                URI uri = new URI(it);
+                File file = new File(uri);
+                String absolutePath = file.absolutePath
+                if (file.exists()) {
+                    if (file.isFile()) {
+                        new JarFile(file).entries().each{ entry ->
+                            if (entry.name.endsWith(".class")) {
+                                def entryname = entry.name
+                                def filename = entryname[entryname.lastIndexOf('/') + 1..-1]
+                                def path = ""
+                                if (entryname.lastIndexOf('/') > -1) {
+                                    path = entryname.substring(0, entryname.lastIndexOf('/'))
+                                }
+                                classnamecollector(filename, path)
+                            }
+                        }
+                    } else {
+                        file.eachFileRecurse{ classFile ->
+                            if (classFile.name.endsWith(".class")) {
+                                classnamecollector(classFile.name,
+                                                   classFile.parent[absolutePath.length() + 1 .. -1])
+                            }
+                        }
+                    }
+                }
+            }
+            
+            bootUrls.each{
+                classcollector(it)
+            }
+            extUrls.each{
+                classcollector(it)
+            }
+            urls.each {
+                classcollector(it)
+            }
+        }
+        Utils.printAsLispList classMap[unqualifiedName];
+    }
+
     def getClassLoader() {
         if (classloader == null) {
             URL[] realUrls = new URL[urls.size()];
