@@ -27,6 +27,10 @@
 
 (defvar malabar-groovy-options '("--color=false"))
 
+(defvar malabar-groovy-lib-dir "~/malabar/lib")
+
+(defvar malabar-groovy-extra-classpath '("~/src/malabar/target/classes"))
+
 (defvar malabar-groovy-mode-hook '())
 
 (defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> ")
@@ -52,8 +56,15 @@
                        malabar-groovy-comint-name
                        malabar-groovy-command
                        nil
+                       "-cp"
+                       (mapconcat #'expand-file-name
+                                  (append malabar-groovy-classpath
+                                          (directory-files malabar-groovy-lib-dir t
+                                                           ".*\\.jar$"))
+                                  path-separator)
                        malabar-groovy-options))
-    (malabar-groovy-mode))
+    (malabar-groovy-mode)
+    (malabar-groovy-eval "import org.grumblesmurf.malabar.*"))
   (unless silent
     (pop-to-buffer malabar-groovy-buffer-name)))
 
