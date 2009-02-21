@@ -46,6 +46,12 @@
                     result))))))
     (apply 'append result)))
 
+(defvar malabar-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
+    map)
+  "Keymap for Malabar mode.")
+
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
   ;; Funky stuff here
@@ -131,5 +137,9 @@
                         goals)
                       ",")
            ")")))
+
+(defun malabar-install-project ()
+  (interactive)
+  (malabar-build-project 'install))
 
 (provide 'malabar-mode)
