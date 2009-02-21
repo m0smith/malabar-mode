@@ -141,10 +141,6 @@ public enum MvnServer
             
             MavenExecutionResult result = INSTANCE.mavenEmbedder.execute(request);
             CLIReportingUtils.logResult(request, result, INSTANCE.logger);
-            if (result.hasExceptions())
-                System.out.println("1");
-            else
-                System.out.println("0");
             return !result.hasExceptions();
         }
     }
