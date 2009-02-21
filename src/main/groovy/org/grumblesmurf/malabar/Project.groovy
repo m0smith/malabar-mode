@@ -16,6 +16,8 @@ class Project
     def description;
     def pomFile;
 
+    def modStamp;
+
     def srcDirectories;
     def classesDirectory;
 
@@ -29,8 +31,13 @@ class Project
     def mavenProject;
     
     static Project makeProject(pom) {
-        MavenEmbedder embedder = MvnServer.embedder
+        Project p = Projects.get(pom)
         File pomFile = pom as File
+        if (p && p.modStamp >= pomFile.lastModified()) {
+            return p
+        }
+        
+        MavenEmbedder embedder = MvnServer.embedder
         MavenExecutionRequest req = MvnServer.newRequest()
         req.baseDirectory = pomFile.parentFile
         MavenExecutionResult result = embedder.readProjectWithDependencies(req)
@@ -50,6 +57,7 @@ class Project
     
     private Project(pom, result) {
         pomFile = pom
+        modStamp = (pom as File).lastModified()
         mavenProject = result.project
         name = mavenProject.name
         description = mavenProject.description
