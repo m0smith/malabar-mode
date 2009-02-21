@@ -17,6 +17,7 @@
 ;;
 (require 'comint)
 (require 'ansi-color)
+(require 'working)
 
 (defvar malabar-groovy-comint-name "Malabar Groovy")
 
@@ -35,6 +36,9 @@
 
 (defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> ")
 
+(defvar malabar-groovy-initial-statements
+  '("import org.grumblesmurf.malabar.*"))
+
 (defun malabar-groovy-mode ()
   (interactive)
   (delay-mode-hooks (comint-mode))
@@ -52,19 +56,31 @@
 (defun malabar-groovy-start (&optional silent)
   (interactive)
   (unless (malabar-groovy-live-p)
-    (set-buffer (apply #'make-comint
-                       malabar-groovy-comint-name
-                       malabar-groovy-command
-                       nil
-                       "-cp"
-                       (mapconcat #'expand-file-name
-                                  (append malabar-groovy-classpath
-                                          (directory-files malabar-groovy-lib-dir t
-                                                           ".*\\.jar$"))
-                                  path-separator)
-                       malabar-groovy-options))
-    (malabar-groovy-mode)
-    (malabar-groovy-eval "import org.grumblesmurf.malabar.*"))
+    (working-status-forms "Starting Groovy...%s" "done"
+      (let ((initial-point
+             (with-current-buffer (get-buffer-create malabar-groovy-buffer-name)
+               (point))))
+        (working-dynamic-status nil "starting process")
+        (set-buffer (apply #'make-comint
+                           malabar-groovy-comint-name
+                           malabar-groovy-command
+                           nil
+                           "-cp"
+                           (mapconcat #'expand-file-name
+                                      (append malabar-groovy-extra-classpath
+                                              (directory-files malabar-groovy-lib-dir t
+                                                               ".*\\.jar$"))
+                                      path-separator)
+                           malabar-groovy-options))
+        (malabar-groovy-mode)
+        (working-dynamic-status nil "waiting for prompt")
+        (while (not (with-current-buffer malabar-groovy-buffer-name
+                      (save-excursion
+                        (goto-char (point-max))
+                        (re-search-backward malabar-groovy-prompt-regexp initial-point t))))
+          (accept-process-output (get-buffer-process malabar-groovy-buffer-name)))
+        (working-dynamic-status nil "evaluating initial statements")
+        (mapc #'malabar-groovy-eval malabar-groovy-initial-statements))))
   (unless silent
     (pop-to-buffer malabar-groovy-buffer-name)))
 
@@ -87,7 +103,8 @@
   (let* ((output (car cell))
          (start-of-return (string-match "===> " output)))
     (rplaca cell (substring output 0 start-of-return))
-    (rplacd cell (substring output (match-end 0) (1- (length output))))
+    (when start-of-return
+      (rplacd cell (substring output (match-end 0) (1- (length output)))))
     cell))
 
 (defun malabar-groovy-eval (string)
