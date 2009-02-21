@@ -41,11 +41,23 @@ public enum MvnServer
         if (validateConfiguration()) {
             try {
                 mavenEmbedder = new MavenEmbedder(configuration);
+                mavenEmbedder.setLogger(logger);
             } catch (MavenEmbedderException e) {
                 CLIReportingUtils.showError("Unable to start the embedder: ", e, false, errorReporter, logger);
                 throw new RuntimeException("Unabled to start the embedder", e);
             }
         }
+    }
+
+    public static MavenEmbedder getEmbedder() {
+        return INSTANCE.mavenEmbedder;
+    }
+
+    public static MavenExecutionRequest newRequest() {
+        MavenExecutionRequest req = new DefaultMavenExecutionRequest();
+        req.setErrorReporter(INSTANCE.errorReporter);
+        req.setTransferListener(INSTANCE.transferListener);
+        return req;
     }
 
     private Configuration buildEmbedderConfiguration() {
