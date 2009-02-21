@@ -149,11 +149,13 @@
         (let ((end (string-match malabar-groovy-prompt-regexp output))
               (original-output output))
           (when end
-            (setq output (substring output 0 (string-match "^===> " output)))
+            (setq output (substring output 0 end))
             (set-process-filter process old-filter))
           (insert output)
           (when end
-            (let ((result (substring original-output (match-end 0) (1- end))))
+            (let ((result (progn (goto-char (point-max))
+                                 (re-search-backward "^===> \\(.*\\)$")
+                                 (match-string-no-properties 1))))
               (message "%s" result)
               (apply #'compilation-handle-exit 'exit
                      (if (equal result "true")

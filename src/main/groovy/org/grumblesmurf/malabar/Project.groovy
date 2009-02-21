@@ -29,6 +29,8 @@ class Project
     def target = "1.1";
 
     def mavenProject;
+
+    def compiler;
     
     static Project makeProject(pom) {
         Project p = Projects.get(pom)
@@ -86,5 +88,7 @@ class Project
             source = (compilerConfig.getChild("source") ?: source).value
             target = (compilerConfig.getChild("target") ?: target).value
         }
+
+        compiler = new Compiler(this);
     }
 }

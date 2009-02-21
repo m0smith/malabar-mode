@@ -37,6 +37,10 @@ class Classpath
             this.urls << "file:" + it
         }
     }
+
+    def asClassPath() {
+        return urls.collect{it.substring(5)}.join(':')
+    }
     
     private classloader;
 

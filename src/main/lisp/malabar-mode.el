@@ -49,6 +49,7 @@
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
+    (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
     map)
   "Keymap for Malabar mode.")
 
@@ -120,13 +121,7 @@
           (eval (car (read-from-string (car result)))))))))
 
 (defun malabar-build-project (goals)
-  (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
-    (setq buffer-read-only nil)
-    (buffer-disable-undo (current-buffer))
-    (erase-buffer)
-    (buffer-enable-undo (current-buffer))
-    (compilation-mode)
-    (setq buffer-read-only nil))
+  (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
    (concat (format "MvnServer.INSTANCE.run('%s', "
@@ -138,8 +133,26 @@
                       ",")
            ")")))
 
+(defun malabar-setup-compilation-buffer ()
+  (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
+    (setq buffer-read-only nil)
+    (buffer-disable-undo (current-buffer))
+    (erase-buffer)
+    (buffer-enable-undo (current-buffer))
+    (compilation-mode)
+    (setq buffer-read-only nil)))
+
 (defun malabar-install-project ()
   (interactive)
   (malabar-build-project 'install))
+
+(defun malabar-compile-file ()
+  (interactive)
+  (malabar-setup-compilation-buffer)
+  (display-buffer malabar-groovy-compilation-buffer-name t)
+  (malabar-groovy-eval-as-compilation
+   (concat (format "Project.makeProject('%s').compiler.compile('%s')"
+                   (malabar-maven-find-project-file)
+                   (buffer-file-name (current-buffer))))))
 
 (provide 'malabar-mode)
