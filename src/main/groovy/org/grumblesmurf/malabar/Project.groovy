@@ -56,6 +56,12 @@ class Project
             return me;
         }
     }
+
+    def runtest(testname) {
+        def run = MvnServer.INSTANCE.run(pomFile, false, "test");
+        run.addProperty("test", testname);
+        return run.run();
+    }
     
     private Project(pom, result) {
         pomFile = pom

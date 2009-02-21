@@ -19,6 +19,7 @@
 (require 'semantic-load)
 (require 'semantic-ctxt)
 (require 'semantic-find)
+(require 'semantic-wisent)
 (require 'wisent-malabar-java-wy)
 (require 'cl)
 (require 'malabar-groovy)
@@ -50,6 +51,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
     (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
+    (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-test)
     map)
   "Keymap for Malabar mode.")
 
@@ -133,7 +135,10 @@
                       ",")
            ")")))
 
+(defvar malabar-compilation-project-file nil)
+
 (defun malabar-setup-compilation-buffer ()
+  (setq malabar-compilation-project-file (malabar-maven-find-project-file))
   (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
     (setq buffer-read-only nil)
     (buffer-disable-undo (current-buffer))
@@ -154,5 +159,68 @@
    (concat (format "Project.makeProject('%s').compiler.compile('%s')"
                    (malabar-maven-find-project-file)
                    (buffer-file-name (current-buffer))))))
+
+(defun malabar-get-package-name ()
+  (let ((package (semantic-brute-find-tag-by-class 'package (current-buffer))))
+    (when package
+      (semantic-tag-name package))))
+
+(defun malabar-unqualified-class-name-of-buffer (&optional buffer)
+  (file-name-sans-extension
+   (file-name-nondirectory
+    (buffer-file-name (or buffer (current-buffer))))))
+
+(defun malabar-test-class-buffer-p (buffer)
+  (let* ((type-tag (car (semantic-brute-find-tag-by-class 'type (current-buffer))))
+         (superclasses (semantic-tag-type-superclasses type-tag)))
+    (or (member "TestCase" superclasses)
+        (member "junit.framework.TestCase" superclasses)
+        (member "TestSuite" superclasses)
+        (member "junit.framework.TestSuite" superclasses)
+        (some (lambda (member-tag)
+                (remove-if-not (lambda (m)
+                                 (and (string= "@" (substring m 0 1))
+                                      (string-ends-with m "Test")))
+                               (semantic-tag-modifiers member-tag)))
+              (semantic-tag-type-members type-tag)))))
+
+(defun malabar-project-test-source-directories (project-file)
+  (car
+   (read-from-string
+    (car (malabar-groovy-eval
+          (format "Utils.printAsLispList(Project.makeProject('%s').testSrcDirectories)"
+                  project-file))))))
+
+(defvar malabar-compilation-project-test-source-directories nil)
+
+(defun malabar-find-test-class-from-error ()
+  (let* ((class-name (match-string-no-properties 2))
+         (class-file (concat (replace-regexp-in-string "\\." "/" class-name)
+                             ".java")))
+    (list
+     (some (lambda (d)
+             (let ((f (expand-file-name class-file d)))
+               (when (file-exists-p f)
+                 f)))
+           malabar-compilation-project-test-source-directories))))
+
+(defun malabar-run-test ()
+  (interactive)
+  (assert (malabar-test-class-buffer-p (current-buffer)))
+  (malabar-setup-compilation-buffer)
+  (setq malabar-compilation-project-test-source-directories
+        (malabar-project-test-source-directories malabar-compilation-project-file))
+  (display-buffer malabar-groovy-compilation-buffer-name t)
+  (malabar-groovy-eval-as-compilation
+   (concat (format "Project.makeProject('%s').runtest('%s')"
+                   (malabar-maven-find-project-file)
+                   (malabar-unqualified-class-name-of-buffer (current-buffer))))))
+
+(defvar malabar-failed-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
+
+(add-to-list 'compilation-error-regexp-alist
+             (list malabar-failed-test-re                ;; RE
+                   'malabar-find-test-class-from-error)) ;; FILE
+                   
 
 (provide 'malabar-mode)
