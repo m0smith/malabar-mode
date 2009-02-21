@@ -24,6 +24,9 @@
 (defvar malabar-groovy-buffer-name
   (concat "*" malabar-groovy-comint-name "*"))
 
+(defvar malabar-groovy-compilation-buffer-name
+  (concat "*" malabar-groovy-comint-name " Compilation*"))
+
 (defvar malabar-groovy-command "groovysh")
 
 (defvar malabar-groovy-options '("--color=false"))
@@ -124,6 +127,41 @@
         (rplaca malabar-groovy--eval-output
                 (substring (car malabar-groovy--eval-output) (length string)))
         (malabar-groovy--eval-fix-output malabar-groovy--eval-output)))))
+
+(defun malabar-groovy-eval-as-compilation (string)
+  (unless (malabar-groovy-live-p)
+    (malabar-groovy-start t))
+  (when (malabar-groovy-live-p)
+    (let ((groovy-process (get-buffer-process malabar-groovy-buffer-name)))
+      (let ((old-filter (process-filter groovy-process))
+            (string (if (string-ends-with string "\n")
+                        string
+                      (concat string "\n"))))
+        (set-process-filter groovy-process
+                            (malabar-groovy--compilation-filter old-filter))
+        (process-send-string groovy-process string)))))
+
+(defun malabar-groovy--compilation-filter (old-filter)
+  (lexical-let ((old-filter old-filter))
+    (lambda (process output)
+      (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
+        (goto-char (point-max))
+        (let ((end (string-match malabar-groovy-prompt-regexp output))
+              (original-output output))
+          (when end
+            (setq output (substring output 0 (string-match "^===> " output)))
+            (set-process-filter process old-filter))
+          (insert output)
+          (when end
+            (let ((result (substring original-output (match-end 0) (1- end))))
+              (message "%s" result)
+              (apply #'compilation-handle-exit 'exit
+                     (if (equal result "true")
+                         (list 0 "finished\n")
+                       (list 0 "exited abnormally")))))
+          (when compilation-scroll-output
+            (set-window-point (get-buffer-window malabar-groovy-compilation-buffer-name)
+                              (point-max))))))))
 
 (defun string-ends-with (string end)
   (string= (substring string (- (length string) (length end))) end))

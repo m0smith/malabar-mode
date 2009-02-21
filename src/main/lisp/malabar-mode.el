@@ -98,12 +98,38 @@
                 type-tokens)
      :test #'equal)))
 
-(defvar malabar-project-definition-functions
-  '((malabar-maven-find-project-file . malabar-maven-define-project)))
-
 (defun malabar-maven-find-project-file ()
   (let ((dir (locate-dominating-file (buffer-file-name (current-buffer)) "pom.xml")))
     (when dir
       (expand-file-name "pom.xml" dir))))
+
+(defun malabar-maven-define-project (pom-file)
+  (malabar-groovy-eval (format "Project.makeProject('%s')" pom-file)))
+
+(defun malabar-make-project ()
+  (let ((project-file (malabar-maven-find-project-file)))
+    (when project-file
+      (let ((result (malabar-maven-define-project project-file)))
+        (when (equal "null" (cdr result))
+          (eval (car (read-from-string (car result)))))))))
+
+(defun malabar-build-project (goals)
+  (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
+    (setq buffer-read-only nil)
+    (buffer-disable-undo (current-buffer))
+    (erase-buffer)
+    (buffer-enable-undo (current-buffer))
+    (compilation-mode)
+    (setq buffer-read-only nil))
+  (display-buffer malabar-groovy-compilation-buffer-name t)
+  (malabar-groovy-eval-as-compilation
+   (concat (format "MvnServer.INSTANCE.run('%s', "
+                   (malabar-maven-find-project-file))
+           (mapconcat (lambda (s) (format "'%s'" s))
+                      (if (atom goals)
+                          (list goals)
+                        goals)
+                      ",")
+           ")")))
 
 (provide 'malabar-mode)
