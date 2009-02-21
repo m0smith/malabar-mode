@@ -49,16 +49,18 @@
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
   ;; Funky stuff here
-  (malabar-semantic-setup)
-  )
-
-(defun malabar-semantic-setup ()
-  ;; Nasty hardcode
+  (add-hook 'semantic-init-hooks #'malabar-semantic-setup)
   (setq semantic-lex-depth 10)
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
-  (semantic-idle-scheduler-mode 1)
-  (remove-hook 'java-mode-hook 'wisent-java-default-setup))
+  )
+
+(remove-hook 'java-mode-hook 'wisent-java-default-setup)
+
+(defun malabar-semantic-setup ()
+  ;; Nasty hardcode
+  (remove-hook 'semantic-init-hooks 'malabar-semantic-setup)
+  (semantic-idle-scheduler-mode 1))
 
 (defun malabar-type-token-candidates ()
   (remove nil (mapcar (lambda (token)
@@ -89,9 +91,19 @@
 
 (defun malabar-import-candidates ()
   (let ((type-tokens (remove-if-not #'malabar-type-token-p (malabar-type-token-candidates))))
-    (remove-if (lambda (token)
-                 (or (malabar-class-defined-in-current-buffer-p token)
-                     (malabar-class-imported-p token)))
-               type-tokens)))
+    (remove-duplicates
+     (remove-if (lambda (token)
+                  (or (malabar-class-defined-in-current-buffer-p token)
+                      (malabar-class-imported-p token)))
+                type-tokens)
+     :test #'equal)))
+
+(defvar malabar-project-definition-functions
+  '((malabar-maven-find-project-file . malabar-maven-define-project)))
+
+(defun malabar-maven-find-project-file ()
+  (let ((dir (locate-dominating-file (buffer-file-name (current-buffer)) "pom.xml")))
+    (when dir
+      (expand-file-name "pom.xml" dir))))
 
 (provide 'malabar-mode)
