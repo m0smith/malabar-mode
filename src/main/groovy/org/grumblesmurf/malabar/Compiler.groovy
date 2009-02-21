@@ -12,6 +12,13 @@ class Compiler
     }
 
     def compile(file) {
+        def output = project.classesDirectory;
+        def classpath = project.compileClasspath;
+        if (project.testSrcDirectories.any{ file.startsWith(it) }) {
+            output = project.testClassesDirectory
+            classpath = project.testClasspath
+        }
+        
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager =
             compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
@@ -19,9 +26,9 @@ class Compiler
             fileManager.getJavaFileObjectsFromStrings(Arrays.asList(file));
         JavaCompiler.CompilationTask task =
             compiler.getTask(null, fileManager, null,
-                             ["-cp", project.compileClasspath.asClassPath(),
+                             ["-cp", classpath.asClassPath(),
                               "-g", "-deprecation",
-                              "-d", project.classesDirectory,
+                              "-d", output,
                               "-source", project.source,
                               "-target", project.target,
                               "-encoding", project.encoding,
