@@ -1,0 +1,30 @@
+Short term
+
+- Code completion
+
+- Classpath completion?
+
+- Import precedence ordering, in conjunction with defaulting import to
+  first matching class
+  - e.g. prefer java.util.List to java.awt.List
+
+- Organize imports
+  
+- goto-type-at-point (with disassembly if needed)
+  - create if necessary
+
+- Implement interface
+
+- Extend abstract class
+
+- Code generation
+  - getters/setters
+  - delegation
+
+- Run test directly (i.e. not with Maven)
+
+Long term
+
+- Refactoring
+
+- xref
