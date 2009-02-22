@@ -128,6 +128,9 @@
                 (substring (car malabar-groovy--eval-output) (length string)))
         (malabar-groovy--eval-fix-output malabar-groovy--eval-output)))))
 
+(defun malabar-groovy-eval-and-lispeval (string)
+  (car (read-from-string (car (malabar-groovy-eval string)))))
+
 (defun malabar-groovy-eval-as-compilation (string)
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))

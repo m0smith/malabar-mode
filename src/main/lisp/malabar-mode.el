@@ -23,6 +23,7 @@
 (require 'wisent-malabar-java-wy)
 (require 'cl)
 (require 'malabar-groovy)
+(require 'thingatpt)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
@@ -107,6 +108,65 @@
                 type-tokens)
      :test #'equal)))
 
+(defun malabar-import-one-class (unqualified)
+  (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
+  (if (or (malabar-class-defined-in-current-buffer-p unqualified)
+          (malabar-class-imported-p unqualified))
+      (message "Class %s does not need to be imported" unqualified)
+    (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
+                          "testClasspath"
+                        "compileClasspath"))
+           (possible-classes (malabar-groovy-eval-and-lispeval
+                              (format "Project.makeProject('%s').%s.getClasses('%s')"
+                                      (malabar-maven-find-project-file)
+                                      classpath
+                                      unqualified))))
+      (let ((classes-to-import (if (= 1 (length possible-classes))
+                                   possible-classes
+                                 (malabar-choose (format "%d classes named '%s', pick one: "
+                                                         (length possible-classes)
+                                                         unqualified)
+                                                 possible-classes))))
+        (unless (null classes-to-import)
+          (malabar-import-insert-import classes-to-import))))))
+
+(defun malabar-choose (prompt choices)
+  (let ((res (completing-read prompt choices nil t)))
+    (unless (equal "" res)
+      (list res))))
+
+(defun malabar-import-insert-import (qualified-classes)
+  (let* ((tags (semantic-fetch-tags))
+         (last-import-tag (car (last (semantic-brute-find-tag-by-class 'include tags))))
+         (package-tag (car (semantic-brute-find-tag-by-class 'package tags)))
+         (class-tag (car (semantic-brute-find-tag-by-class 'type tags)))
+         insertion-point)
+    (cond (last-import-tag
+           (setq insertion-point (1+ (semantic-tag-end last-import-tag))))
+          (package-tag
+           (save-excursion
+             (goto-char (semantic-tag-end package-tag))
+             (forward-line)
+             (insert "\n")
+             (setq insertion-point (point))))
+          (class-tag
+           (setq insertion-point
+                 (let ((class-doc (semantic-documentation-for-tag class-tag 'lex)))
+                   (if class-doc
+                       (semantic-lex-token-start class-doc)
+                     (semantic-tag-start class-tag)))))
+          (t
+           (setq insertion-point (point-min))))
+    (save-excursion
+      (goto-char insertion-point)
+      (unless (and (bolp) (eolp))
+        (insert "\n"))
+      (goto-char insertion-point)
+      (dolist (qualified-class qualified-classes)
+        (when (> (length qualified-class) 0)
+          (insert "import " qualified-class ";\n")
+          (message "Imported %s" qualified-class))))))
+
 (defun malabar-maven-find-project-file ()
   (let ((dir (locate-dominating-file (buffer-file-name (current-buffer)) "pom.xml")))
     (when dir
@@ -185,11 +245,9 @@
               (semantic-tag-type-members type-tag)))))
 
 (defun malabar-project-test-source-directories (project-file)
-  (car
-   (read-from-string
-    (car (malabar-groovy-eval
-          (format "Utils.printAsLispList(Project.makeProject('%s').testSrcDirectories)"
-                  project-file))))))
+  (malabar-groovy-eval-and-lispeval
+   (format "Utils.printAsLispList(Project.makeProject('%s').testSrcDirectories)"
+           project-file)))
 
 (defvar malabar-compilation-project-test-source-directories nil)
 
@@ -222,5 +280,4 @@
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
                    
-
 (provide 'malabar-mode)
