@@ -53,6 +53,7 @@
     (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
     (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
     (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-test)
+    (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
     map)
   "Keymap for Malabar mode.")
 
