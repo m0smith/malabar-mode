@@ -109,34 +109,37 @@
                 type-tokens)
      :test #'equal)))
 
+(defun malabar-import-find-import (unqualified)
+  (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
+                        "testClasspath"
+                      "compileClasspath"))
+         (possible-classes (malabar-groovy-eval-and-lispeval
+                            (format "Project.makeProject('%s').%s.getClasses('%s')"
+                                    (malabar-maven-find-project-file)
+                                    classpath
+                                    unqualified))))
+    (if (= 1 (length possible-classes))
+        (car possible-classes)
+      (malabar-choose (format "%d classes named '%s', pick one: "
+                              (length possible-classes)
+                              unqualified)
+                      possible-classes))))
+
 (defun malabar-import-one-class (unqualified)
   (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
   (if (or (malabar-class-defined-in-current-buffer-p unqualified)
           (malabar-class-imported-p unqualified))
       (message "Class %s does not need to be imported" unqualified)
-    (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
-                          "testClasspath"
-                        "compileClasspath"))
-           (possible-classes (malabar-groovy-eval-and-lispeval
-                              (format "Project.makeProject('%s').%s.getClasses('%s')"
-                                      (malabar-maven-find-project-file)
-                                      classpath
-                                      unqualified))))
-      (let ((classes-to-import (if (= 1 (length possible-classes))
-                                   possible-classes
-                                 (malabar-choose (format "%d classes named '%s', pick one: "
-                                                         (length possible-classes)
-                                                         unqualified)
-                                                 possible-classes))))
-        (unless (null classes-to-import)
-          (malabar-import-insert-import classes-to-import))))))
+    (let ((class-to-import (malabar-import-find-import unqualified)))
+      (unless (null class-to-import)
+        (malabar-import-insert-imports (list class-to-import))))))
 
 (defun malabar-choose (prompt choices)
   (let ((res (completing-read prompt choices nil t)))
     (unless (equal "" res)
-      (list res))))
+      res)))
 
-(defun malabar-import-insert-import (qualified-classes)
+(defun malabar-import-insert-imports (qualified-classes)
   (let* ((tags (semantic-fetch-tags))
          (last-import-tag (car (last (semantic-brute-find-tag-by-class 'include tags))))
          (package-tag (car (semantic-brute-find-tag-by-class 'package tags)))
