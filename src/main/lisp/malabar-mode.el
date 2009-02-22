@@ -114,6 +114,9 @@
   '("^java\\.lang\\.[^.]+$"                 ;; Always imported
     "^sun\\."                               ;; Implementation internals
     "^com\\.sun\\.xml\\.internal\\."        ;; ...
+    "\\$"                                   ;; If you want to import
+                                            ;; an inner class, do it
+                                            ;; yourself
     ))
 
 (defun malabar-import-current-package-p (qualified-class)
@@ -125,9 +128,7 @@
   (or (some (lambda (re)
               (string-match re qualified-class))
             malabar-import-excluded-classes-regexp-list)
-      (malabar-import-current-package-p qualified-class)
-      ;; If you want to import an inner class, do it yourself
-      (position ?$ qualified-class)))
+      (malabar-import-current-package-p qualified-class)))
 
 (defun malabar-import-find-import (unqualified)
   (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
