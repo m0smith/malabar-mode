@@ -130,24 +130,53 @@
             malabar-import-excluded-classes-regexp-list)
       (malabar-import-current-package-p qualified-class)))
 
+(defvar malabar-import-precedence-order
+  '("java.util"
+    "java.io"
+    "java.net"
+    "java.lang.reflect"
+    "java.sql"
+    "java.text"
+    "javax.swing")
+  "Sort order by package for classes to import.  A class from a
+package not in this list will sort after a class from any package
+in the list")
+
+(defun malabar-get-package-of (classname)
+  (let ((lastdot (position ?. classname :from-end t)))
+    (if lastdot
+        (substring classname 0 lastdot)
+      "")))
+
+(defun malabar-import-sort-by-precedence (class-a class-b)
+  (let ((a-package (malabar-get-package-of class-a))
+        (b-package (malabar-get-package-of class-b)))
+    (let ((a-package-successors (member a-package malabar-import-precedence-order))
+          (b-package-successors (member b-package malabar-import-precedence-order)))
+      (or (member b-package a-package-successors)
+          (and a-package-successors
+               (null b-package-successors))))))
+
 (defun malabar-import-find-import (unqualified)
   (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
                         "testClasspath"
                       "compileClasspath"))
          (possible-classes
-          (remove-if #'malabar-import-exclude
-                     (malabar-groovy-eval-and-lispeval
-                      (format "Project.makeProject('%s').%s.getClasses('%s')"
-                              (malabar-maven-find-project-file)
-                              classpath
-                              unqualified)))))
+          (sort (remove-if #'malabar-import-exclude
+                           (malabar-groovy-eval-and-lispeval
+                            (format "Project.makeProject('%s').%s.getClasses('%s')"
+                                    (malabar-maven-find-project-file)
+                                    classpath
+                                    unqualified)))
+                #'malabar-import-sort-by-precedence)))
     (when possible-classes
       (if (= 1 (length possible-classes))
           (car possible-classes)
         (malabar-choose (format "%d classes named '%s', pick one: "
                                 (length possible-classes)
                                 unqualified)
-                        possible-classes)))))
+                        possible-classes
+                        (car possible-classes))))))
 
 (defun malabar-import-all ()
   (interactive)
@@ -166,8 +195,8 @@
       (unless (null class-to-import)
         (malabar-import-insert-imports (list class-to-import))))))
 
-(defun malabar-choose (prompt choices)
-  (let ((res (completing-read prompt choices nil t)))
+(defun malabar-choose (prompt choices &optional default)
+  (let ((res (completing-read prompt choices nil t default)))
     (unless (equal "" res)
       res)))
 

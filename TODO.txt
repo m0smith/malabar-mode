@@ -4,10 +4,6 @@ Short term
 
 - Classpath completion?
 
-- Import precedence ordering, in conjunction with defaulting import to
-  first matching class
-  - e.g. prefer java.util.List to java.awt.List
-
 - Organize imports
   
 - goto-type-at-point (with disassembly if needed)
