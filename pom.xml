@@ -6,6 +6,13 @@
   <version>1.0-SNAPSHOT</version>
   <name>A better Java mode for Emacs</name>
   <inceptionYear>2009</inceptionYear>
+  <licenses>
+    <license>
+      <name>The GNU General Public License, Version 2</name>
+      <url>http://www.gnu.org/licenses/gpl2.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
