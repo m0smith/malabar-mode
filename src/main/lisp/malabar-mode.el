@@ -109,21 +109,43 @@
                 type-tokens)
      :test #'equal)))
 
+(defvar malabar-import-excluded-classes-regexp-list
+  '("^java\\.lang\\.[^.]+$"                 ;; Always imported
+    "^sun\\."                               ;; Implementation internals
+    "^com\\.sun\\.xml\\.internal\\."        ;; ...
+    ))
+
+(defun malabar-import-current-package-p (qualified-class)
+  (let ((package (malabar-get-package-name)))
+    (when package
+      (string-match (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class))))
+
+(defun malabar-import-exclude (qualified-class)
+  (or (some (lambda (re)
+              (string-match re qualified-class))
+            malabar-import-excluded-classes-regexp-list)
+      (malabar-import-current-package-p qualified-class)
+      ;; If you want to import an inner class, do it yourself
+      (position ?$ qualified-class)))
+
 (defun malabar-import-find-import (unqualified)
   (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
                         "testClasspath"
                       "compileClasspath"))
-         (possible-classes (malabar-groovy-eval-and-lispeval
-                            (format "Project.makeProject('%s').%s.getClasses('%s')"
-                                    (malabar-maven-find-project-file)
-                                    classpath
-                                    unqualified))))
-    (if (= 1 (length possible-classes))
-        (car possible-classes)
-      (malabar-choose (format "%d classes named '%s', pick one: "
-                              (length possible-classes)
-                              unqualified)
-                      possible-classes))))
+         (possible-classes
+          (remove-if #'malabar-import-exclude
+                     (malabar-groovy-eval-and-lispeval
+                      (format "Project.makeProject('%s').%s.getClasses('%s')"
+                              (malabar-maven-find-project-file)
+                              classpath
+                              unqualified)))))
+    (when possible-classes
+      (if (= 1 (length possible-classes))
+          (car possible-classes)
+        (malabar-choose (format "%d classes named '%s', pick one: "
+                                (length possible-classes)
+                                unqualified)
+                        possible-classes)))))
 
 (defun malabar-import-all ()
   (interactive)
@@ -148,36 +170,37 @@
       res)))
 
 (defun malabar-import-insert-imports (qualified-classes)
-  (let* ((tags (semantic-fetch-tags))
-         (last-import-tag (car (last (semantic-brute-find-tag-by-class 'include tags))))
-         (package-tag (car (semantic-brute-find-tag-by-class 'package tags)))
-         (class-tag (car (semantic-brute-find-tag-by-class 'type tags)))
-         insertion-point)
-    (cond (last-import-tag
-           (setq insertion-point (1+ (semantic-tag-end last-import-tag))))
-          (package-tag
-           (save-excursion
-             (goto-char (semantic-tag-end package-tag))
-             (forward-line)
-             (insert "\n")
-             (setq insertion-point (point))))
-          (class-tag
-           (setq insertion-point
-                 (let ((class-doc (semantic-documentation-for-tag class-tag 'lex)))
-                   (if class-doc
-                       (semantic-lex-token-start class-doc)
-                     (semantic-tag-start class-tag)))))
-          (t
-           (setq insertion-point (point-min))))
-    (save-excursion
-      (goto-char insertion-point)
-      (unless (and (bolp) (eolp))
-        (insert "\n"))
-      (goto-char insertion-point)
-      (dolist (qualified-class qualified-classes)
-        (when (> (length qualified-class) 0)
-          (insert "import " qualified-class ";\n")
-          (message "Imported %s" qualified-class))))))
+  (when qualified-classes
+    (let* ((tags (semantic-fetch-tags))
+           (last-import-tag (car (last (semantic-brute-find-tag-by-class 'include tags))))
+           (package-tag (car (semantic-brute-find-tag-by-class 'package tags)))
+           (class-tag (car (semantic-brute-find-tag-by-class 'type tags)))
+           insertion-point)
+      (cond (last-import-tag
+             (setq insertion-point (1+ (semantic-tag-end last-import-tag))))
+            (package-tag
+             (save-excursion
+               (goto-char (semantic-tag-end package-tag))
+               (forward-line)
+               (insert "\n")
+               (setq insertion-point (point))))
+            (class-tag
+             (setq insertion-point
+                   (let ((class-doc (semantic-documentation-for-tag class-tag 'lex)))
+                     (if class-doc
+                         (semantic-lex-token-start class-doc)
+                       (semantic-tag-start class-tag)))))
+            (t
+             (setq insertion-point (point-min))))
+      (save-excursion
+        (goto-char insertion-point)
+        (unless (and (bolp) (eolp))
+          (insert "\n"))
+        (goto-char insertion-point)
+        (dolist (qualified-class qualified-classes)
+          (when (> (length qualified-class) 0)
+            (insert "import " qualified-class ";\n")
+            (message "Imported %s" qualified-class)))))))
 
 (defun malabar-maven-find-project-file ()
   (let ((dir (locate-dominating-file (buffer-file-name (current-buffer)) "pom.xml")))
@@ -233,7 +256,7 @@
                    (buffer-file-name (current-buffer))))))
 
 (defun malabar-get-package-name ()
-  (let ((package (semantic-brute-find-tag-by-class 'package (current-buffer))))
+  (let ((package (car (semantic-brute-find-tag-by-class 'package (current-buffer)))))
     (when package
       (semantic-tag-name package))))
 
