@@ -125,6 +125,14 @@
                               unqualified)
                       possible-classes))))
 
+(defun malabar-import-all ()
+  (interactive)
+  (let ((imports (remove nil
+                         (mapcar #'malabar-import-find-import
+                                 (malabar-import-candidates)))))
+    (when imports
+      (malabar-import-insert-imports imports))))
+
 (defun malabar-import-one-class (unqualified)
   (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
   (if (or (malabar-class-defined-in-current-buffer-p unqualified)
