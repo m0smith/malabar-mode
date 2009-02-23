@@ -215,7 +215,7 @@ class Classpath
             printName(it)
             printModifiers(it)
             printTypeParameters(it)
-            print " :returntype " + quotify(typeString(it.genericReturnType))
+            print " :return-type " + quotify(typeString(it.genericReturnType))
             printArguments(it, methodParameters)
             printDeclaringClass(it)
             printExceptions(it)
