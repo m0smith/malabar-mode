@@ -172,6 +172,13 @@ class Classpath
             print " :declaring-class " + quotify(it.declaringClass.name)
         }
 
+        def printTypeParameters = {
+            print " :type-parameters "
+            Utils.printAsLispList(it.typeParameters.collect { tp ->
+                    typeString(tp)
+                })
+        }
+
         def printArguments = { it, names ->
             print " :arguments"
             print " ("
@@ -207,6 +214,7 @@ class Classpath
             print "(method"
             printName(it)
             printModifiers(it)
+            printTypeParameters(it)
             print " :returntype " + quotify(typeString(it.genericReturnType))
             printArguments(it, methodParameters)
             printDeclaringClass(it)
@@ -224,6 +232,7 @@ class Classpath
             
             print "(constructor"
             printModifiers(it)
+            printTypeParameters(it)
             printArguments(it.genericParameterTypes, methodParameters)
             printExceptions(it)
             printDeclaringClass(it)
@@ -243,6 +252,7 @@ class Classpath
             print "(class :name " + quotify(it.simpleName)
             printModifiers(it)
             printDeclaringClass(it)
+            printTypeParameters(it)
             println ")"
         }
         
@@ -297,6 +307,17 @@ class Classpath
             }
             str += ">"
             return str;
+        }
+        if (type instanceof TypeVariable) {
+            def str = type.name
+            if (type.bounds) {
+                if (type.bounds.length > 1 ||
+                    type.bounds[0] != Object.class) {
+                    str += " extends "
+                    str += type.bounds.collect{ typeString(it) }.join(" & ")
+                }
+            }
+            return str
         }
         
         return type.toString()
