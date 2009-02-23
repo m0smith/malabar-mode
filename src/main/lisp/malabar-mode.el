@@ -233,8 +233,9 @@ in the list")
             (insert "import " qualified-class ";\n")
             (message "Imported %s" qualified-class)))))))
 
-(defun malabar-maven-find-project-file ()
-  (let ((dir (locate-dominating-file (buffer-file-name (current-buffer)) "pom.xml")))
+(defun malabar-maven-find-project-file (&optional buffer)
+  (let ((dir (locate-dominating-file (buffer-file-name (or buffer (current-buffer)))
+                                     "pom.xml")))
     (when dir
       (expand-file-name "pom.xml" dir))))
 
@@ -286,8 +287,9 @@ in the list")
                    (malabar-maven-find-project-file)
                    (buffer-file-name (current-buffer))))))
 
-(defun malabar-get-package-name ()
-  (let ((package (car (semantic-brute-find-tag-by-class 'package (current-buffer)))))
+(defun malabar-get-package-name (&optional buffer)
+  (let ((package (car (semantic-brute-find-tag-by-class 'package (or buffer
+                                                                     (current-buffer))))))
     (when package
       (semantic-tag-name package))))
 
@@ -295,6 +297,13 @@ in the list")
   (file-name-sans-extension
    (file-name-nondirectory
     (buffer-file-name (or buffer (current-buffer))))))
+
+(defun malabar-qualified-class-name-of-buffer (&optional buffer)
+  (let ((package (malabar-get-package-name buffer))
+        (class (malabar-unqualified-class-name-of-buffer)))
+    (if package
+        (concat package "." class)
+      class)))
 
 (defun malabar-test-class-buffer-p (buffer)
   (let* ((type-tag (car (semantic-brute-find-tag-by-class 'type (current-buffer))))
@@ -317,28 +326,66 @@ in the list")
 
 (defvar malabar-compilation-project-test-source-directories nil)
 
+(defun malabar-class-name-to-filename (class-name)
+  (concat (replace-regexp-in-string "\\." "/" class-name)
+          ".java"))
+
 (defun malabar-find-test-class-from-error ()
   (let* ((class-name (match-string-no-properties 2))
-         (class-file (concat (replace-regexp-in-string "\\." "/" class-name)
-                             ".java")))
+         (class-file (malabar-class-name-to-filename class-name)))
     (list
-     (some (lambda (d)
-             (let ((f (expand-file-name class-file d)))
-               (when (file-exists-p f)
-                 f)))
-           malabar-compilation-project-test-source-directories))))
+     (malabar-locate-file
+      class-file
+      malabar-compilation-project-test-source-directories))))
+
+(defun malabar-locate-file (file directories)
+  (locate-file file directories))
+
+(defvar malabar-test-class-suffix "Test")
+
+(defun malabar-corresponding-test-class-name (buffer)
+  (let ((package (malabar-get-package-name buffer))
+        (type-tag (car (semantic-brute-find-tag-by-class 'type buffer))))
+    (let ((class (concat (semantic-tag-name type-tag) malabar-test-class-suffix)))
+      (if package
+          (concat package "." class)
+        class))))
+
+(defun malabar-visit-corresponding-test (&optional buffer silent)
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (if (malabar-test-class-buffer-p buffer)
+        buffer
+      (let ((class-file (malabar-class-name-to-filename
+                         (malabar-corresponding-test-class-name buffer)))
+            (test-source-directories (malabar-project-test-source-directories
+                                      (malabar-maven-find-project-file buffer))))
+        (funcall
+         (if silent #'find-file-noselect #'find-file)
+         (or (malabar-locate-file class-file test-source-directories)
+             (expand-file-name class-file (car test-source-directories))))))))
+
+(defun malabar-run-test-internal (test-starter)
+  (with-current-buffer (malabar-visit-corresponding-test (current-buffer) t)
+    (malabar-setup-compilation-buffer)
+    (setq malabar-compilation-project-test-source-directories
+          (malabar-project-test-source-directories malabar-compilation-project-file))
+    (display-buffer malabar-groovy-compilation-buffer-name t)
+    (malabar-groovy-eval-as-compilation
+     (format test-starter
+             (malabar-qualified-class-name-of-buffer (current-buffer))))))
+
+(defun malabar-run-junit-test-no-maven ()
+  (interactive)
+  (malabar-run-test-internal 
+   (format "Project.makeProject('%s').runJunit('%%s')"
+           (malabar-maven-find-project-file))))
 
 (defun malabar-run-test ()
   (interactive)
-  (assert (malabar-test-class-buffer-p (current-buffer)))
-  (malabar-setup-compilation-buffer)
-  (setq malabar-compilation-project-test-source-directories
-        (malabar-project-test-source-directories malabar-compilation-project-file))
-  (display-buffer malabar-groovy-compilation-buffer-name t)
-  (malabar-groovy-eval-as-compilation
-   (concat (format "Project.makeProject('%s').runtest('%s')"
-                   (malabar-maven-find-project-file)
-                   (malabar-unqualified-class-name-of-buffer (current-buffer))))))
+  (malabar-run-test-internal
+   (format "Project.makeProject('%s').runtest('%%s')"
+           (malabar-maven-find-project-file))))
 
 (defvar malabar-failed-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
 

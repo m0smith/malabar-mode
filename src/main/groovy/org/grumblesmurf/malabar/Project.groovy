@@ -80,6 +80,13 @@ class Project
         run.addProperty("test", testname);
         return run.run();
     }
+
+    def runJunit(testname) {
+        // Hohum
+        def testclass = testClasspath.getClassLoader().loadClass(testname)
+        def junitcore = testClasspath.getClassLoader().loadClass("org.junit.runner.JUnitCore")
+        junitcore.getMethod("runClasses", [ Class[] ] as Class[]).invoke(null, [ testclass ] as Class[])
+    }
     
     private Project(pom, result) {
         pomFile = pom
