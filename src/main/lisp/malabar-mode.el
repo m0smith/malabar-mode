@@ -345,5 +345,48 @@ in the list")
 (add-to-list 'compilation-error-regexp-alist
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
-                   
+
+(defun malabar-get-members (classname)
+  (malabar-groovy-eval-and-lispeval
+   (format "Project.makeProject('%s').compileClasspath.getMembers('%s')"
+           (malabar-maven-find-project-file)
+           classname)))
+
+(defun malabar-get-abstract-members (classname)
+  (remove-if-not (lambda (m)
+                   (and (eq 'method (car m))
+                        (member 'abstract (getf (cdr m) :modifiers))))
+                 (malabar-get-members classname)))
+
+(defun malabar-create-method-signature (method-spec)
+  (assert (eq 'method (car method-spec)))
+  (let* ((spec (cdr method-spec))
+         (modifiers (remove 'abstract (getf spec :modifiers)))
+         (type-parameters (getf spec :type-parameters))
+         (return-type (getf spec :return-type))
+         (name (getf spec :name))
+         (arguments (getf spec :arguments))
+         (throws (getf spec :throws)))
+    (concat (mapconcat #'symbol-name modifiers " ")
+            " "
+            (if type-parameters
+                (concat "<" (mapconcat #'identity type-parameters ", ") "> ")
+              "")
+            return-type " "
+            name
+            "("
+            (mapconcat (lexical-let ((counter -1))
+                         (lambda (arg)
+                           (or (getf arg :name)
+                               (format "%s arg%s"
+                                       (getf arg :type)
+                                       (incf counter)))))
+                       arguments
+                       ", ")
+            ")"
+            (if throws
+                (concat " throws "
+                        (mapconcat #'identity throws ", "))
+              ""))))
+
 (provide 'malabar-mode)
