@@ -27,6 +27,7 @@
 
 (require 'malabar-groovy)
 (require 'malabar-annotations)
+(require 'malabar-abbrevs)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
@@ -69,6 +70,7 @@
   (wisent-malabar-java-wy--install-parser)
   ;; Set up indentation of Java annotations.
   (malabar-annotations-setup)
+  (malabar-abbrevs-setup)
   )
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
