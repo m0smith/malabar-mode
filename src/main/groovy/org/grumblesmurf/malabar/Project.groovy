@@ -82,10 +82,18 @@ class Project
     }
 
     def runJunit(testname) {
-        // Hohum
-        def testclass = testClasspath.getClassLoader().loadClass(testname)
-        def junitcore = testClasspath.getClassLoader().loadClass("org.junit.runner.JUnitCore")
-        junitcore.getMethod("runClasses", [ Class[] ] as Class[]).invoke(null, [ testclass ] as Class[])
+        // Extra care must be taken to ensure class reloadability
+        def classloader = testClasspath.newClassLoader()
+        def junitcore = classloader.loadClass("org.junit.runner.JUnitCore")
+        def testclass = classloader.loadClass(testname)
+        def result = junitcore.runClasses(testclass);
+        result.failures.each{
+            println it
+        }
+        println "Failures: ${result.failureCount}  Tests run: ${result.runCount}  Ignored: ${result.ignoreCount}"
+        def seconds = result.runTime / 1000.0
+        println "Took ${seconds} seconds"
+        return result.wasSuccessful();
     }
     
     private Project(pom, result) {

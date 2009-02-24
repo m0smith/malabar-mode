@@ -118,14 +118,15 @@ class Classpath
         Utils.printAsLispList classMap[unqualifiedName];
     }
 
+    def newClassLoader() {
+        def realUrls = urls.collect { new URL(it) }
+        return new RootLoader(realUrls as URL[],
+                              ClassLoader.systemClassLoader.parent)
+    }
+        
     def getClassLoader() {
         if (classloader == null) {
-            URL[] realUrls = new URL[urls.size()];
-            urls.eachWithIndex() { it, i ->
-                realUrls[i] = new URL(it)
-            }
-            classloader = new RootLoader(realUrls,
-                                         ClassLoader.systemClassLoader.parent)
+            classloader = newClassLoader();
         }
         return classloader
     }

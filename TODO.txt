@@ -19,8 +19,6 @@ Short term
   - getters/setters
   - delegation
 
-- Run test directly (i.e. not with Maven)
-
 Long term
 
 - Refactoring
