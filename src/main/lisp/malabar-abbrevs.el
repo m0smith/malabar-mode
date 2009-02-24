@@ -18,23 +18,44 @@
 ;; 02110-1301 USA.
 ;;
 
-(defvar malabar-case-fixed-abbrevs
-  '(("pu" . "public")
-    ("pri" . "private")
-    ("pro" . "protected")
-    ("st" . "static")
-    ("vo" . "void")
-    ("ab" . "abstract")
-    ("bo" . "boolean")
-    ("cl" . "class")
-    ("impl" . "implements")
-    ("ext" . "extends")
-    ("pa" . "package")
-    ("re" . "return")))
+(require 'skeleton)
 
+(defvar malabar-case-fixed-abbrevs
+  '(("pu" "public")
+    ("pri" "private")
+    ("pro" "protected")
+    ("st" "static")
+    ("vo" "void")
+    ("ab" "abstract")
+    ("bo" "boolean")
+    ("cl" "class")
+    ("impl" "implements")
+    ("ext" "extends")
+    ("pa" "package")
+    ("re" "return")
+    ("#Test" hook malabar-abbrevs-create-test)))
+
+(defun malabar-abbrevs-delete-abbrev ()
+  (when last-abbrev-text
+    (backward-delete-char-untabify (length last-abbrev-text))))
+
+(defmacro define-malabar-abbrev-skeleton (name docstring interactor &rest skeleton)
+  `(define-skeleton ,name
+     ,docstring
+     ,interactor '(malabar-abbrevs-delete-abbrev)
+     ,@skeleton))
+
+(define-malabar-abbrev-skeleton malabar-abbrevs-create-test
+  "Create a test method"
+  nil
+  > "@Test" \n
+  > "public void " _ "() throws Exception {" \n
+  "}" > \n)
+  
 (defun malabar-abbrevs-setup ()
+  (abbrev-table-put malabar-mode-abbrev-table :regexp "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*")
   (mapc (lambda (abbr)
-          (define-abbrev local-abbrev-table (car abbr) (cdr abbr) nil
+          (define-abbrev malabar-mode-abbrev-table (first abbr) (second abbr) (third abbr)
             :case-fixed t :system 'force))
         malabar-case-fixed-abbrevs))
 
