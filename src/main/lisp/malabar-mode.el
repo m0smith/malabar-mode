@@ -23,8 +23,10 @@
 (require 'semantic-wisent)
 (require 'wisent-malabar-java-wy)
 (require 'cl)
-(require 'malabar-groovy)
 (require 'thingatpt)
+
+(require 'malabar-groovy)
+(require 'malabar-annotations)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
@@ -65,6 +67,8 @@
   (setq semantic-lex-depth 10)
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
+  ;; Set up indentation of Java annotations.
+  (malabar-annotations-setup)
   )
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
