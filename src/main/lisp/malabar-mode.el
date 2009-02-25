@@ -540,31 +540,48 @@ in the list")
                     (malabar-get-package-of (getf (cdr method-spec)
                                                   :declaring-class)))))))
 
-(defun malabar-override-method (method-spec)
-  (interactive
-   (list
-    (malabar-choose
-     "Method to override: "
-     (mapcar 'malabar-override-method-make-choose-spec
-             (remove-if-not (lambda (spec)
-                              (and (eq (car spec) 'method)
-                                   (malabar-overridable-method-p spec)))
-                            (malabar-get-members
-                             (malabar-get-superclass-at-point)))))))
-  (assert method-spec)
-  (malabar-goto-end-of-class)
-  (insert "\n" "@Override\n" (malabar-create-method-signature method-spec t) " {\n"
-          "// TODO: Stub\n"
-          (if (equal (getf (cdr method-spec) :return-type) "void")
-              ""
-            (concat "return "
-                    (malabar-default-return-value (getf (cdr method-spec) :return-type))
-                    ";\n"))
-          "}\n")
-  (forward-line -2)
-  (c-indent-defun)
-  (back-to-indentation))
-
+(defun malabar-override-method (&optional method-spec)
+  (interactive)
+  (let ((overridable-methods (remove-if-not (lambda (spec)
+                                              (and (eq (car spec) 'method)
+                                                   (malabar-overridable-method-p spec)))
+                                            (malabar-get-members
+                                             (malabar-get-superclass-at-point)))))
+    (unless method-spec
+      (setq method-spec
+            (malabar-choose "Method to override: "
+                            (mapcar 'malabar-override-method-make-choose-spec
+                                    overridable-methods))))
+    (when method-spec
+      (malabar-goto-end-of-class)
+      (insert "\n" "@Override\n" (malabar-create-method-signature method-spec t) " {\n"
+              "// TODO: Stub\n"
+              (if (equal (getf (cdr method-spec) :return-type) "void")
+                  ""
+                (concat "return "
+                        (malabar-default-return-value (getf (cdr method-spec) :return-type))
+                        ";\n"))
+              "}\n")
+      (forward-line -2)
+      (c-indent-defun)
+      (back-to-indentation)
+      (let ((equals-spec (find-if (lambda (spec)
+                                    (and (equal (getf (cdr spec) :name) "equals")
+                                         (equal (getf (cdr spec) :declaring-class)
+                                                "java.lang.Object")))
+                                  overridable-methods))
+            (hashcode-spec (find-if (lambda (spec)
+                                      (and (equal (getf (cdr spec) :name) "hashCode")
+                                           (equal (getf (cdr spec) :declaring-class)
+                                                  "java.lang.Object")))
+                                    overridable-methods)))
+        (cond ((and (equal method-spec equals-spec)
+                    hashcode-spec)
+               (malabar-override-method hashcode-spec))
+              ((and (equal method-spec hashcode-spec)
+                    equals-spec)
+               (malabar-override-method equals-spec)))))))
+                              
 (defun malabar-default-return-value (type)
   (cond ((member type '("byte" "short" "int" "long"))
          "-1")
