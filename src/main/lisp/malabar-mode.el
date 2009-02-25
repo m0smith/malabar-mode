@@ -512,9 +512,28 @@ in the list")
   (let ((class-tag (malabar-get-class-tag-at-point)))
     (goto-char (1- (semantic-tag-end class-tag)))))
 
+(defun malabar-find-method-in-current-class (method-spec)
+  (let ((class-tag (malabar-get-class-tag-at-point))
+        (method-name (getf (cdr method-spec) :name))
+        (method-argument-types
+         (mapcar (lambda (arg)
+                   (malabar-qualify-class-name-in-buffer (getf arg :type)))
+                 (getf (cdr method-spec) :arguments))))
+    (some (lambda (tag)
+            (and (equal method-name
+                        (semantic-tag-name tag))
+                 (equal method-argument-types 
+                        (mapcar (lambda (arg-tag)
+                                  (malabar-qualify-class-name-in-buffer
+                                   (semantic-tag-type arg-tag)))
+                                (semantic-tag-function-arguments tag)))
+                 tag))
+          (semantic-tag-type-members class-tag))))
+
 (defun malabar-overridable-method-p (method-spec)
   (let ((modifiers (getf (cdr method-spec) :modifiers)))
     (and (not (member 'final modifiers))
+         (not (malabar-find-method-in-current-class method-spec))
          (or (member 'protected modifiers)
              (member 'public modifiers)
              (equal (malabar-get-package-name)
