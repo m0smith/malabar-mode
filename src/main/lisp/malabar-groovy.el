@@ -21,6 +21,8 @@
 (require 'ansi-color)
 (require 'working)
 
+(require 'malabar-util)
+
 (defvar malabar-groovy-comint-name "Malabar Groovy")
 
 (defvar malabar-groovy-buffer-name
@@ -170,7 +172,4 @@
             (set-window-point (get-buffer-window malabar-groovy-compilation-buffer-name)
                               (point-max))))))))
 
-(defun string-ends-with (string end)
-  (string= (substring string (- (length string) (length end))) end))
-    
 (provide 'malabar-groovy)

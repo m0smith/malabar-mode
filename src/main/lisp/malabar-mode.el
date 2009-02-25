@@ -28,6 +28,7 @@
 (require 'malabar-groovy)
 (require 'malabar-annotations)
 (require 'malabar-abbrevs)
+(require 'malabar-util)
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
@@ -318,11 +319,14 @@ in the list")
                    (malabar-maven-find-project-file)
                    (buffer-file-name (current-buffer))))))
 
+(defun malabar-get-package-tag (&optional buffer)
+  (car (semantic-brute-find-tag-by-class 'psemantic-parse-tree-set-up-to-dateackage (or buffer
+                                                      (current-buffer)))))
+
 (defun malabar-get-package-name (&optional buffer)
-  (let ((package (car (semantic-brute-find-tag-by-class 'package (or buffer
-                                                                     (current-buffer))))))
-    (when package
-      (semantic-tag-name package))))
+  (let ((package-tag (malabar-get-package-tag)))
+    (when package-tag
+      (semantic-tag-name package-tag))))
 
 (defun malabar-unqualified-class-name-of-buffer (&optional buffer)
   (file-name-sans-extension
@@ -359,6 +363,11 @@ in the list")
 (defun malabar-project-test-source-directories (project-file)
   (malabar-groovy-eval-and-lispeval
    (format "Utils.printAsLispList(Project.makeProject('%s').testSrcDirectories)"
+           project-file)))
+
+(defun malabar-project-source-directories (project-file)
+  (malabar-groovy-eval-and-lispeval
+   (format "Utils.printAsLispList(Project.makeProject('%s').srcDirectories)"
            project-file)))
 
 (defvar malabar-compilation-project-test-source-directories nil)
@@ -592,5 +601,41 @@ in the list")
         ((equal type "boolean")
          "false")
         (t "null")))
+
+(defun malabar-compute-package-name (&optional buffer)
+  (let* ((dir (file-name-directory (buffer-file-name buffer)))
+         (source-directories (malabar-project-source-directories
+                              (malabar-maven-find-project-file buffer))))
+    (replace-regexp-in-string
+     "/" "."
+     (substring dir (1+ (length
+                         (find dir source-directories
+                               :test #'(lambda (dir src-dir)
+                                         (string-starts-with dir src-dir)))))
+                (1- (length dir))))))
+
+(defun malabar-update-package ()
+  (interactive)
+  (let ((computed-package (malabar-compute-package-name (current-buffer)))
+        (actual-package (malabar-get-package-name (current-buffer))))
+    (unless (equal computed-package actual-package)
+      (let ((package-tag (malabar-get-package-tag (current-buffer))))
+        (if (null package-tag)
+            (progn (goto-char (point-min))
+                   (malabar-forward-comment)
+                   (unless (eolp)
+                     (insert "\n\n")
+                     (forward-line -2)))
+          (goto-char (semantic-tag-start package-tag))
+          (zap-to-char 1 ?\;))
+        (insert "package " computed-package ";")
+        ;; Work around a bug in semantic
+        (semantic-parse-tree-set-needs-rebuild)))))
+
+(defun malabar-forward-comment ()
+  (interactive)
+  (c-forward-single-comment)
+  (unless (bolp)
+    (forward-line 1)))
 
 (provide 'malabar-mode)
