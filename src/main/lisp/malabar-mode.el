@@ -59,6 +59,7 @@
     (define-key map [?\C-c ?\C-v t] 'malabar-run-test)
     (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-junit-test-no-maven)
     (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
+    (define-key map [?\C-c ?\C-v ?\C-o] 'malabar-override-method)
     map)
   "Keymap for Malabar mode.")
 
@@ -94,26 +95,40 @@
                  (string-match (concat "^" re "$") token))
                java-font-lock-extra-types))))
 
-(defun malabar-class-defined-in-current-buffer-p (classname)
-  (let ((tags (semantic-find-tags-by-class 'type (current-buffer))))
+(defun malabar-class-defined-in-buffer-p (classname &optional buffer)
+  (let ((tags (semantic-find-tags-by-class 'type (or buffer (current-buffer)))))
     (find classname tags
           :key #'semantic-tag-name
           :test #'equal)))
 
-(defun malabar-class-imported-p (classname)
-  (let ((tags (semantic-find-tags-by-class 'include (current-buffer))))
-    (find classname tags
-          :key (lambda (tag)
-                 (substring (semantic-tag-name tag)
-                            (1+ (position ?. (semantic-tag-name tag) :from-end t))))
-          :test #'equal)))
+(defun malabar-find-imported-class (classname &optional buffer)
+  (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer)))))
+    (let ((import-tag (find classname tags
+                            :key (lambda (tag)
+                                   (malabar-get-package-of (semantic-tag-name tag)))
+                            :test #'equal)))
+      (or (and import-tag
+               (semantic-tag-name import-tag))
+          (malabar-find-imported-class-from-wildcard-imports classname buffer)
+          (find (concat "java.lang." classname)
+                (malabar-qualify-class-name classname buffer)
+                :test #'equal)))))
+
+(defun malabar-find-imported-class-from-wildcard-imports (class &optional buffer)
+  (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer))))
+        (classes (malabar-qualify-class-name class buffer)))
+    (some (lambda (tag)
+            (find (concat (malabar-get-package-of (semantic-tag-name tag)) "." class)
+                  classes
+                  :test #'equal))
+          tags)))
 
 (defun malabar-import-candidates ()
   (let ((type-tokens (remove-if-not #'malabar-type-token-p (malabar-type-token-candidates))))
     (remove-duplicates
      (remove-if (lambda (token)
-                  (or (malabar-class-defined-in-current-buffer-p token)
-                      (malabar-class-imported-p token)))
+                  (or (malabar-class-defined-in-buffer-p token)
+                      (malabar-find-imported-class token)))
                 type-tokens)
      :test #'equal)))
 
@@ -164,17 +179,22 @@ in the list")
           (and a-package-successors
                (null b-package-successors))))))
 
+(defun malabar-qualify-class-name (unqualified &optional buffer)
+  (malabar-groovy-eval-and-lispeval
+   (format "Project.makeProject('%s').%s.getClasses('%s')"
+           (malabar-maven-find-project-file buffer)
+           (malabar-classpath-of-buffer buffer)
+           unqualified)))
+
+(defun malabar-classpath-of-buffer (&optional buffer)
+  (if (malabar-test-class-buffer-p (or buffer (current-buffer)))
+      "testClasspath"
+    "compileClasspath"))
+
 (defun malabar-import-find-import (unqualified)
-  (let* ((classpath (if (malabar-test-class-buffer-p (current-buffer))
-                        "testClasspath"
-                      "compileClasspath"))
-         (possible-classes
+  (let* ((possible-classes
           (sort (remove-if #'malabar-import-exclude
-                           (malabar-groovy-eval-and-lispeval
-                            (format "Project.makeProject('%s').%s.getClasses('%s')"
-                                    (malabar-maven-find-project-file)
-                                    classpath
-                                    unqualified)))
+                           (malabar-qualify-class-name unqualified))
                 #'malabar-import-sort-by-precedence)))
     (when possible-classes
       (if (= 1 (length possible-classes))
@@ -195,17 +215,21 @@ in the list")
 
 (defun malabar-import-one-class (unqualified)
   (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
-  (if (or (malabar-class-defined-in-current-buffer-p unqualified)
-          (malabar-class-imported-p unqualified))
+  (if (or (malabar-class-defined-in-buffer-p unqualified)
+          (malabar-find-imported-class unqualified))
       (message "Class %s does not need to be imported" unqualified)
     (let ((class-to-import (malabar-import-find-import unqualified)))
       (unless (null class-to-import)
         (malabar-import-insert-imports (list class-to-import))))))
 
 (defun malabar-choose (prompt choices &optional default)
-  (let ((res (completing-read prompt choices nil t default)))
+  (let ((res (completing-read prompt (if (consp (car choices))
+                                         (mapcar #'car choices)
+                                       choices) nil t default)))
     (unless (equal "" res)
-      res)))
+      (if (consp (car choices))
+          (cdr (assoc res choices))
+        res))))
 
 (defun malabar-import-insert-imports (qualified-classes)
   (when qualified-classes
@@ -306,14 +330,20 @@ in the list")
     (buffer-file-name (or buffer (current-buffer))))))
 
 (defun malabar-qualified-class-name-of-buffer (&optional buffer)
-  (let ((package (malabar-get-package-name buffer))
-        (class (malabar-unqualified-class-name-of-buffer)))
-    (if package
-        (concat package "." class)
-      class)))
+  (let ((class (malabar-unqualified-class-name-of-buffer buffer)))
+    (malabar-qualify-class-name-in-buffer class buffer)))
+
+(defun malabar-qualify-class-name-in-buffer (class &optional buffer)
+  (let* ((buffer (or buffer (current-buffer)))
+         (package (malabar-get-package-name buffer))
+         (imported-class (malabar-find-imported-class class buffer)))
+    (or imported-class
+        (if package
+            (concat package "." class)
+          class))))
 
 (defun malabar-test-class-buffer-p (buffer)
-  (let* ((type-tag (car (semantic-brute-find-tag-by-class 'type (current-buffer))))
+  (let* ((type-tag (car (semantic-brute-find-tag-by-class 'type buffer)))
          (superclasses (semantic-tag-type-superclasses type-tag)))
     (or (member "TestCase" superclasses)
         (member "junit.framework.TestCase" superclasses)
@@ -400,11 +430,13 @@ in the list")
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
 
-(defun malabar-get-members (classname)
-  (malabar-groovy-eval-and-lispeval
-   (format "Project.makeProject('%s').compileClasspath.getMembers('%s')"
-           (malabar-maven-find-project-file)
-           classname)))
+(defun malabar-get-members (classname &optional buffer)
+  (let ((buffer (or buffer (current-buffer))))
+    (malabar-groovy-eval-and-lispeval
+     (format "Project.makeProject('%s').%s.getMembers('%s')"
+             (malabar-maven-find-project-file buffer)
+             (malabar-classpath-of-buffer buffer)
+             classname))))
 
 (defun malabar-get-abstract-members (classname)
   (remove-if-not (lambda (m)
@@ -412,10 +444,29 @@ in the list")
                         (member 'abstract (getf (cdr m) :modifiers))))
                  (malabar-get-members classname)))
 
-(defun malabar-create-method-signature (method-spec)
+(defun malabar-create-simplified-method-signature (method-spec)
   (assert (eq 'method (car method-spec)))
   (let* ((spec (cdr method-spec))
-         (modifiers (remove 'abstract (getf spec :modifiers)))
+         (modifiers (remove 'native (remove 'abstract (getf spec :modifiers))))
+         (return-type (getf spec :return-type))
+         (name (getf spec :name))
+         (arguments (getf spec :arguments)))
+    (concat name "("
+            (mapconcat (lexical-let ((counter -1))
+                         (lambda (arg)
+                           (or (getf arg :name)
+                               (format "%s arg%s"
+                                       (getf arg :type)
+                                       (incf counter)))))
+                       arguments
+                       ", ")
+            ") : " return-type
+            " (" (mapconcat #'symbol-name modifiers " ") ")")))
+            
+(defun malabar-create-method-signature (method-spec &optional include-throws)
+  (assert (eq 'method (car method-spec)))
+  (let* ((spec (cdr method-spec))
+         (modifiers (remove 'native (remove 'abstract (getf spec :modifiers))))
          (type-parameters (getf spec :type-parameters))
          (return-type (getf spec :return-type))
          (name (getf spec :name))
@@ -438,9 +489,72 @@ in the list")
                        arguments
                        ", ")
             ")"
-            (if throws
+            (if (and throws include-throws)
                 (concat " throws "
                         (mapconcat #'identity throws ", "))
               ""))))
+
+(defun malabar-get-superclass-at-point ()
+  (malabar-qualify-class-name-in-buffer
+   (or (car (semantic-tag-type-superclasses (malabar-get-class-tag-at-point)))
+       "Object"))))
+
+(defun malabar-override-method-make-choose-spec (method-spec)
+  (cons (malabar-create-simplified-method-signature method-spec)
+        method-spec))
+
+(defun malabar-get-class-tag-at-point ()
+  (or (semantic-current-tag-of-class 'type)
+      (car (semantic-find-tags-by-class 'type (current-buffer)))))
+
+(defun malabar-goto-end-of-class ()
+  (interactive)
+  (let ((class-tag (malabar-get-class-tag-at-point)))
+    (goto-char (1- (semantic-tag-end class-tag)))))
+
+(defun malabar-overridable-method-p (method-spec)
+  (let ((modifiers (getf (cdr method-spec) :modifiers)))
+    (and (not (member 'final modifiers))
+         (or (member 'protected modifiers)
+             (member 'public modifiers)
+             (equal (malabar-get-package-name)
+                    (malabar-get-package-of (getf (cdr method-spec)
+                                                  :declaring-class)))))))
+
+(defun malabar-override-method (method-spec)
+  (interactive
+   (list
+    (malabar-choose
+     "Method to override: "
+     (mapcar 'malabar-override-method-make-choose-spec
+             (remove-if-not (lambda (spec)
+                              (and (eq (car spec) 'method)
+                                   (malabar-overridable-method-p spec)))
+                            (malabar-get-members
+                             (malabar-get-superclass-at-point)))))))
+  (assert method-spec)
+  (malabar-goto-end-of-class)
+  (insert "\n" "@Override\n" (malabar-create-method-signature method-spec t) " {\n"
+          "// TODO: Stub\n"
+          (if (equal (getf (cdr method-spec) :return-type) "void")
+              ""
+            (concat "return "
+                    (malabar-default-return-value (getf (cdr method-spec) :return-type))
+                    ";\n"))
+          "}\n")
+  (forward-line -2)
+  (c-indent-defun)
+  (back-to-indentation))
+
+(defun malabar-default-return-value (type)
+  (cond ((member type '("byte" "short" "int" "long"))
+         "-1")
+        ((member type '("float" "double"))
+         "-1.0")
+        ((equal type "char")
+         "'\\0'")
+        ((equal type "boolean")
+         "false")
+        (t "null")))
 
 (provide 'malabar-mode)

@@ -13,8 +13,6 @@ Short term
 
 - Extend abstract class
 
-- Override method
-
 - Code generation
   - getters/setters
   - delegation
