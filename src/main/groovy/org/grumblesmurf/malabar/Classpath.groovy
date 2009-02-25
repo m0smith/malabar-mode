@@ -234,7 +234,7 @@ class Classpath
             print "(constructor"
             printModifiers(it)
             printTypeParameters(it)
-            printArguments(it.genericParameterTypes, methodParameters)
+            printArguments(it, methodParameters)
             printExceptions(it)
             printDeclaringClass(it)
             println ")"
