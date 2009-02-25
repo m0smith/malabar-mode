@@ -497,7 +497,7 @@ in the list")
 (defun malabar-get-superclass-at-point ()
   (malabar-qualify-class-name-in-buffer
    (or (car (semantic-tag-type-superclasses (malabar-get-class-tag-at-point)))
-       "Object"))))
+       "Object")))
 
 (defun malabar-override-method-make-choose-spec (method-spec)
   (cons (malabar-create-simplified-method-signature method-spec)
