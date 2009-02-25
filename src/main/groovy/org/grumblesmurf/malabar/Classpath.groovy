@@ -65,8 +65,13 @@ class Classpath
     def classMap = [:]
     
     def getClasses(String name) {
-        if (name.contains(".") && getClassLoader().loadClass(name)) {
-            Utils.printAsLispList([name]);
+        if (name.contains(".")) {
+            try {
+                getClassLoader().loadClass(name);
+                Utils.printAsLispList([name]);
+            } catch (ClassNotFoundException e) {
+                Utils.printAsLispList([]);
+            }
             return;
         }
         
