@@ -64,7 +64,12 @@ class Classpath
 
     def classMap = [:]
     
-    def getClasses(String unqualifiedName) {
+    def getClasses(String name) {
+        if (name.contains(".") && getClassLoader().loadClass(name)) {
+            Utils.printAsLispList([name]);
+            return;
+        }
+        
         if (classMap.isEmpty()) {
             def classnamecollector = { fileName, path ->
                 def classbinaryname = fileName[0..-7];
@@ -115,7 +120,7 @@ class Classpath
                 classcollector(it)
             }
         }
-        Utils.printAsLispList classMap[unqualifiedName];
+        Utils.printAsLispList classMap[name];
     }
 
     def newClassLoader() {
