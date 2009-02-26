@@ -9,8 +9,6 @@ Short term
 - goto-type-at-point (with disassembly if needed)
   - create if necessary
 
-- Implement interface
-
 - Code generation
   - getters/setters
   - delegation
