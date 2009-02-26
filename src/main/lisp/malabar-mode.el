@@ -509,6 +509,35 @@ in the list")
   :members
   :throws)
 
+(defmacro define-spec-modifier-predicates (&rest props)
+  `(progn
+     ,@(mapcar (lambda (p)
+                 `(defun ,(intern (format "malabar--%s-p" (symbol-name p))) (spec)
+                    (member ',p (malabar--get-modifiers spec))))
+               props)))
+
+(define-spec-modifier-predicates
+  abstract
+  public
+  private
+  protected
+  final
+  interface)
+
+(defun malabar--package-private-p (spec)
+  (not (or (malabar--public-p spec)
+           (malabar--protected-p spec)
+           (malabar--private-p spec))))
+
+(defmacro define-spec-type-predicates (&rest types)
+  `(progn
+     ,@(mapcar (lambda (type)
+                 `(defsubst ,(intern (format "malabar--%s-p" (symbol-name type))) (spec)
+                    (eq ',type (car spec))))
+               types)))
+
+(define-spec-type-predicates method constructor class field)
+
 (defun malabar-get-members (classname &optional buffer)
   (malabar--get-members (malabar-get-class-info classname buffer)))
 
@@ -517,8 +546,8 @@ in the list")
 
 (defun malabar--get-abstract-methods (class-info)
   (remove-if-not (lambda (m)
-                   (and (eq 'method (car m))
-                        (member 'abstract (malabar--get-modifiers m))))
+                   (and (malabar--method-p m)
+                        (malabar--abstract-p m)))
                  (malabar--get-members class-info)))
 
 (defun malabar--arg-name-maker ()
@@ -529,9 +558,12 @@ in the list")
                   (getf arg :type)
                   (incf counter))))))
 
+(defun malabar--cleaned-modifiers (spec)
+  (remove 'native (remove 'abstract (malabar--get-modifiers method-spec))))
+
 (defun malabar-create-simplified-method-signature (method-spec)
-  (assert (eq 'method (car method-spec)))
-  (let ((modifiers (remove 'native (remove 'abstract (malabar--get-modifiers method-spec))))
+  (assert (malabar--method-p method-spec))
+  (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (return-type (malabar--get-return-type method-spec))
         (name (malabar--get-name method-spec))
         (arguments (malabar--get-arguments method-spec)))
@@ -543,8 +575,8 @@ in the list")
             " (" (mapconcat #'symbol-name modifiers " ") ")")))
             
 (defun malabar-create-method-signature (method-spec &optional include-throws)
-  (assert (eq 'method (car method-spec)))
-  (let ((modifiers (remove 'native (remove 'abstract (malabar--get-modifiers method-spec))))
+  (assert (malabar--method-p method-spec))
+  (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (return-type (malabar--get-return-type method-spec))
         (name (malabar--get-name method-spec))
         (arguments (malabar--get-arguments method-spec))
@@ -568,8 +600,8 @@ in the list")
               ""))))
 
 (defun malabar-create-constructor-signature (method-spec)
-  (assert (eq 'constructor (car method-spec)))
-  (let ((modifiers (remove 'native (remove 'abstract (malabar--get-modifiers method-spec))))
+  (assert (malabar--constructor-p method-spec))
+  (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (arguments (malabar--get-arguments method-spec))
         (type-parameters (malabar--get-type-parameters method-spec))
         (throws (malabar--get-throws method-spec)))
@@ -626,19 +658,18 @@ in the list")
           (semantic-tag-type-members class-tag))))
 
 (defun malabar-overridable-method-p (method-spec)
-  (let ((modifiers (malabar--get-modifiers method-spec)))
-    (and (not (member 'final modifiers))
-         (not (malabar-find-method-in-current-class method-spec))
-         (or (member 'protected modifiers)
-             (member 'public modifiers)
-             (equal (malabar-get-package-name)
-                    (malabar-get-package-of
-                     (malabar--get-declaring-class method-spec)))))))
+  (and (not (malabar--final-p method-spec))
+       (not (malabar-find-method-in-current-class method-spec))
+       (or (malabar--public-p method-spec)
+           (malabar--protected-p method-spec)
+           (equal (malabar-get-package-name)
+                  (malabar-get-package-of
+                   (malabar--get-declaring-class method-spec))))))
 
 (defun malabar-overridable-methods ()
-  (remove-if-not (lambda (spec)
-                   (and (eq (car spec) 'method)
-                        (malabar-overridable-method-p spec)))
+  (remove-if-not (lambda (s)
+                   (and (malabar--method-p s)
+                        (malabar-overridable-method-p s)))
                  (malabar-get-members
                   (malabar-get-superclass-at-point))))
 
@@ -723,67 +754,71 @@ in the list")
   (unless (bolp)
     (forward-line 1)))
 
-(defun malabar-extend-class (&optional class)
-  (interactive)
-  (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
-    (error "Java is limited to single inheritance, class already extends %s"
-           (malabar-get-superclass-at-point)))
+(defun malabar-prompt-for-and-qualify-class (&optional class)
   (let* ((class (or class
                     (read-from-minibuffer "Class to extend: ")))
          (qualified-class (or (malabar-import-find-import class)
                               (malabar-qualify-class-name-in-buffer class)))
          (class-info (malabar-get-class-info qualified-class)))
+    (list class qualified-class class-info)))
+
+(defun malabar--class-accessible-p (qualified-class class-info)
+  (or (malabar--public-p class-info)
+      (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
+
+(defun malabar-extend-class (&optional class)
+  (interactive)
+  (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
+    (error "Java is limited to single inheritance, class already extends %s"
+           (malabar-get-superclass-at-point)))
+  (destructuring-bind (class qualified-class class-info)
+      (malabar-prompt-for-and-qualify-class class)
     (when (equal qualified-class "java.lang.Enum")
       (error "You cannot extend %s, see the Java Language Specification" qualified-class))
-    (let ((modifiers (malabar--get-modifiers class-info))
-          (package (malabar-get-package-name)))
-      (unless (or (member 'public modifiers)
-                  (equal package (malabar-get-package-of qualified-class)))
-        (error "You cannot extend %s, it is not accessible from %s"
-               qualified-class package))
-      (when (member 'final modifiers)
-        (error "You cannot extends %s, it is declared final"
+    (unless (malabar--class-accessible-p qualified-class class-info)
+      (error "You cannot extend %s, it is not accessible from %s"
+             qualified-class (malabar-get-package-name)))
+    (when (malabar--final-p class-info)
+      (error "You cannot extends %s, it is declared final"
+             qualified-class))
+    (when (malabar--interface-p class-info)
+      (error "You cannot extends %s, it is an interface"
+             qualified-class))
+    (let* ((members (malabar--get-members class-info))
+           (accessible-constructors
+            (remove-if-not (lambda (s)
+                             (and (malabar--constructor-p s)
+                                  (malabar-overridable-method-p s)))
+                           members)))
+      (unless accessible-constructors
+        (error "You cannot extends %s, it has no accessible constructors"
                qualified-class))
-      (when (member 'interface modifiers)
-        (error "You cannot extends %s, it is an interface"
-               qualified-class))
-      (let* ((members (malabar--get-members class-info))
-             (accessible-constructors
-              (remove-if-not #'malabar-overridable-method-p
-                             (remove* 'constructor
-                                      members
-                                      :test-not #'eql
-                                      :key #'car))))
-        (unless accessible-constructors
-          (error "You cannot extends %s, it has no accessible constructors"
-                 qualified-class))
-        (let ((type-params (malabar--get-type-parameters class-info)))
-          (unless (malabar-find-imported-class qualified-class)
-            (malabar-import-insert-imports (list qualified-class)))
-          (let* ((class-tag (malabar-get-class-tag-at-point))
-                 (class-start (semantic-tag-start class-tag)))
-            (goto-char class-start)
-            (skip-chars-forward "^{")
-            (search-backward "implements" class-start t)
-            (insert "extends " class
-                    (if type-params
-                        (concat "<" (mapconcat #'identity type-params ", ") ">")
-                      ""))
-            (indent-according-to-mode)
-            (newline-and-indent)
-            (semantic-parse-tree-set-needs-rebuild)
-            (semantic-fetch-tags)
-            (malabar--extend-class-move-to-constructor-insertion-point)
-            (mapc (lambda (constructor)
-                    (insert (malabar-create-constructor-signature constructor) " {\n"
-                            "// TODO: Stub\n"
-                            "}\n\n")
-                    (forward-line -2)
-                    (c-indent-defun)
-                    (forward-line 2))
-                  accessible-constructors)
-            (mapc #'malabar-override-method (malabar--get-abstract-methods class-info))
-          ))))))
+      (let ((type-params (malabar--get-type-parameters class-info)))
+        (unless (malabar-find-imported-class qualified-class)
+          (malabar-import-insert-imports (list qualified-class)))
+        (let* ((class-tag (malabar-get-class-tag-at-point))
+               (class-start (semantic-tag-start class-tag)))
+          (goto-char class-start)
+          (skip-chars-forward "^{")
+          (search-backward "implements" class-start t)
+          (insert "extends " class
+                  (if type-params
+                      (concat "<" (mapconcat #'identity type-params ", ") ">")
+                    ""))
+          (indent-according-to-mode)
+          (newline-and-indent)
+          (semantic-parse-tree-set-needs-rebuild)
+          (semantic-fetch-tags)
+          (malabar--extend-class-move-to-constructor-insertion-point)
+          (mapc (lambda (constructor)
+                  (insert (malabar-create-constructor-signature constructor) " {\n"
+                          "// TODO: Stub\n"
+                          "}\n\n")
+                  (forward-line -2)
+                  (c-indent-defun)
+                  (forward-line 2))
+                accessible-constructors)
+          (mapc #'malabar-override-method (malabar--get-abstract-methods class-info)))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))
