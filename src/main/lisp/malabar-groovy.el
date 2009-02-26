@@ -44,7 +44,8 @@
 (defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> ")
 
 (defvar malabar-groovy-initial-statements
-  '("import org.grumblesmurf.malabar.*"))
+  '("import org.grumblesmurf.malabar.*"
+    "import java.lang.reflect.*"))
 
 (defun malabar-groovy-mode ()
   (interactive)

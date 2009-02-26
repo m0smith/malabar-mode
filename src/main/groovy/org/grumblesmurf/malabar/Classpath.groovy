@@ -155,64 +155,81 @@ class Classpath
         return new ClassReader(input);
     }
 
+    def getClassInfo(className) {
+        Class c = this.classLoader.loadClass(className)
+        print "(class "
+        printName(c)
+        printModifiers(c)
+        printDeclaringClass(c)
+        printTypeParameters(c)
+        print " :members "
+        getMembers(c)
+        print ")"
+    }
+    
     def getMembers(String className) {
         Class c = this.classLoader.loadClass(className)
+        getMembers(c)
+    }
+
+    def getMembers(Class c) {
         print "("
         getMembersInternal(c, [] as Set)
         println ")"
     }
+
+    def quotify(it) {
+        return "\"${it}\""
+    }
     
+    def printName(it) {
+        print " :name " + quotify(it.name)
+    };
+    
+    def printModifiers(it) {
+        print " :modifiers (" + Modifier.toString(it.modifiers) + ")"
+    };
+    
+    def printDeclaringClass(it) {
+        if (it.declaringClass)
+            print " :declaring-class " + quotify(it.declaringClass.name)
+    };
+    
+    def printTypeParameters(it) {
+        print " :type-parameters "
+        Utils.printAsLispList(it.typeParameters.collect { tp ->
+                typeString(tp)
+            })
+    };
+
+    def printArguments(it, names) {
+        print " :arguments"
+        print " ("
+        it.genericParameterTypes.eachWithIndex{ pt, i ->
+            print "(:type " + quotify(typeString(pt))
+            if (names && names[++i]) {
+                printName(names[i])
+            }
+            print ") "
+        }
+        print ") " 
+    };
+
+    def printExceptions(it) {
+        if (it.genericExceptionTypes.length > 0) {
+            print " :throws (";
+            it.genericExceptionTypes.each{ ex ->
+                print " " + quotify(typeString(ex))
+            }
+            print ") "
+        }
+    }
+        
     def getMembersInternal(Class c, Set seenMethods) {
         ClassReader cr = getClassReader(c.name);
         ClassInfo cir = new ClassInfo();
         cr.accept(cir, false);
 
-        def quotify = {
-            return "\"${it}\""
-        }
-        
-        def printName = {
-            print " :name " + quotify(it.name)
-        }
-
-        def printModifiers = {
-            print " :modifiers (" + Modifier.toString(it.modifiers) + ")"
-        }
-
-        def printDeclaringClass = {
-            print " :declaring-class " + quotify(it.declaringClass.name)
-        }
-
-        def printTypeParameters = {
-            print " :type-parameters "
-            Utils.printAsLispList(it.typeParameters.collect { tp ->
-                    typeString(tp)
-                })
-        }
-
-        def printArguments = { it, names ->
-            print " :arguments"
-            print " ("
-            it.genericParameterTypes.eachWithIndex{ pt, i ->
-                print "(:type " + quotify(typeString(pt))
-                if (names && names[++i]) {
-                    printName(names[i])
-                }
-                print ") "
-            }
-            print ") " 
-        }
-
-        def printExceptions = {
-            if (it.genericExceptionTypes.length > 0) {
-                print " :throws (";
-                it.genericExceptionTypes.each{ ex ->
-                    print " " + quotify(typeString(ex))
-                }
-                print ") "
-            }
-        }
-        
         def methodPrinter = {
             def desc = it.name + Type.getMethodDescriptor(it)
             if (seenMethods.contains(desc))
