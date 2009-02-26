@@ -228,7 +228,11 @@ class Classpath
     def getMembersInternal(Class c, Set seenMethods) {
         ClassReader cr = getClassReader(c.name);
         ClassInfo cir = new ClassInfo();
-        cr.accept(cir, false);
+        try {
+            cr.accept(cir, false);
+        } catch (Exception e) {
+            // cr sometimes barfs on JRE classes
+        }
 
         def methodPrinter = {
             def desc = it.name + Type.getMethodDescriptor(it)
