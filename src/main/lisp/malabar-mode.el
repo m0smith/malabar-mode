@@ -58,7 +58,7 @@
   (let ((map (make-sparse-keymap)))
     (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
     (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
-    (define-key map [?\C-c ?\C-v t] 'malabar-run-test)
+    (define-key map [?\C-c ?\C-v ?t] 'malabar-run-test)
     (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-junit-test-no-maven)
     (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
     (define-key map [?\C-c ?\C-v ?\C-o] 'malabar-override-method)
