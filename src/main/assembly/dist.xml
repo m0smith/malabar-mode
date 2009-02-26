@@ -17,7 +17,7 @@
   </fileSets>
   <files>
     <file>
-      <source>LICENSE.txt</source>
+      <source>COPYING.txt</source>
     </file>
   </files>
 </assembly>
