@@ -766,6 +766,21 @@ in the list")
   (or (malabar--public-p class-info)
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
+(defun malabar-implement-interface (&optional interface)
+  (interactive)
+  (destructuring-bind (interface qualified-interface interface-info)
+      (malabar-prompt-for-and-qualify-class interface)
+    (unless (malabar--class-accessible-p qualified-interface interface-info)
+      (error "You cannot implement %s, it is not accessible from %s"
+             qualified-interface (malabar-get-package-name)))
+    (unless (malabar--interface-p interface-info)
+      (error "You cannot implement %s, it is not an interface"
+             qualified-interface))
+    ;; Move to correct insertion point
+    ;; insert "implements" and indent if first interface, insert ", " if not
+    (insert qualified-interface)
+    (mapc #'malabar-override-method (malabar--get-abstract-methods interface-info))))
+
 (defun malabar-extend-class (&optional class)
   (interactive)
   (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
