@@ -62,6 +62,8 @@
     (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-junit-test-no-maven)
     (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
     (define-key map [?\C-c ?\C-v ?\C-o] 'malabar-override-method)
+    (define-key map [?\C-c ?\C-v ?\C-e] 'malabar-extend-class)
+    (define-key map [?\C-c ?\C-v ?\C-i] 'malabar-implement-interface)
     map)
   "Keymap for Malabar mode.")
 
