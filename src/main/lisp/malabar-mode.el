@@ -60,6 +60,7 @@
     (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
     (define-key map [?\C-c ?\C-v ?t] 'malabar-run-test)
     (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-junit-test-no-maven)
+    (define-key map [?\C-c ?\C-v ?\M-t] 'malabar-run-all-tests)
     (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
     (define-key map [?\C-c ?\C-v ?\C-o] 'malabar-override-method)
     (define-key map [?\C-c ?\C-v ?\C-e] 'malabar-extend-class)
@@ -477,6 +478,10 @@ in the list")
   (malabar-run-test-internal
    (format "%s.runtest('%%s')"
            (malabar-project (current-buffer)))))
+
+(defun malabar-run-all-tests ()
+  (interactive)
+  (malabar-build-project 'test))
 
 (defvar malabar-failed-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
 
