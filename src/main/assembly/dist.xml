@@ -19,5 +19,8 @@
     <file>
       <source>COPYING.txt</source>
     </file>
+    <file>
+      <source>README.rst</source>
+    </file>
   </files>
 </assembly>
