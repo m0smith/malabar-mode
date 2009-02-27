@@ -188,11 +188,18 @@ in the list")
 (defun malabar-project-classpath (buffer)
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
 
+(defvar malabar--qualify-class-name-cache nil)
+
 (defun malabar-qualify-class-name (unqualified &optional buffer)
-  (or (malabar-groovy-eval-and-lispeval
-       (format "%s.getClasses('%s')"
-               (malabar-project-classpath (or buffer (current-buffer)))
-               unqualified))
+  (or (and malabar--qualify-class-name-cache
+           (gethash unqualified malabar--qualify-class-name-cache))
+      (let ((classes (malabar-groovy-eval-and-lispeval
+                      (format "%s.getClasses('%s')"
+                              (malabar-project-classpath (or buffer (current-buffer)))
+                              unqualified))))
+        (when malabar--qualify-class-name-cache
+          (puthash unqualified classes malabar--qualify-class-name-cache))
+        classes)
       (error "Class not found %s" unqualified)))
 
 (defun malabar-classpath-of-buffer (&optional buffer)
@@ -328,8 +335,8 @@ in the list")
                    (buffer-file-name (current-buffer))))))
 
 (defun malabar-get-package-tag (&optional buffer)
-  (car (semantic-brute-find-tag-by-class 'package (or buffer
-                                                      (current-buffer)))))
+  (car (semantic-find-tags-by-class 'package (or buffer
+                                                 (current-buffer)))))
 
 (defun malabar-get-package-name (&optional buffer)
   (let ((package-tag (malabar-get-package-tag)))
@@ -484,11 +491,18 @@ in the list")
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
 
+(defvar malabar--class-info-cache nil)
+
 (defun malabar-get-class-info (classname &optional buffer)
-  (malabar-groovy-eval-and-lispeval
-   (format "%s.getClassInfo('%s')"
-           (malabar-project-classpath (or buffer (current-buffer)))
-           classname)))
+  (or (and malabar--class-info-cache
+           (gethash classname malabar--class-info-cache))
+      (let ((info (malabar-groovy-eval-and-lispeval
+                   (format "%s.getClassInfo('%s')"
+                           (malabar-project-classpath (or buffer (current-buffer)))
+                           classname))))
+        (when malabar--class-info-cache
+          (puthash classname info malabar--class-info-cache))
+        info)))
 
 (defsubst malabar--get-property (spec prop)
   (getf (cdr spec) prop))
@@ -680,46 +694,51 @@ in the list")
                  (malabar-get-members
                   (malabar-get-superclass-at-point))))
 
-(defun malabar-override-method (&optional method-spec suppress-annotation)
+(defun malabar-override-method (&optional method-spec suppress-annotation no-indent-defun)
   (interactive)
-  (let ((overridable-methods (malabar-overridable-methods)))
-    (unless method-spec
-      (setq method-spec
-            (malabar-choose "Method to override: "
-                            (mapcar 'malabar-override-method-make-choose-spec
-                                    overridable-methods))))
-    (when method-spec
-      (malabar-goto-end-of-class)
-      (insert "\n" (if suppress-annotation
-                       ""
-                     "@Override\n")
-              (malabar-create-method-signature method-spec t) " {\n"
-              "// TODO: Stub\n"
-              (if (equal (malabar--get-return-type method-spec) "void")
-                  ""
-                (concat "return "
-                        (malabar-default-return-value (malabar--get-return-type method-spec))
-                        ";\n"))
-              "}\n")
-      (forward-line -2)
-      (c-indent-defun)
-      (back-to-indentation)
-      (let ((equals-spec (find-if (lambda (spec)
-                                    (and (equal (malabar--get-name spec) "equals")
+  (malabar--override-method method-spec (malabar-overridable-methods)
+                            suppress-annotation no-indent-defun))
+
+(defun malabar--override-method (method-spec overridable-methods
+                                             suppress-annotation no-indent-defun)
+  (unless method-spec
+    (setq method-spec
+          (malabar-choose "Method to override: "
+                          (mapcar 'malabar-override-method-make-choose-spec
+                                  overridable-methods))))
+  (when method-spec
+    (malabar-goto-end-of-class)
+    (insert "\n" (if suppress-annotation
+                     ""
+                   "@Override\n")
+            (malabar-create-method-signature method-spec t) " {\n"
+            "// TODO: Stub\n"
+            (if (equal (malabar--get-return-type method-spec) "void")
+                ""
+              (concat "return "
+                      (malabar-default-return-value (malabar--get-return-type method-spec))
+                      ";\n"))
+            "}\n")
+    (forward-line -2)
+    (unless no-indent-defun
+      (c-indent-defun))
+    (back-to-indentation)
+    (let ((equals-spec (find-if (lambda (spec)
+                                  (and (equal (malabar--get-name spec) "equals")
+                                       (equal (malabar--get-declaring-class spec)
+                                              "java.lang.Object")))
+                                overridable-methods))
+          (hashcode-spec (find-if (lambda (spec)
+                                    (and (equal (malabar--get-name spec) "hashCode")
                                          (equal (malabar--get-declaring-class spec)
                                                 "java.lang.Object")))
-                                  overridable-methods))
-            (hashcode-spec (find-if (lambda (spec)
-                                      (and (equal (malabar--get-name spec) "hashCode")
-                                           (equal (malabar--get-declaring-class spec)
-                                                  "java.lang.Object")))
-                                    overridable-methods)))
-        (cond ((and (equal method-spec equals-spec)
-                    hashcode-spec)
-               (malabar-override-method hashcode-spec))
-              ((and (equal method-spec hashcode-spec)
-                    equals-spec)
-               (malabar-override-method equals-spec)))))))
+                                  overridable-methods)))
+      (cond ((and (equal method-spec equals-spec)
+                  hashcode-spec)
+             (malabar-override-method hashcode-spec))
+            ((and (equal method-spec hashcode-spec)
+                  equals-spec)
+             (malabar-override-method equals-spec))))))
 
 (defun malabar-default-return-value (type)
   (let ((cell (assoc type malabar-java-primitive-types-with-defaults)))
@@ -777,16 +796,19 @@ in the list")
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
 (defun malabar--override-all (methods &optional suppress-annotation)
-  (let ((c-progress-interval nil)
-        (c-echo-syntactic-information-p nil)
-        (method-count (length methods))
-        (counter 0))
+  (let ((method-count (length methods))
+        (counter 0)
+        (malabar--qualify-class-name-cache (make-hash-table :test 'equal))
+        (malabar--class-info-cache (make-hash-table :test 'equal))
+        (overridable-methods (malabar-overridable-methods)))
     (message nil)
     (working-status-forms "Overriding methods...%s" nil
       (dolist (method methods)
         (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-        (malabar-override-method method suppress-annotation))
-      (working-status t "done"))))
+        (malabar--override-method method overridable-methods suppress-annotation t))
+      (working-status t "done"))
+    (let ((class-tag (malabar-get-class-tag-at-point)))
+      (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
 (defun malabar-implement-interface (&optional interface)
   (interactive)
