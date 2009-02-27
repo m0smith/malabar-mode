@@ -328,7 +328,7 @@ in the list")
                    (buffer-file-name (current-buffer))))))
 
 (defun malabar-get-package-tag (&optional buffer)
-  (car (semantic-brute-find-tag-by-class 'psemantic-parse-tree-set-up-to-dateackage (or buffer
+  (car (semantic-brute-find-tag-by-class 'package (or buffer
                                                       (current-buffer)))))
 
 (defun malabar-get-package-name (&optional buffer)
