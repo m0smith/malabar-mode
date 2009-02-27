@@ -825,6 +825,9 @@ in the list")
 
 (defun malabar-extend-class (&optional class)
   (interactive)
+  (unless (equal "class" (semantic-tag-type (malabar-get-class-tag-at-point)))
+    (error "Only classes can extend other classes; this is an %s"
+           (semantic-tag-type (malabar-get-class-tag-at-point))))
   (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
     (error "Java is limited to single inheritance, class already extends %s"
            (malabar-get-superclass-at-point)))
