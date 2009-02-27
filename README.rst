@@ -100,6 +100,8 @@ released version.  Fortunately, building is pretty easy:
    
      (require 'malabar-mode)
      (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
+     ;; If groovysh is not on your PATH
+     (setq malabar-groovy-command "/path/to/groovysh")
      (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
 
 =======
