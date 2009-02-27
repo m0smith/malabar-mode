@@ -60,7 +60,9 @@
   ;; Set keymap?
   ;; set comint-input-filter
   (run-mode-hooks 'malabar-groovy-mode-hook))
-  
+
+(defvar malabar-groovy-comint-filter nil)
+
 (defun malabar-groovy-start (&optional silent)
   (interactive)
   (unless (malabar-groovy-live-p)
@@ -87,6 +89,8 @@
                         (goto-char (point-max))
                         (re-search-backward malabar-groovy-prompt-regexp initial-point t))))
           (accept-process-output (get-buffer-process malabar-groovy-buffer-name)))
+        (setq malabar-groovy-comint-filter
+              (process-filter (get-buffer-process malabar-groovy-buffer-name)))
         (working-dynamic-status nil "evaluating initial statements")
         (mapc #'malabar-groovy-eval malabar-groovy-initial-statements))))
   (unless silent
@@ -120,15 +124,14 @@
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
     (let ((groovy-process (get-buffer-process malabar-groovy-buffer-name)))
-      (let ((old-filter (process-filter groovy-process))
-            (string (if (string-ends-with string "\n")
+      (let ((string (if (string-ends-with string "\n")
                         string
                       (concat string "\n"))))
         (setq malabar-groovy--eval-output (cons "" ""))
         (set-process-filter groovy-process #'malabar-groovy--eval-filter)
         (process-send-string groovy-process string)
         (accept-process-output groovy-process)
-        (set-process-filter groovy-process old-filter)
+        (set-process-filter groovy-process malabar-groovy-comint-filter)
         (rplaca malabar-groovy--eval-output
                 (substring (car malabar-groovy--eval-output) (length string)))
         (malabar-groovy--eval-fix-output malabar-groovy--eval-output)))))
@@ -141,12 +144,11 @@
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
     (let ((groovy-process (get-buffer-process malabar-groovy-buffer-name)))
-      (let ((old-filter (process-filter groovy-process))
-            (string (if (string-ends-with string "\n")
+      (let ((string (if (string-ends-with string "\n")
                         string
                       (concat string "\n"))))
         (set-process-filter groovy-process
-                            (malabar-groovy--compilation-filter old-filter))
+                            (malabar-groovy--compilation-filter malabar-groovy-comint-filter))
         (process-send-string groovy-process string)))))
 
 (defun malabar-groovy--compilation-filter (old-filter)
