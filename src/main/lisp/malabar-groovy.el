@@ -82,6 +82,8 @@
                                                                ".*\\.jar$"))
                                       path-separator)
                            malabar-groovy-options))
+        (unless silent
+          (pop-to-buffer malabar-groovy-buffer-name))
         (malabar-groovy-mode)
         (working-dynamic-status nil "waiting for prompt")
         (while (not (with-current-buffer malabar-groovy-buffer-name
@@ -92,9 +94,7 @@
         (setq malabar-groovy-comint-filter
               (process-filter (get-buffer-process malabar-groovy-buffer-name)))
         (working-dynamic-status nil "evaluating initial statements")
-        (mapc #'malabar-groovy-eval malabar-groovy-initial-statements))))
-  (unless silent
-    (pop-to-buffer malabar-groovy-buffer-name)))
+        (mapc #'malabar-groovy-eval malabar-groovy-initial-statements)))))
 
 (defun malabar-groovy-live-p ()
   (comint-check-proc malabar-groovy-buffer-name))
