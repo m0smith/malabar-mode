@@ -680,7 +680,7 @@ in the list")
                  (malabar-get-members
                   (malabar-get-superclass-at-point))))
 
-(defun malabar-override-method (&optional method-spec)
+(defun malabar-override-method (&optional method-spec suppress-annotation)
   (interactive)
   (let ((overridable-methods (malabar-overridable-methods)))
     (unless method-spec
@@ -690,7 +690,10 @@ in the list")
                                     overridable-methods))))
     (when method-spec
       (malabar-goto-end-of-class)
-      (insert "\n" "@Override\n" (malabar-create-method-signature method-spec t) " {\n"
+      (insert "\n" (if suppress-annotation
+                       ""
+                     "@Override\n")
+              (malabar-create-method-signature method-spec t) " {\n"
               "// TODO: Stub\n"
               (if (equal (malabar--get-return-type method-spec) "void")
                   ""
@@ -773,7 +776,7 @@ in the list")
   (or (malabar--public-p class-info)
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
-(defun malabar--override-all (methods)
+(defun malabar--override-all (methods &optional suppress-annotation)
   (let ((c-progress-interval nil)
         (c-echo-syntactic-information-p nil)
         (method-count (length methods))
@@ -782,7 +785,7 @@ in the list")
     (working-status-forms "Overriding methods...%s" nil
       (dolist (method methods)
         (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-        (malabar-override-method method))
+        (malabar-override-method method suppress-annotation))
       (working-status t "done"))))
 
 (defun malabar-implement-interface (&optional interface)
@@ -810,7 +813,7 @@ in the list")
                       ">")))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-all (malabar--get-abstract-methods interface-info))))
+    (malabar--override-all (malabar--get-abstract-methods interface-info) t)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
   (malabar-goto-start-of-class)
@@ -861,8 +864,7 @@ in the list")
                     ""))
           (indent-according-to-mode)
           (newline-and-indent)
-          (semantic-parse-tree-set-needs-rebuild)
-          (semantic-fetch-tags)
+          (semantic-clear-toplevel-cache)
           (malabar--extend-class-move-to-constructor-insertion-point)
           (mapc (lambda (constructor)
                   (insert (malabar-create-constructor-signature constructor) " {\n"
