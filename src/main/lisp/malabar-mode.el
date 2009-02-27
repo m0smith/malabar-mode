@@ -188,18 +188,11 @@ in the list")
 (defun malabar-project-classpath (buffer)
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
 
-(defvar malabar--qualify-class-name-cache nil)
-
-(defun malabar-qualify-class-name (unqualified &optional buffer)
-  (or (and malabar--qualify-class-name-cache
-           (gethash unqualified malabar--qualify-class-name-cache))
-      (let ((classes (malabar-groovy-eval-and-lispeval
-                      (format "%s.getClasses('%s')"
-                              (malabar-project-classpath (or buffer (current-buffer)))
-                              unqualified))))
-        (when malabar--qualify-class-name-cache
-          (puthash unqualified classes malabar--qualify-class-name-cache))
-        classes)
+(define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
+  (or (malabar-groovy-eval-and-lispeval
+       (format "%s.getClasses('%s')"
+               (malabar-project-classpath (or buffer (current-buffer)))
+               unqualified))
       (error "Class not found %s" unqualified)))
 
 (defun malabar-classpath-of-buffer (&optional buffer)
@@ -491,18 +484,11 @@ in the list")
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
 
-(defvar malabar--class-info-cache nil)
-
-(defun malabar-get-class-info (classname &optional buffer)
-  (or (and malabar--class-info-cache
-           (gethash classname malabar--class-info-cache))
-      (let ((info (malabar-groovy-eval-and-lispeval
-                   (format "%s.getClassInfo('%s')"
-                           (malabar-project-classpath (or buffer (current-buffer)))
-                           classname))))
-        (when malabar--class-info-cache
-          (puthash classname info malabar--class-info-cache))
-        info)))
+(define-cached-function malabar-get-class-info (classname &optional buffer)
+  (malabar-groovy-eval-and-lispeval
+   (format "%s.getClassInfo('%s')"
+           (malabar-project-classpath (or buffer (current-buffer)))
+           classname)))
 
 (defsubst malabar--get-property (spec prop)
   (getf (cdr spec) prop))
@@ -798,14 +784,13 @@ in the list")
 (defun malabar--override-all (methods &optional suppress-annotation)
   (let ((method-count (length methods))
         (counter 0)
-        (malabar--qualify-class-name-cache (make-hash-table :test 'equal))
-        (malabar--class-info-cache (make-hash-table :test 'equal))
         (overridable-methods (malabar-overridable-methods)))
     (message nil)
     (working-status-forms "Overriding methods...%s" nil
-      (dolist (method methods)
-        (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-        (malabar--override-method method overridable-methods suppress-annotation t))
+      (with-caches 
+       (dolist (method methods)
+         (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
+         (malabar--override-method method overridable-methods suppress-annotation t)))
       (working-status t "done"))
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))

@@ -23,4 +23,41 @@
 (defun string-ends-with (string end)
   (string= (substring string (- (length string) (length end))) end))
     
+(defvar malabar--caches nil)
+
+(def-edebug-spec with-caches t)
+(defmacro with-caches (&rest forms)
+  "Executes FORMS with all defined caches bound to new
+hash-tables with `equal' as test."
+  `(let ,(mapcar (lambda (cache-name)
+                   (list cache-name '(make-hash-table :test 'equal)))
+                 malabar--caches)
+     ,@forms))
+
+(def-edebug-spec define-cached-function defun)
+(defmacro define-cached-function (name lambda-list &optional doc &rest body)
+  "Defines NAME as a function which, when invoked within the
+scope of `with-caches', memoizes its return in a unique cache
+keyed by the function's first parameter."
+  (declare (indent defun)
+           (doc-string 3))
+  (let ((gensym (gensym))
+        (cache-name (gensym))
+        (key (first lambda-list)))
+    `(progn
+       (add-to-list 'malabar--caches ',cache-name)
+       (defun ,name ,lambda-list
+         ,@(when (stringp doc)
+             (list doc))
+         (or (and (boundp ',cache-name)
+                  ,cache-name
+                  (gethash ,key ,cache-name))
+             (let ((,gensym (progn ,@(if (stringp doc)
+                                         body
+                                       (cons doc body)))))
+               (when (and (boundp ',cache-name)
+                          ,cache-name)
+                 (puthash ,key ,gensym ,cache-name))
+               ,gensym))))))
+
 (provide 'malabar-util)
