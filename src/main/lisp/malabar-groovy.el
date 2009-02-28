@@ -31,12 +31,13 @@
 (defvar malabar-groovy-compilation-buffer-name
   (concat "*Malabar Compilation*"))
 
-(defvar malabar-groovy-command "groovysh"
-  "The command to execute the Groovy Shell.  Include the full
+(defvar malabar-groovy-java-command "java"
+  "The command to invoke Java Include the full
 path if necessary.")
 
-(defvar malabar-groovy-options '("--color=false")
-  "Extra options to pass to groovysh.")
+(defvar malabar-groovy-server-class "org.grumblesmurf.malabar.GroovyServer"
+  "The class name of the Malabar Groovy server.  Don't touch
+unless you know what you're doing.")
 
 (defvar malabar-groovy-lib-dir "~/malabar/lib"
   "The location of all Malabar's JARs.")
@@ -55,6 +56,9 @@ for hacking on Malabar itself.")
   '("import org.grumblesmurf.malabar.*"
     "import java.lang.reflect.*")
   "Statements to execute immediately after starting groovysh.")
+
+(defvar malabar-groovy-java-options nil
+  "Extra options to pass to Java.")
 
 (defun malabar-groovy-mode ()
   "A major mode for the Groovy console."
@@ -85,7 +89,7 @@ pop to the Groovy console buffer."
         (working-dynamic-status nil "starting process")
         (set-buffer (apply #'make-comint
                            malabar-groovy-comint-name
-                           malabar-groovy-command
+                           malabar-groovy-java-command
                            nil
                            "-cp"
                            (mapconcat #'expand-file-name
@@ -93,7 +97,8 @@ pop to the Groovy console buffer."
                                               (directory-files malabar-groovy-lib-dir t
                                                                ".*\\.jar$"))
                                       path-separator)
-                           malabar-groovy-options))
+                           (append malabar-groovy-java-options
+                                   (list malabar-groovy-server-class))))
         (unless silent
           (pop-to-buffer malabar-groovy-buffer-name))
         (malabar-groovy-mode)
