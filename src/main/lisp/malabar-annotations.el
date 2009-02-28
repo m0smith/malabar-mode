@@ -35,7 +35,7 @@
 
 ;;; Code:
 
-(defun c-preprend-offset (symbol offset)
+(defun c-prepend-offset (symbol offset)
   "Find the offset entry for SYMBOL and add OFFSET at the front of the list.
 See `c-set-offset' for a description of OFFSET and SYMBOL."
   (let ((old-offset (cdr-safe (or (assq symbol c-offsets-alist)
@@ -54,11 +54,11 @@ The setup function adds one of the custom indentation functions
 to the offset lists of the symbols `arglist-intro', `topmost-intro-cont', `arglist-intro',
 `arglist-close', `statement-cont' and `func-decl-cont'. 
 This function should be called after any calls to `c-set-style'."
-  (c-preprend-offset 'arglist-intro 'c-single-indent-after-java-annotations)
-  (c-preprend-offset 'topmost-intro-cont 'c-no-indent-after-java-annotations)
-  (c-preprend-offset 'arglist-close 'c-no-indent-after-java-annotations)
-  (c-preprend-offset 'statement-cont 'c-no-indent-after-java-annotations)
-  (c-preprend-offset 'func-decl-cont 'c-no-indent-after-java-annotations))
+  (c-prepend-offset 'arglist-intro 'c-single-indent-after-java-annotations)
+  (c-prepend-offset 'topmost-intro-cont 'c-no-indent-after-java-annotations)
+  (c-prepend-offset 'arglist-close 'c-no-indent-after-java-annotations)
+  (c-prepend-offset 'statement-cont 'c-no-indent-after-java-annotations)
+  (c-prepend-offset 'func-decl-cont 'c-no-indent-after-java-annotations))
 
 (defun c-only-java-annotations-p (langelem)
   "Check if there are only java annotations before the current line.
