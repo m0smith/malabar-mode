@@ -143,7 +143,9 @@
     "\\$"                                   ;; If you want to import
                                             ;; an inner class, do it
                                             ;; yourself
-    ))
+    )
+  "Any class that matches a regexp on this list will never be
+automatically imported.")
 
 (defun malabar-import-current-package-p (qualified-class)
   (let ((package (malabar-get-package-name)))
@@ -216,6 +218,8 @@ in the list")
                         (car possible-classes))))))
 
 (defun malabar-import-all ()
+  "Attempts to add import statements for all unqualified type
+names in the current buffer."
   (interactive)
   (let ((imports (remove nil
                          (mapcar #'malabar-import-find-import
@@ -224,6 +228,8 @@ in the list")
       (malabar-import-insert-imports imports))))
 
 (defun malabar-import-one-class (unqualified)
+  "Qualifies and adds an import statement for a single type name.
+If UNQUALIFIED is NIL, prompts in the minibuffer."
   (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
   (if (or (malabar-class-defined-in-buffer-p unqualified)
           (malabar-find-imported-class unqualified))
@@ -233,6 +239,10 @@ in the list")
         (malabar-import-insert-imports (list class-to-import))))))
 
 (defun malabar-choose (prompt choices &optional default)
+  "Prompts (with completion) for an element of CHOICES,
+defaulting to DEFAULT.  CHOICES may be either a list of strings
+or a alist; if an alist, will prompt for a car of CHOICES and
+return the corresponding cdr."
   (let ((res (completing-read prompt (if (consp (car choices))
                                          (mapcar #'car choices)
                                        choices) nil t default)))
@@ -280,16 +290,6 @@ in the list")
     (when dir
       (expand-file-name "pom.xml" dir))))
 
-(defun malabar-maven-define-project (pom-file)
-  (malabar-groovy-eval (format "Project.makeProject('%s')" pom-file)))
-
-(defun malabar-make-project ()
-  (let ((project-file (malabar-maven-find-project-file)))
-    (when project-file
-      (let ((result (malabar-maven-define-project project-file)))
-        (when (equal "null" (cdr result))
-          (eval (car (read-from-string (car result)))))))))
-
 (defun malabar-build-project (goals)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
@@ -316,10 +316,12 @@ in the list")
     (setq buffer-read-only nil)))
 
 (defun malabar-install-project ()
+  "Runs 'mvn install' on the current project."
   (interactive)
   (malabar-build-project 'install))
 
 (defun malabar-compile-file ()
+  "Compiles the current buffer."
   (interactive)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
@@ -468,18 +470,23 @@ in the list")
              (malabar-qualified-class-name-of-buffer (current-buffer))))))
 
 (defun malabar-run-junit-test-no-maven ()
+  "Runs the current buffer (or its corresponding test) as a
+standalone JUnit test."
   (interactive)
   (malabar-run-test-internal 
    (format "%s.runJunit('%%s')"
            (malabar-project (current-buffer)))))
 
 (defun malabar-run-test ()
+  "Runs the current buffer (or its corresponding test) as a test,
+using 'mvn test -Dtestname'."
   (interactive)
   (malabar-run-test-internal
    (format "%s.runtest('%%s')"
            (malabar-project (current-buffer)))))
 
 (defun malabar-run-all-tests ()
+  "Runs all project tests ('mvn test')."
   (interactive)
   (malabar-build-project 'test))
 
@@ -561,27 +568,44 @@ in the list")
   (lexical-let ((counter -1))
     (lambda (arg)
       (or (getf arg :name)
-          (format "%s arg%s"
-                  (getf arg :type)
+          (format "arg%s"
                   (incf counter))))))
 
 (defun malabar--cleaned-modifiers (spec)
-  (remove 'native (remove 'abstract (malabar--get-modifiers method-spec))))
+  (remove 'native (remove 'abstract (malabar--get-modifiers spec))))
 
 (defun malabar-create-simplified-method-signature (method-spec)
+  "Creates a readable method signature suitable for
+e.g. `malabar-choose'."
   (assert (malabar--method-p method-spec))
   (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (return-type (malabar--get-return-type method-spec))
         (name (malabar--get-name method-spec))
         (arguments (malabar--get-arguments method-spec)))
-    (concat name "("
-            (mapconcat (malabar--arg-name-maker)
+    (concat name (malabar--stringify-arguments-with-types arguments)
+            " : " return-type
+            " (" (mapconcat #'symbol-name modifiers " ") ")")))
+
+(defun malabar--stringify-arguments-with-types (arguments)
+  (let ((arg-name-maker (malabar--arg-name-maker)))
+    (concat "("
+            (mapconcat (lambda (arg)
+                         (format "%s %s"
+                                 (getf arg :type)
+                                 (funcall arg-name-maker arg)))
                        arguments
                        ", ")
-            ") : " return-type
-            " (" (mapconcat #'symbol-name modifiers " ") ")")))
-            
-(defun malabar-create-method-signature (method-spec &optional include-throws)
+            ")")))
+
+(defun malabar--stringify-arguments (arguments)
+  (concat "("
+          (mapconcat (malabar--arg-name-maker)
+                     arguments
+                     ", ")
+          ")"))
+
+(defun malabar-create-method-signature (method-spec)
+  "Creates a method signature for insertion in a class file."
   (assert (malabar--method-p method-spec))
   (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (return-type (malabar--get-return-type method-spec))
@@ -589,44 +613,37 @@ in the list")
         (arguments (malabar--get-arguments method-spec))
         (type-parameters (malabar--get-type-parameters method-spec))
         (throws (malabar--get-throws method-spec)))
-    (concat (mapconcat #'symbol-name modifiers " ")
-            " "
-            (if type-parameters
-                (concat "<" (mapconcat #'identity type-parameters ", ") "> ")
-              "")
-            return-type " "
-            name
-            "("
-            (mapconcat (malabar--arg-name-maker)
-                       arguments
-                       ", ")
-            ")"
-            (if (and throws include-throws)
-                (concat " throws "
-                        (mapconcat #'identity throws ", "))
-              ""))))
+    (malabar--create-method-signature-helper
+     name
+     modifiers type-parameters return-type arguments throws)))
 
 (defun malabar-create-constructor-signature (method-spec)
+  "Creates a constructor signature for insertion in a class file."
   (assert (malabar--constructor-p method-spec))
   (let ((modifiers (malabar--cleaned-modifiers method-spec))
         (arguments (malabar--get-arguments method-spec))
         (type-parameters (malabar--get-type-parameters method-spec))
         (throws (malabar--get-throws method-spec)))
-    (concat (mapconcat #'symbol-name modifiers " ")
-            " "
-            (if type-parameters
-                (concat "<" (mapconcat #'identity type-parameters ", ") "> ")
-              "")
-            (semantic-tag-name (malabar-get-class-tag-at-point))
-            "("
-            (mapconcat (malabar--arg-name-maker)
-                       arguments
-                       ", ")
-            ")"
-            (if throws
-                (concat " throws "
-                        (mapconcat #'identity throws ", "))
-              ""))))
+    (malabar--create-method-signature-helper
+     (semantic-tag-name (malabar-get-class-tag-at-point))
+     modifiers type-parameters nil arguments throws)))
+
+(defun malabar--create-method-signature-helper (name modifiers type-parameters
+                                                     return-type arguments throws)
+  (concat (mapconcat #'symbol-name modifiers " ")
+          " "
+          (if type-parameters
+              (concat "<" (mapconcat #'identity type-parameters ", ") "> ")
+            "")
+          (if return-type
+              (concat return-type " ")
+            "")
+          name
+          (malabar--stringify-arguments-with-types arguments)
+          (if throws
+              (concat " throws "
+                      (mapconcat #'identity throws ", "))
+            "")))
 
 (defun malabar-get-superclass-at-point ()
   (malabar-qualify-class-name-in-buffer
@@ -685,51 +702,63 @@ in the list")
                  (malabar-get-members
                   (malabar-get-superclass-at-point))))
 
-(defun malabar-override-method (&optional method-spec suppress-annotation no-indent-defun)
+(defun malabar-override-method (&optional method-spec)
+  "Adds a stub implementation overriding method from the
+superclass to the class at point.  If METHOD-SPEC is NIL, prompts
+for the method to override."
   (interactive)
-  (malabar--override-method method-spec (malabar-overridable-methods)
-                            suppress-annotation no-indent-defun))
+  (let ((overridable-methods (malabar-overridable-methods)))
+    (unless method-spec
+      (setq method-spec
+            (malabar-choose "Method to override: "
+                            (mapcar 'malabar-override-method-make-choose-spec
+                                    overridable-methods))))
+    (when method-spec
+      (malabar--override-method method-spec overridable-methods nil nil t))))
 
 (defun malabar--override-method (method-spec overridable-methods
-                                             suppress-annotation no-indent-defun)
-  (unless method-spec
-    (setq method-spec
-          (malabar-choose "Method to override: "
-                          (mapcar 'malabar-override-method-make-choose-spec
-                                  overridable-methods))))
-  (when method-spec
-    (malabar-goto-end-of-class)
-    (insert "\n" (if suppress-annotation
-                     ""
-                   "@Override\n")
-            (malabar-create-method-signature method-spec t) " {\n"
-            "// TODO: Stub\n"
+                                             suppress-annotation no-indent-defun
+                                             call-super)
+  (malabar-goto-end-of-class)
+  (insert "\n" (if suppress-annotation
+                   ""
+                 "@Override\n")
+          (malabar-create-method-signature method-spec) " {\n"
+          "// TODO: Stub\n"
+          (let ((super-call
+                 (concat "super." (malabar--get-name method-spec)
+                         (malabar--stringify-arguments
+                          (malabar--get-arguments method-spec)))))
             (if (equal (malabar--get-return-type method-spec) "void")
-                ""
+                (if call-super
+                    (concat super-call ";\n")
+                  "")
               (concat "return "
-                      (malabar-default-return-value (malabar--get-return-type method-spec))
-                      ";\n"))
-            "}\n")
-    (forward-line -2)
-    (unless no-indent-defun
-      (c-indent-defun))
-    (back-to-indentation)
-    (let ((equals-spec (find-if (lambda (spec)
-                                  (and (equal (malabar--get-name spec) "equals")
+                      (if call-super
+                          super-call
+                        (malabar-default-return-value (malabar--get-return-type method-spec)))
+                      ";\n")))
+          "}\n")
+  (forward-line -2)
+  (unless no-indent-defun
+    (c-indent-defun))
+  (back-to-indentation)
+  (let ((equals-spec (find-if (lambda (spec)
+                                (and (equal (malabar--get-name spec) "equals")
+                                     (equal (malabar--get-declaring-class spec)
+                                            "java.lang.Object")))
+                              overridable-methods))
+        (hashcode-spec (find-if (lambda (spec)
+                                  (and (equal (malabar--get-name spec) "hashCode")
                                        (equal (malabar--get-declaring-class spec)
                                               "java.lang.Object")))
-                                overridable-methods))
-          (hashcode-spec (find-if (lambda (spec)
-                                    (and (equal (malabar--get-name spec) "hashCode")
-                                         (equal (malabar--get-declaring-class spec)
-                                                "java.lang.Object")))
-                                  overridable-methods)))
-      (cond ((and (equal method-spec equals-spec)
-                  hashcode-spec)
-             (malabar-override-method hashcode-spec))
-            ((and (equal method-spec hashcode-spec)
-                  equals-spec)
-             (malabar-override-method equals-spec))))))
+                                overridable-methods)))
+    (cond ((and (equal method-spec equals-spec)
+                hashcode-spec)
+           (malabar-override-method hashcode-spec))
+          ((and (equal method-spec hashcode-spec)
+                equals-spec)
+           (malabar-override-method equals-spec)))))
 
 (defun malabar-default-return-value (type)
   (let ((cell (assoc type malabar-java-primitive-types-with-defaults)))
@@ -750,6 +779,9 @@ in the list")
                 (1- (length dir))))))
 
 (defun malabar-update-package ()
+  "Updates the package statement in the current buffer to match
+the class's location in the file system, adding one if it is not
+present."
   (interactive)
   (let ((computed-package (malabar-compute-package-name (current-buffer)))
         (actual-package (malabar-get-package-name (current-buffer))))
@@ -786,7 +818,7 @@ in the list")
   (or (malabar--public-p class-info)
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
-(defun malabar--override-all (methods &optional suppress-annotation)
+(defun malabar--override-all (methods suppress-annotation call-super)
   (let ((method-count (length methods))
         (counter 0)
         (overridable-methods (malabar-overridable-methods)))
@@ -795,12 +827,15 @@ in the list")
       (with-caches 
        (dolist (method methods)
          (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-         (malabar--override-method method overridable-methods suppress-annotation t)))
+         (malabar--override-method method overridable-methods suppress-annotation
+                                   t call-super)))
       (working-status t "done"))
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
 (defun malabar-implement-interface (&optional interface)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods."
   (interactive)
   (destructuring-bind (interface qualified-interface interface-info)
       (malabar-prompt-for-and-qualify-class "Interface to implement: " interface)
@@ -825,7 +860,7 @@ in the list")
                       ">")))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-all (malabar--get-abstract-methods interface-info) t)))
+    (malabar--override-all (malabar--get-abstract-methods interface-info) t nil)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
   (malabar-goto-start-of-class)
@@ -836,6 +871,9 @@ in the list")
     (goto-char (match-end 0))))
 
 (defun malabar-extend-class (&optional class)
+  "Alters the class at point to extend CLASS, adding stub
+implementations of any abstract methods from CLASS and of
+accessible constructors."
   (interactive)
   (unless (equal "class" (semantic-tag-type (malabar-get-class-tag-at-point)))
     (error "Only classes can extend other classes; this is an %s"
@@ -884,12 +922,14 @@ in the list")
           (mapc (lambda (constructor)
                   (insert (malabar-create-constructor-signature constructor) " {\n"
                           "// TODO: Stub\n"
+                          "super" (malabar--stringify-arguments
+                                   (malabar--get-arguments constructor)) ";"
                           "}\n\n")
                   (forward-line -2)
                   (c-indent-defun)
                   (forward-line 2))
                 accessible-constructors)
-          (malabar--override-all (malabar--get-abstract-methods class-info)))))))
+          (malabar--override-all (malabar--get-abstract-methods class-info) nil t))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))

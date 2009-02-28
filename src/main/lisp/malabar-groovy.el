@@ -29,25 +29,35 @@
   (concat "*" malabar-groovy-comint-name "*"))
 
 (defvar malabar-groovy-compilation-buffer-name
-  (concat "*" malabar-groovy-comint-name " Compilation*"))
+  (concat "*Malabar Compilation*"))
 
-(defvar malabar-groovy-command "groovysh")
+(defvar malabar-groovy-command "groovysh"
+  "The command to execute the Groovy Shell.  Include the full
+path if necessary.")
 
-(defvar malabar-groovy-options '("--color=false"))
+(defvar malabar-groovy-options '("--color=false")
+  "Extra options to pass to groovysh.")
 
-(defvar malabar-groovy-lib-dir "~/malabar/lib")
+(defvar malabar-groovy-lib-dir "~/malabar/lib"
+  "The location of all Malabar's JARs.")
 
-(defvar malabar-groovy-extra-classpath '("~/src/malabar/target/classes"))
+(defvar malabar-groovy-extra-classpath '("~/src/malabar/target/classes")
+  "Extra classpath elements to pass to groovysh (mainly useful
+for hacking on Malabar itself.")
 
-(defvar malabar-groovy-mode-hook '())
+(defvar malabar-groovy-mode-hook '()
+  "Hook that gets called when entering malabar-groovy-mode.")
 
-(defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> ")
+(defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> "
+  "Regexp to recognize the groovysh prompt.")
 
 (defvar malabar-groovy-initial-statements
   '("import org.grumblesmurf.malabar.*"
-    "import java.lang.reflect.*"))
+    "import java.lang.reflect.*")
+  "Statements to execute immediately after starting groovysh.")
 
 (defun malabar-groovy-mode ()
+  "A major mode for the Groovy console."
   (interactive)
   (delay-mode-hooks (comint-mode))
   ;;(ansi-color-for-comint-mode-on)
@@ -64,6 +74,8 @@
 (defvar malabar-groovy-comint-filter nil)
 
 (defun malabar-groovy-start (&optional silent)
+  "Start groovy and wait for it to come up.  If SILENT is NIL,
+pop to the Groovy console buffer."
   (interactive)
   (unless (malabar-groovy-live-p)
     (working-status-forms "Starting Groovy...%s" "done"
@@ -120,6 +132,7 @@
     cell))
 
 (defun malabar-groovy-eval (string)
+  "Pass STRING to groovysh for evaluation."
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
@@ -137,9 +150,12 @@
         (malabar-groovy--eval-fix-output malabar-groovy--eval-output)))))
 
 (defun malabar-groovy-eval-and-lispeval (string)
+  "Pass STRING to groovysh for evaluation, and read the output for Lisp use."
   (car (read-from-string (car (malabar-groovy-eval string)))))
 
 (defun malabar-groovy-eval-as-compilation (string)
+  "Passes STRING to groovysh for evaluation in a buffer in
+`compilation-mode'."
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)

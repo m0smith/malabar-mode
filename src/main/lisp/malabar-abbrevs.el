@@ -33,13 +33,18 @@
     ("ext" "extends")
     ("pa" "package")
     ("re" "return")
-    ("#Test" hook malabar-abbrevs-create-test)))
+    ("#Test" hook malabar-abbrevs-create-test))
+  "The list of abbrevs which should be recognized only in the
+specified case.")
 
 (defun malabar-abbrevs-delete-abbrev ()
+  "Delete the abbrev (prior to expanding)."
   (when last-abbrev-text
     (backward-delete-char-untabify (length last-abbrev-text))))
 
 (defmacro define-malabar-abbrev-skeleton (name docstring interactor &rest skeleton)
+  "Define name as a skeleton which, as its first action, executes
+`malabar-abbrevs-delete-abbrev'."
   `(define-skeleton ,name
      ,docstring
      ,interactor '(malabar-abbrevs-delete-abbrev)
@@ -51,9 +56,14 @@
   > "@Test" \n
   > "public void " _ "() throws Exception {" \n
   "}" > \n)
+
+(defvar malabar-abbrevs-abbrev-regexp
+  "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*"
+  "The regexp to recognize abbrevs.  Group one is used for abbrev
+lookup.")
   
 (defun malabar-abbrevs-setup ()
-  (abbrev-table-put malabar-mode-abbrev-table :regexp "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*")
+  (abbrev-table-put malabar-mode-abbrev-table :regexp malabar-abbrevs-abbrev-regexp)
   (mapc (lambda (abbr)
           (define-abbrev malabar-mode-abbrev-table (first abbr) (second abbr) (third abbr)
             :case-fixed t :system 'force))
