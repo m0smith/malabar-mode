@@ -27,9 +27,15 @@ import java.net.*;
 
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.ClosedByInterruptException;
+
+import java.util.concurrent.CountDownLatch;
 
 class GroovyServer
 {
+    static compileServerReady = new CountDownLatch(1);
+    static evalServerReady = new CountDownLatch(1);
+    
     static void main(String[] args) {
         def cli = new CliBuilder();
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
@@ -40,24 +46,27 @@ class GroovyServer
         def options = cli.parse(args);
 
         if (options.c && options.e) {
-            //def compileThread = startServer(Integer.valueOf(options.getOptionValue('c')));
-            //def evalThread = startServer(Integer.valueOf(options.getOptionValue('e')));
+            def compileThread = startServer(Integer.valueOf(options.getOptionValue('c')),
+                                            compileServerReady);
+            def evalThread = startServer(Integer.valueOf(options.getOptionValue('e')),
+                                            evalServerReady);
+            compileServerReady.await();
+            evalServerReady.await();
             startConsole();
-            //compileThread.interrupt();
-            //evalThread.interrupt();
+            compileThread.interrupt();
+            evalThread.interrupt();
         } else {
             System.exit(1);
         }
     }
 
-    static startServer(int port) {
-        def t = new Thread(new GroovySocketServer(port));
+    static startServer(int port, CountDownLatch latch) {
+        def t = new Thread(new GroovySocketServer(port, latch));
         t.start();
         return t;
     }
     
     static startConsole() {
-        println "Starting console..."
         new Groovysh(new IO()).run();
     }
 }
@@ -66,21 +75,29 @@ class GroovySocketServer
     implements Runnable 
 {
     private final port;
+    private final CountDownLatch latch;
 
-    GroovySocketServer(int port) {
+    GroovySocketServer(int port, CountDownLatch latch) {
         this.port = port;
+        this.latch = latch;
     }
     
     void run() {
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
         ServerSocket server = serverChannel.socket();
         server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
-        SocketChannel clientChannel = serverChannel.accept();
-        Socket client = clientChannel.socket();
+        latch.countDown();
         try {
-            new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+            SocketChannel clientChannel = serverChannel.accept();
+            Socket client = clientChannel.socket();
+            try {
+                new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+            } finally {
+                client.close();
+            }
+        } catch (ClosedByInterruptException e) {
+            // Do nothing, this is normal
         } finally {
-            client.close();
             server.close();
         }
     }
