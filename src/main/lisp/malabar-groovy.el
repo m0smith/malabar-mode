@@ -25,15 +25,22 @@
 
 (defvar malabar-groovy-comint-name "Malabar Groovy")
 
+(defvar malabar-groovy-compiler-comint-name "Malabar Compile Server")
+
+(defvar malabar-groovy-evaluator-comint-name "Malabar Eval Server")
+
 (defvar malabar-groovy-buffer-name
   (concat "*" malabar-groovy-comint-name "*"))
 
-(defvar malabar-groovy-compilation-buffer-name
-  (concat "*Malabar Compilation*"))
+(defvar malabar-groovy-compiler-buffer-name
+  (concat "*" malabar-groovy-compiler-comint-name "*"))
+
+(defvar malabar-groovy-evaluator-buffer-name
+  (concat "*" malabar-groovy-evaluator-comint-name "*"))
 
 (defvar malabar-groovy-java-command "java"
-  "The command to invoke Java Include the full
-path if necessary.")
+  "The command to invoke Java.  Include the full path if
+necessary.")
 
 (defvar malabar-groovy-server-class "org.grumblesmurf.malabar.GroovyServer"
   "The class name of the Malabar Groovy server.  Don't touch
@@ -44,7 +51,7 @@ unless you know what you're doing.")
 
 (defvar malabar-groovy-extra-classpath '("~/src/malabar/target/classes")
   "Extra classpath elements to pass to groovysh (mainly useful
-for hacking on Malabar itself.")
+for hacking on Malabar itself).")
 
 (defvar malabar-groovy-mode-hook '()
   "Hook that gets called when entering malabar-groovy-mode.")
@@ -56,6 +63,12 @@ for hacking on Malabar itself.")
   '("import org.grumblesmurf.malabar.*"
     "import java.lang.reflect.*")
   "Statements to execute immediately after starting groovysh.")
+
+(defvar malabar-groovy-compiler-port 5555
+  "The port on which the Groovy compile server should listen.")
+
+(defvar malabar-groovy-evaluator-port 6666
+  "The port on which the Groovy eval server should listen.")
 
 (defvar malabar-groovy-java-options nil
   "Extra options to pass to Java.")
@@ -87,18 +100,21 @@ pop to the Groovy console buffer."
              (with-current-buffer (get-buffer-create malabar-groovy-buffer-name)
                (point))))
         (working-dynamic-status nil "starting process")
-        (set-buffer (apply #'make-comint
-                           malabar-groovy-comint-name
-                           malabar-groovy-java-command
-                           nil
-                           "-cp"
-                           (mapconcat #'expand-file-name
-                                      (append malabar-groovy-extra-classpath
-                                              (directory-files malabar-groovy-lib-dir t
-                                                               ".*\\.jar$"))
-                                      path-separator)
-                           (append malabar-groovy-java-options
-                                   (list malabar-groovy-server-class))))
+        (set-buffer (get-buffer malabar-groovy-buffer-name))
+        (apply #'make-comint
+               malabar-groovy-comint-name
+               malabar-groovy-java-command
+               nil
+               "-cp"
+               (mapconcat #'expand-file-name
+                          (append malabar-groovy-extra-classpath
+                                  (directory-files malabar-groovy-lib-dir t
+                                                   ".*\\.jar$"))
+                          path-separator)
+               (append malabar-groovy-java-options
+                       (list malabar-groovy-server-class
+                             "-c" (number-to-string malabar-groovy-compiler-port)
+                             "-e" (number-to-string malabar-groovy-eval-port))))
         (unless silent
           (pop-to-buffer malabar-groovy-buffer-name))
         (malabar-groovy-mode)
@@ -111,7 +127,22 @@ pop to the Groovy console buffer."
         (setq malabar-groovy-comint-filter
               (process-filter (get-buffer-process malabar-groovy-buffer-name)))
         (working-dynamic-status nil "evaluating initial statements")
+        (make-comint malabar-groovy-compiler-comint-name
+                     (cons "localhost" (number-to-string malabar-groovy-compiler-port)))
+        (make-comint malabar-groovy-evaluator-comint-name
+                     (cons "localhost" (number-to-string malabar-groovy-evaluator-port)))
+        (dolist (process (list (get-buffer-process malabar-groovy-compiler-buffer-name)
+                               (get-buffer-process malabar-groovy-evaluator-buffer-name)
+                               (get-buffer-process malabar-groovy-buffer-name)))
+          (dolist (stmt malabar-groovy-initial-statements)
+            (malabar-groovy-eval-in-process process stmt)))
         (mapc #'malabar-groovy-eval malabar-groovy-initial-statements)))))
+
+(defun malabar-groovy-eval-in-process (process string)
+  (let ((string (if (string-ends-with string "\n")
+                    string
+                  (concat string "\n"))))
+    (comint-send-string process string)))
 
 (defun malabar-groovy-live-p ()
   (comint-check-proc malabar-groovy-buffer-name))
