@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 
 import org.junit.Test;
 import org.junit.Before;
+import org.junit.After;
 import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -32,29 +33,45 @@ import org.codehaus.groovy.tools.shell.util.ANSI;
 class GroovyServerTest
 {
     int compilerPort = 5555;
+    int evalPort = 6666;
 
-    def compilerReady = new CountDownLatch(1);
-    def done = new CountDownLatch(1);
+    def servers = [];
     
-    def startGroovyCompiler = {
-        GroovyServer.startServer(compilerPort, compilerReady);
-        done.await();
-    } as Runnable;
-        
     @Before
     void disableANSI() {
         ANSI.enabled = false;
     }
+
+    @After
+    void shutdownServers() {
+        servers.each {
+            it.socket.close();
+        }
+    }
     
     @Test(timeout=2000L)
     void singleServer() {
-        def thread = new Thread(startGroovyCompiler);
-        thread.start();
-        compilerReady.await();
+        def ready = new CountDownLatch(1);
+        servers << GroovyServer.startServer(compilerPort, ready);
+        ready.await();
         withSocket { s ->
             s.connect(localPort(compilerPort), 1000);
         }
-        done.countDown();
+    }
+
+    @Test(timeout=2000L)
+    void dualServer() {
+        def serversReady = new CountDownLatch(2);
+        servers << GroovyServer.startServer(compilerPort, serversReady);
+        servers << GroovyServer.startServer(evalPort, serversReady);
+        serversReady.await();
+        
+        withSocket { s ->
+            s.connect(localPort(compilerPort), 1000);
+        }
+        withSocket { s ->
+            s.connect(localPort(evalPort), 1000);
+        }
     }
 
     def withSocket (Closure closure) {

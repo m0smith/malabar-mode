@@ -29,8 +29,7 @@ import java.util.concurrent.CountDownLatch;
 
 class GroovyServer
 {
-    static compileServerReady = new CountDownLatch(1);
-    static evalServerReady = new CountDownLatch(1);
+    static serversReady = new CountDownLatch(2);
     
     static void main(String[] args) {
         def cli = new CliBuilder();
@@ -42,24 +41,23 @@ class GroovyServer
         def options = cli.parse(args);
 
         if (options.c && options.e) {
-            def compileThread = startServer(Integer.valueOf(options.getOptionValue('c')),
-                                            compileServerReady);
-            def evalThread = startServer(Integer.valueOf(options.getOptionValue('e')),
-                                            evalServerReady);
-            compileServerReady.await();
-            evalServerReady.await();
+            def compileServer = startServer(Integer.valueOf(options.getOptionValue('c')),
+                                            serversReady);
+            def evalServer = startServer(Integer.valueOf(options.getOptionValue('e')),
+                                         serversReady);
+            serversReady.await();
             startConsole();
-            println "Shutting down"
-            System.exit(0);
+            compileServer.socket.close();
+            evalServer.socket.close();
         } else {
             System.exit(1);
         }
     }
 
     static startServer(int port, CountDownLatch latch) {
-        def t = new Thread(new GroovySocketServer(port, latch));
-        t.start();
-        return t;
+        def s = new GroovySocketServer(port, latch);
+        new Thread(s).start();
+        return s;
     }
     
     static startConsole() {
@@ -73,20 +71,39 @@ class GroovySocketServer
     private final port;
     private final CountDownLatch latch;
 
+    private final ServerSocket serverSocket;
+
     GroovySocketServer(int port, CountDownLatch latch) {
         this.port = port;
         this.latch = latch;
     }
-    
+
+    public synchronized ServerSocket getSocket() {
+        return serverSocket;
+    }
+
+    private synchronized void setSocket(ServerSocket socket) {
+        serverSocket = socket;
+    }
+
     void run() {
         ServerSocket server = new ServerSocket();
+        setSocket(server);
+
+        server.reuseAddress = true;
+
         server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
         latch.countDown();
-        Socket client = server.accept();
         try {
-            new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+            Socket client = server.accept();
+            try {
+                new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+            } finally {
+                client.close();
+            }
+        } catch (SocketException e) {
+            // Do nothing
         } finally {
-            client.close();
             server.close();
         }
     }
