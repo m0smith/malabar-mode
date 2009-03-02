@@ -22,6 +22,7 @@ import java.net.*;
 import java.util.concurrent.*;
 
 import org.junit.Test;
+import org.junit.Before;
 import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -31,34 +32,45 @@ import org.codehaus.groovy.tools.shell.util.ANSI;
 class GroovyServerTest
 {
     int compilerPort = 5555;
-    int evalPort = 6666;
 
-    def ready = new CountDownLatch(1);
+    def compilerReady = new CountDownLatch(1);
     def done = new CountDownLatch(1);
     
-    def startGroovyServer = {
-        GroovyServer.startServer(compilerPort, ready);
+    def startGroovyCompiler = {
+        GroovyServer.startServer(compilerPort, compilerReady);
         done.await();
     } as Runnable;
         
-    @Test(timeout=2000L)
-    void socketServer() {
+    @Before
+    void disableANSI() {
         ANSI.enabled = false;
-
-        def thread = new Thread(startGroovyServer);
+    }
+    
+    @Test(timeout=2000L)
+    void singleServer() {
+        def thread = new Thread(startGroovyCompiler);
         thread.start();
-        ready.await();
+        compilerReady.await();
+        withSocket { s ->
+            s.connect(localPort(compilerPort), 1000);
+        }
+        done.countDown();
+    }
+
+    def withSocket (Closure closure) {
         Socket s = new Socket();
         try {
-            s.connect(new InetSocketAddress(InetAddress.getByName(null), compilerPort),
-                      1000);
+            closure.call(s);
         } catch (SocketTimeoutException e) {
             fail("GroovyServer didn't answer: " + e.getMessage());
         } catch (IOException e) {
             fail("GroovyServer errored: " + e.getMessage());
         } finally {
             s.close();
-            done.countDown();
         }
+    }
+
+    def localPort (port) {
+        return new InetSocketAddress(InetAddress.getByName(null), port);
     }
 }
