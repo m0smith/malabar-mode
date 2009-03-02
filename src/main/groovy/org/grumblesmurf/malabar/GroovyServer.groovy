@@ -29,7 +29,7 @@ import java.util.concurrent.CountDownLatch;
 
 class GroovyServer
 {
-    static serversReady = new CountDownLatch(2);
+    static ready = new CountDownLatch(2);
     
     static void main(String[] args) {
         def cli = new CliBuilder();
@@ -42,13 +42,12 @@ class GroovyServer
 
         if (options.c && options.e) {
             def compileServer = startServer(Integer.valueOf(options.getOptionValue('c')),
-                                            serversReady);
+                                            ready);
             def evalServer = startServer(Integer.valueOf(options.getOptionValue('e')),
-                                         serversReady);
-            serversReady.await();
+                                         ready);
+            ready.await();
             startConsole();
-            compileServer.socket.close();
-            evalServer.socket.close();
+            System.exit(0);
         } else {
             System.exit(1);
         }
