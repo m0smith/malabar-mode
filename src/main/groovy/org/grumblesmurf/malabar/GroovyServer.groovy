@@ -25,10 +25,6 @@ import org.codehaus.groovy.tools.shell.util.Logger;
 
 import java.net.*;
 
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.ClosedByInterruptException;
-
 import java.util.concurrent.CountDownLatch;
 
 class GroovyServer
@@ -53,8 +49,8 @@ class GroovyServer
             compileServerReady.await();
             evalServerReady.await();
             startConsole();
-            compileThread.interrupt();
-            evalThread.interrupt();
+            println "Shutting down"
+            System.exit(0);
         } else {
             System.exit(1);
         }
@@ -83,21 +79,14 @@ class GroovySocketServer
     }
     
     void run() {
-        ServerSocketChannel serverChannel = ServerSocketChannel.open();
-        ServerSocket server = serverChannel.socket();
+        ServerSocket server = new ServerSocket();
         server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
         latch.countDown();
+        Socket client = server.accept();
         try {
-            SocketChannel clientChannel = serverChannel.accept();
-            Socket client = clientChannel.socket();
-            try {
-                new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
-            } finally {
-                client.close();
-            }
-        } catch (ClosedByInterruptException e) {
-            // Do nothing, this is normal
+            new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
         } finally {
+            client.close();
             server.close();
         }
     }
