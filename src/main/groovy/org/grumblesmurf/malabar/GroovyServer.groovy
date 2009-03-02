@@ -19,27 +19,69 @@
 package org.grumblesmurf.malabar;
 
 import org.codehaus.groovy.tools.shell.Groovysh;
-
 import org.codehaus.groovy.tools.shell.util.ANSI;
-
+import org.codehaus.groovy.tools.shell.IO;
 import org.codehaus.groovy.tools.shell.util.Logger;
 
-import org.codehaus.groovy.tools.shell.IO;
+import java.net.*;
+
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 class GroovyServer
 {
     static void main(String[] args) {
-        startConsole();
+        def cli = new CliBuilder();
+        cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
+        cli.e(longOpt: 'evalPort', args: 1, required: true, 'evaluator port');
+        
+        ANSI.enabled = false;
+
+        def options = cli.parse(args);
+
+        if (options.c && options.e) {
+            //def compileThread = startServer(Integer.valueOf(options.getOptionValue('c')));
+            //def evalThread = startServer(Integer.valueOf(options.getOptionValue('e')));
+            startConsole();
+            //compileThread.interrupt();
+            //evalThread.interrupt();
+        } else {
+            System.exit(1);
+        }
     }
 
+    static startServer(int port) {
+        def t = new Thread(new GroovySocketServer(port));
+        t.start();
+        return t;
+    }
+    
     static startConsole() {
-        IO io = new IO();
-        Logger.io = io;
+        println "Starting console..."
+        new Groovysh(new IO()).run();
+    }
+}
 
-        ANSI.enabled = false;
-        
-        Groovysh console = new Groovysh(io);
+class GroovySocketServer
+    implements Runnable 
+{
+    private final port;
 
-        console.run();
+    GroovySocketServer(int port) {
+        this.port = port;
+    }
+    
+    void run() {
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        ServerSocket server = serverChannel.socket();
+        server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
+        SocketChannel clientChannel = serverChannel.accept();
+        Socket client = clientChannel.socket();
+        try {
+            new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+        } finally {
+            client.close();
+            server.close();
+        }
     }
 }
