@@ -33,19 +33,23 @@ class GroovyServer
 
     static ThreadLocal<IO> io = new ThreadLocal<IO>();
 
+    static def getOut() {
+        return io.get()?.out ?: System.out
+    }
+    
     static Closure printlnClosure = { String it ->
-        IO io = io.get();
-        if (io) {
-            io.out.println(it);
-        } else {
-            System.out.println(it);
-        }
+        GroovyServer.getOut().println(it)
+    }
+    
+    static Closure printClosure = { String it ->
+        GroovyServer.getOut().print(it)
     }
     
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
         
         Object.metaClass.println = printlnClosure;
+        Object.metaClass.print = printClosure;
         
         def cli = new CliBuilder();
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
