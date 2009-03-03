@@ -970,4 +970,9 @@ accessible constructors."
         (newline insert-lines)
         (forward-line back-lines)))))
 
+(defun malabar--expression-at-point ()
+  (let* ((point (point))
+         (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
+    (buffer-substring-no-properties pseudo-statement-start point)))
+
 (provide 'malabar-mode)
