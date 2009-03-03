@@ -218,6 +218,13 @@ Hint:  Bugs with patches tend to be fixed faster...
 Yes!  Either describe the feature that you want in the issue tracker,
 or (even better) fork, code, and ask me to pull.
 
+=================
+ Acknowledgments
+=================
+
+* JDEE for being a source of frustration and inspiration (and sometimes of code)
+* `Nikolaj Schumacher`_ for fringe-helper and elk-test
+
 .. _JDEE: http://jdee.sourceforge.net/
 .. _run jdb on an applet: http://jdee.sourceforge.net/jdedoc/html/jde-ug/jde-ug-content.html#d0e4142
 .. _BeanShell: http://www.beanshell.org/
@@ -226,3 +233,4 @@ or (even better) fork, code, and ask me to pull.
 .. _Groovy: http://groovy.codehaus.org/
 .. _Junit: http://www.junit.org/
 .. _Lighthouse: http://espenhw.lighthouseapp.com/projects/26275-malabar-mode/
+.. _Nikolaj Schumacher: http://nschum.de/src/emacs/
