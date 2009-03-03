@@ -30,8 +30,23 @@ import java.util.concurrent.CountDownLatch;
 class GroovyServer
 {
     static ready = new CountDownLatch(2);
+
+    static ThreadLocal<IO> io = new ThreadLocal<IO>();
+
+    static Closure printlnClosure = { String it ->
+        IO io = io.get();
+        if (io) {
+            io.out.println(it);
+        } else {
+            System.out.println(it);
+        }
+    }
     
     static void main(String[] args) {
+        ExpandoMetaClass.enableGlobally();
+        
+        Object.metaClass.println = printlnClosure;
+        
         def cli = new CliBuilder();
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
         cli.e(longOpt: 'evalPort', args: 1, required: true, 'evaluator port');
@@ -60,7 +75,11 @@ class GroovyServer
     }
     
     static startConsole() {
-        new Groovysh(new IO()).run();
+        IO io = new IO();
+        GroovyServer.io.set(io);
+        Binding binding = new Binding();
+        binding['io'] = io;
+        new Groovysh(binding, io).run();
     }
 }
 
@@ -96,7 +115,11 @@ class GroovySocketServer
         try {
             Socket client = server.accept();
             try {
-                new Groovysh(new IO(client.inputStream, client.outputStream, client.outputStream)).run();
+                IO io = new IO(client.inputStream, client.outputStream, client.outputStream);
+                GroovyServer.io.set(io);
+                Binding binding = new Binding();
+                binding['io'] = io;
+                new Groovysh(binding, io).run();
             } finally {
                 client.close();
             }
