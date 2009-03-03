@@ -18,7 +18,7 @@
 ;; 02110-1301 USA.
 ;;
 (defun string-starts-with (string start)
-  (string= (substring string 0 (length start)) start))
+  (string= (substring string 0 (min (length string) (length start))) start))
 
 (defun string-ends-with (string end)
   (string= (substring string (- (length string) (length end))) end))

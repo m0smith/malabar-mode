@@ -27,6 +27,9 @@
 
 (setq elk-test-run-on-define nil)
 
+(deftest "start-with empty"
+  (assert-nil (string-starts-with "" "foo")))
+
 (deftest "start-with match"
   (assert-t (string-starts-with "foobar" "foo")))
 
