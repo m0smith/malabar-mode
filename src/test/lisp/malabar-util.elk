@@ -45,6 +45,30 @@
 (deftest "end-with no match"
   (assert-nil (string-ends-with "barfoo" "bar")))
 
+(deftest "trim empty"
+  (assert-equal "" (string-trim "")))
+
+(deftest "trim all-spaces"
+  (assert-equal "" (string-trim "             ")))
+
+(deftest "trim funky-whitespace"
+  (assert-equal "" (string-trim "     \t\t \n       ")))
+
+(deftest "trim start"
+  (assert-equal "foo" (string-trim "     \t\t \n       foo")))
+
+(deftest "trim end"
+  (assert-equal "foo" (string-trim "foo     \t\t \n       ")))
+
+(deftest "trim both"
+  (assert-equal "foo" (string-trim "     \t\t \n       foo     \t\t \n       ")))
+
+(deftest "delete-whitespace empty"
+  (assert-equal "" (string-delete-whitespace "")))
+
+(deftest "delete-whitespace"
+  (assert-equal "abcdf" (string-delete-whitespace " \na b c \n\n\t d f")))
+
 (apply #'elk-test-group "all-tests" (mapcar #'car elk-test-alist))
 
 (let ((result (elk-test-run "all-tests")))
