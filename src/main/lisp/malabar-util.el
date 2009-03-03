@@ -23,6 +23,11 @@
 (defun string-ends-with (string end)
   (string= (substring string (- (length string) (length end))) end))
     
+(defun string-with-newline (string)
+  (if (string-ends-with string "\n")
+      string
+    (concat string "\n")))
+
 (defvar malabar--caches nil)
 
 (def-edebug-spec with-caches t)
