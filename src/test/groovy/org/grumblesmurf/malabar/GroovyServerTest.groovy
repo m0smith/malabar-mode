@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 
 import org.junit.Test;
 import org.junit.Before;
+import org.junit.AfterClass;
 import org.junit.After;
 import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
@@ -33,6 +34,9 @@ import org.codehaus.groovy.tools.shell.util.ANSI;
 class GroovyServerTest
 {
     def servers = [];
+
+    static exceptionHandler = { 
+    } as Thread.UncaughtExceptionHandler;
     
     @Before
     void disableANSI() {
@@ -43,6 +47,17 @@ class GroovyServerTest
     void shutdownServers() {
         servers.each {
             it.socket.close();
+        }
+    }
+
+    @AfterClass
+    static void setExceptionHandler() {
+        Thread[] threads = new Thread[Thread.activeCount() * 2];
+        Thread.enumerate(threads);
+        threads.each {
+            if (it?.name?.startsWith("GroovyServer")) {
+                it.setUncaughtExceptionHandler(exceptionHandler);
+            }
         }
     }
     

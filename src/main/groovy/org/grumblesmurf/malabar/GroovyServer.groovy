@@ -74,7 +74,7 @@ class GroovyServer
 
     static startServer(int port, CountDownLatch latch) {
         def s = new GroovySocketServer(port, latch);
-        new Thread(s).start();
+        new Thread(s, "GroovyServer on " + port).start();
         return s;
     }
     
