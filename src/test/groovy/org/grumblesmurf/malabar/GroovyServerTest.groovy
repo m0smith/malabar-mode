@@ -32,9 +32,6 @@ import org.codehaus.groovy.tools.shell.util.ANSI;
 
 class GroovyServerTest
 {
-    int compilerPort = 5555;
-    int evalPort = 6666;
-
     def servers = [];
     
     @Before
@@ -52,25 +49,25 @@ class GroovyServerTest
     @Test(timeout=2000L)
     void singleServer() {
         def ready = new CountDownLatch(1);
-        servers << GroovyServer.startServer(compilerPort, ready);
+        def server = GroovyServer.startServer(0, ready);
+        servers << server;
         ready.await();
         withSocket { s ->
-            s.connect(localPort(compilerPort), 1000);
+            s.connect(localPort(server.socket.localPort), 1000);
         }
     }
 
     @Test(timeout=2000L)
     void dualServer() {
         def serversReady = new CountDownLatch(2);
-        servers << GroovyServer.startServer(compilerPort, serversReady);
-        servers << GroovyServer.startServer(evalPort, serversReady);
+        servers << GroovyServer.startServer(0, serversReady);
+        servers << GroovyServer.startServer(0, serversReady);
         serversReady.await();
-        
-        withSocket { s ->
-            s.connect(localPort(compilerPort), 1000);
-        }
-        withSocket { s ->
-            s.connect(localPort(evalPort), 1000);
+
+        servers.each { server ->
+            withSocket { s ->
+                s.connect(localPort(server.socket.localPort), 1000);
+            }
         }
     }
 
