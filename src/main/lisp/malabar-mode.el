@@ -78,7 +78,7 @@
   ;; Set up indentation of Java annotations.
   (malabar-annotations-setup)
   (malabar-abbrevs-setup)
-  )
+  (malabar-groovy-start t))
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
 
@@ -307,13 +307,7 @@ return the corresponding cdr."
 
 (defun malabar-setup-compilation-buffer ()
   (setq malabar-compilation-project-file (malabar-maven-find-project-file))
-  (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
-    (setq buffer-read-only nil)
-    (buffer-disable-undo (current-buffer))
-    (erase-buffer)
-    (buffer-enable-undo (current-buffer))
-    (compilation-mode)
-    (setq buffer-read-only nil)))
+  (malabar-groovy-setup-compilation-buffer))
 
 (defun malabar-install-project ()
   "Runs 'mvn install' on the current project."

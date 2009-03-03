@@ -33,6 +33,11 @@
 (defun string-delete-whitespace (string) 
   (replace-regexp-in-string "[\r\n\t ]+" "" string t t))
     
+(defun string-with-newline (string)
+  (if (string-ends-with string "\n")
+      string
+    (concat string "\n")))
+
 (defvar malabar--caches nil)
 
 (def-edebug-spec with-caches t)
