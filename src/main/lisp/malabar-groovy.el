@@ -20,6 +20,7 @@
 (require 'comint)
 (require 'ansi-color)
 (require 'working)
+(require 'cl)
 
 (require 'malabar-util)
 
@@ -128,15 +129,20 @@ pop to the Groovy console buffer."
               (process-filter (get-buffer-process malabar-groovy-buffer-name)))
         (working-dynamic-status nil "evaluating initial statements")
         (make-comint malabar-groovy-compiler-comint-name
-                     (cons "localhost" (number-to-string malabar-groovy-compiler-port)))
+                     (cons "localhost"
+                           (number-to-string malabar-groovy-compiler-port)))
         (make-comint malabar-groovy-evaluator-comint-name
-                     (cons "localhost" (number-to-string malabar-groovy-evaluator-port)))
+                     (cons "localhost"
+                           (number-to-string malabar-groovy-evaluator-port)))
         (dolist (process (list (get-buffer-process malabar-groovy-compiler-buffer-name)
                                (get-buffer-process malabar-groovy-evaluator-buffer-name)
                                (get-buffer-process malabar-groovy-buffer-name)))
           (dolist (stmt malabar-groovy-initial-statements)
             (malabar-groovy-eval-in-process process stmt)))
-        (mapc #'malabar-groovy-eval malabar-groovy-initial-statements)))))
+        (with-current-buffer malabar-groovy-compiler-buffer-name
+          (malabar-groovy--setup-compilation-buffer))
+        (with-current-buffer malabar-groovy-evaluator-buffer-name
+          (malabar-groovy--setup-eval-buffer))))))
 
 (defun malabar-groovy-eval-in-process (process string)
   (let ((string (if (string-ends-with string "\n")
@@ -151,38 +157,63 @@ pop to the Groovy console buffer."
 
 (defvar malabar-groovy--eval-buffer (get-buffer-create " *Malabar Groovy eval*"))
 
-(defun malabar-groovy--eval-filter (process output)
-  (let ((end-of-return (string-match malabar-groovy-prompt-regexp output)))
-    (rplaca malabar-groovy--eval-output
-            (concat (car malabar-groovy--eval-output)
-                    (substring output 0 end-of-return)))
-    (unless end-of-return
-      (accept-process-output process))))
+(defvar malabar-groovy--eval-callback nil)
+
+(defun malabar-groovy--setup-compilation-buffer ()
+  nil)
+
+(defun malabar-groovy--setup-eval-buffer ()
+  (when (assq 'comint-output-filter-functions (buffer-local-variables))
+    ;; HACK
+    (setq comint-output-filter-functions nil))
+  (add-hook 'comint-output-filter-functions
+            (malabar-groovy--watch-for-prompt 'malabar-groovy--eval-callback
+                                              (current-buffer))
+            nil t))
+
+(defun malabar-groovy--watch-for-prompt (hook buffer)
+  (lexical-let ((hook hook)
+                (buffer buffer))
+    (lambda (string)
+      (when (string-match malabar-groovy-prompt-regexp string)
+        (run-hook-with-args hook buffer)
+        (set hook nil)))))
+
+(defun malabar-groovy--eval-get-output (buffer)
+  (setq malabar-groovy--eval-output
+        (with-current-buffer buffer
+          (cons (buffer-substring-no-properties
+                 (save-excursion
+                   (goto-char (point-max))
+                   (re-search-backward malabar-groovy-prompt-regexp nil nil 2))
+                 (point-max))
+                ""))))
 
 (defun malabar-groovy--eval-fix-output (cell)
-  (let* ((output (car cell))
-         (start-of-return (string-match "===> " output)))
-    (rplaca cell (substring output 0 start-of-return))
-    (when start-of-return
-      (rplacd cell (substring output (match-end 0) (1- (length output)))))
-    cell))
+  (let* ((string (car cell))
+         (output (substring string
+                            (1+ (position ?\n string))
+                            (1+ (position ?\n string :from-end t))))
+         (start-of-return (string-match "\n?===> " output)))
+    (cons (substring output 0 start-of-return)
+          (when start-of-return
+            (substring output (match-end 0) (1- (length output)))))))
 
 (defun malabar-groovy-eval (string)
   "Pass STRING to groovysh for evaluation."
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
-    (let ((groovy-process (get-buffer-process malabar-groovy-buffer-name)))
+    (let ((groovy-process (get-buffer-process malabar-groovy-evaluator-buffer-name)))
       (let ((string (if (string-ends-with string "\n")
                         string
                       (concat string "\n"))))
-        (setq malabar-groovy--eval-output (cons "" ""))
-        (set-process-filter groovy-process #'malabar-groovy--eval-filter)
-        (process-send-string groovy-process string)
-        (accept-process-output groovy-process)
-        (set-process-filter groovy-process malabar-groovy-comint-filter)
-        (rplaca malabar-groovy--eval-output
-                (substring (car malabar-groovy--eval-output) (length string)))
+        (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output) 
+        (malabar-groovy-eval-in-process groovy-process string)
+        (while (not (string-match-p (regexp-quote string)
+                                    (car malabar-groovy--eval-output)))
+          (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output) 
+          (accept-process-output groovy-process))
         (malabar-groovy--eval-fix-output malabar-groovy--eval-output)))))
 
 (defun malabar-groovy-eval-and-lispeval (string)
