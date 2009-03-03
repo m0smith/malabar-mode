@@ -22,6 +22,16 @@
 
 (defun string-ends-with (string end)
   (string= (substring string (- (length string) (length end))) end))
+
+(defun string-trim (string)
+  (when (string-match "\\`[\r\n\t ]+" string)
+    (setq string (replace-match "" t t string)))
+  (when (string-match "[\r\n\t ]+\\'" string)
+    (setq string (replace-match "" t t string)))
+  string)
+
+(defun string-delete-whitespace (string) 
+  (replace-regexp-in-string "[\r\n\t ]+" "" string t t))
     
 (defvar malabar--caches nil)
 
