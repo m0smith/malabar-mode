@@ -21,7 +21,7 @@
   (string= (substring string 0 (min (length string) (length start))) start))
 
 (defun string-ends-with (string end)
-  (string= (substring string (- (length string) (length end))) end))
+  (string= (substring string (max 0 (- (length string) (length end)))) end))
 
 (defun string-trim (string)
   (when (string-match "\\`[\r\n\t ]+" string)

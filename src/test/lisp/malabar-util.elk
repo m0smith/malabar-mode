@@ -36,6 +36,15 @@
 (deftest "start-with no match"
   (assert-nil (string-starts-with "barfoo" "foo")))
 
+(deftest "end-with empty"
+  (assert-nil (string-ends-with "" "foo")))
+
+(deftest "end-with match"
+  (assert-t (string-ends-with "foobar" "bar")))
+
+(deftest "end-with no match"
+  (assert-nil (string-ends-with "barfoo" "bar")))
+
 (apply #'elk-test-group "all-tests" (mapcar #'car elk-test-alist))
 
 (let ((result (elk-test-run "all-tests")))
