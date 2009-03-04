@@ -648,10 +648,12 @@ e.g. `malabar-choose'."
             "")))
 
 (defun malabar-get-superclass-at-point ()
-  (malabar-qualify-class-name-in-buffer
-   (or (car (semantic-tag-type-superclasses (malabar-get-class-tag-at-point)))
-       "Object")))
+  (malabar-qualify-class-name-in-buffer (malabar-get-superclass (malabar-get-class-tag-at-point))))
 
+(defun malabar-get-superclass (class-tag)
+  (or (car (semantic-tag-type-superclasses class-tag))
+       "Object"))
+  
 (defun malabar-override-method-make-choose-spec (method-spec)
   (cons (malabar-create-simplified-method-signature method-spec)
         method-spec))
@@ -1011,5 +1013,51 @@ accessible constructors."
          'variable)
         (t
          'unknown)))
+
+(defun malabar--resolve-type-of (exp-and-kind &optional relative-type)
+  (let ((expression (car exp-and-kind))
+        (kind (cdr exp-and-kind)))
+    (or (case kind  ;; Some expression kinds have statically determinable types
+          (string-literal "java.lang.String")
+          (constructor-call
+           (string-match "^new \\([A-Za-z_][^(]*\\)" expression)
+           (match-string 1 expression))
+          ((array-reference unknown)
+           (error "Cannot (yet) resolve type of %s (%s)" expression kind)))
+        (cond (relative-type
+               ;; TODO: Resolve exp-and-kind in relative-type
+               nil)
+              ;; Resolve exp-and-kind in class at point
+              (t
+               (malabar--resolve-type-of-locally exp kind (malabar-get-class-tag-at-point)))))))
+
+(defun malabar--find-tag-named (name tag-list)
+  (find name tag-list
+        :key #'semantic-tag-name
+        :test #'equal))
+
+(defun malabar--find-member-named (name type-tag)
+  (malabar--find-tag-named name (semantic-tag-type-members type-tag)))
+
+(defun malabar--resolve-type-of-locally (exp kind class-tag)
+  (save-excursion
+    (let* ((expression (if (eq kind 'function-call)
+                           (progn (string-match "^[^(]+" exp)
+                                  (match-string 0 exp))
+                         exp))
+           (local-type (let ((local-variable (and (eq kind 'variable)
+                                                  (malabar--find-tag-named expression (semantic-get-local-variables))))
+                             (member (malabar--find-member-named expression class-tag)))
+                         (semantic-tag-type (or local-variable
+                                                member)))))
+      (or local-type
+          (malabar--resolve-type-of (cons exp kind) (malabar-get-superclass class-tag))
+          (some (lambda (i)
+                  (malabar--resolve-type-of (cons exp kind) i))
+                (semantic-tag-type-interfaces class-tag))
+          (when (and (not (member "static" (semantic-tag-modifiers class-tag)))
+                     (not (semantic-up-context (semantic-tag-start class-tag) 'type)))
+            (malabar--resolve-type-of-locally exp kind (semantic-current-tag-of-class 'type)))
+          (error "Failed to resolve type of %s (%s)" exp kind)))))
 
 (provide 'malabar-mode)
