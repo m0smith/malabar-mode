@@ -55,7 +55,7 @@ class GroovyServerTest
         Thread[] threads = new Thread[Thread.activeCount() * 2];
         Thread.enumerate(threads);
         threads.each {
-            if (it?.name?.startsWith("GroovyServer")) {
+            if (it) {
                 it.setUncaughtExceptionHandler(exceptionHandler);
             }
         }
