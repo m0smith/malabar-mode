@@ -22,7 +22,8 @@
 (require 'semantic-find)
 (require 'semantic-wisent)
 
-;; HACK
+;; HACK: we don't want to load the old Java parser, so trick Emacs
+;; into thinking it's already loaded
 (provide 'wisent-java-wy)
 (require 'wisent-java)
 
@@ -76,7 +77,8 @@
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
-  ;; HACK
+  ;; HACK: Since we're not loading the old java parser the installer
+  ;; function isn't defined; give it a dummy definition
   (flet ((wisent-java-wy--install-parser () nil))
     (wisent-java-default-setup))
   (add-hook 'semantic-init-hooks #'malabar-semantic-setup)

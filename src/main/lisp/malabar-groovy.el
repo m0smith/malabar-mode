@@ -176,7 +176,8 @@ pop to the Groovy console buffer."
   
 (defun malabar-groovy--init-eval-buffer ()
   (when (assq 'comint-output-filter-functions (buffer-local-variables))
-    ;; HACK
+    ;; HACK: There is no reliable way to remove a closure from this
+    ;; list; just clear it, but only if it is already buffer-local
     (setq comint-output-filter-functions nil))
   (add-hook 'comint-output-filter-functions
             (malabar-groovy--watch-for-prompt 'malabar-groovy--eval-callback
