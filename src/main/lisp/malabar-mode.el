@@ -969,4 +969,39 @@ accessible constructors."
          (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
     (buffer-substring-no-properties pseudo-statement-start point)))
 
+(defun malabar--expression-components (expression)
+  (let ((result nil))
+    (with-temp-buffer
+      (insert expression)
+      (goto-char (point-min))
+      (ignore-errors
+        (while t
+          (let ((start (point)))
+                (while (and (not (eobp))
+                            (not (looking-at "\\.")))
+                  (forward-sexp 1))
+                (push (buffer-substring start (point)) result)
+                (forward-char 1)))))
+    (mapcar (lambda (exp)
+              (cons exp (malabar--expression-kind exp)))
+            (nreverse result))))
+
+(defun malabar--expression-kind (expression)
+  (cond ((string-match-p "^new .*)$" expression)
+         'constructor-call)
+        ((string-match-p ")$" expression)
+         'function-call)
+        ((string-match-p "]$" expression)
+         'array-reference)
+        ((string-match-p "\"$" expression)
+         'string-literal)
+        ((string= "this" expression)
+         'this-reference)
+        ((string= "super" expression)
+         'super-reference)
+        ((string-match-p "^[a-zA-Z_][a-zA-Z0-9_]*$" expression)
+         'variable)
+        (t
+         'unknown)))
+
 (provide 'malabar-mode)
