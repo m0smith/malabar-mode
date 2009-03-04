@@ -31,6 +31,7 @@
 (defvar malabar-groovy-eval-server-comint-name "Malabar Eval Server")
 
 (defvar malabar-groovy-compilation-buffer-name "*Malabar Compilation*")
+(get-buffer-create malabar-groovy-compilation-buffer-name)
 
 (defvar malabar-groovy-buffer-name
   (concat "*" malabar-groovy-comint-name "*"))
