@@ -121,7 +121,9 @@
     (let ((import-tag (find classname tags
                             :key #'semantic-tag-name
                             :test #'equal)))
-      (or (and import-tag
+      (or (and (> (count ?. classname) 1)
+               classname)
+          (and import-tag
                (semantic-tag-name import-tag))
           (malabar-find-imported-class-from-wildcard-imports classname buffer)
           (find (concat "java.lang." classname)
