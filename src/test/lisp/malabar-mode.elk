@@ -22,6 +22,7 @@
 (provide 'semantic-ctxt)
 (provide 'semantic-find)
 (provide 'semantic-wisent)
+(provide 'wisent-java)
 (provide 'working)
 (provide 'wisent-malabar-java-wy)
 
