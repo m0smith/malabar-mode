@@ -156,15 +156,19 @@ class Classpath
     }
 
     def getClassInfo(className) {
-        Class c = this.classLoader.loadClass(className)
-        print "(class "
-        printName(c)
-        printModifiers(c)
-        printDeclaringClass(c)
-        printTypeParameters(c)
-        print " :members "
-        getMembers(c)
-        print ")"
+        try {
+            Class c = this.classLoader.loadClass(className)
+            print "(class "
+            printName(c)
+            printModifiers(c)
+            printDeclaringClass(c)
+            printTypeParameters(c)
+            print " :members "
+            getMembers(c)
+            print ")"
+        } catch (ClassNotFoundException e) {
+            Utils.printAsLispList([]);
+        }
     }
     
     def getMembers(String className) {
