@@ -207,7 +207,8 @@ in the list")
       (error "Class not found %s" unqualified)))
 
 (defun malabar-classpath-of-buffer (&optional buffer)
-  (if (malabar-test-class-buffer-p (or buffer (current-buffer)))
+  (if (locate-file (buffer-file-name buffer)
+                   (malabar-project-test-source-directories (malabar-maven-find-project-file buffer)))
       "testClasspath"
     "compileClasspath"))
 
