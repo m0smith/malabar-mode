@@ -160,6 +160,8 @@ class Classpath
             Class c = this.classLoader.loadClass(className)
             print "(class "
             printName(c)
+            printSuperclass(c)
+            printInterfaces(c)
             printModifiers(c)
             printDeclaringClass(c)
             printTypeParameters(c)
@@ -223,7 +225,20 @@ class Classpath
             print ") "
         }
     }
-        
+
+    def printSuperclass(it) {
+        if (it.genericSuperclass) {
+            print " :super-class " + quotify(typeString(it.genericSuperclass, true))
+        }
+    }
+
+    def printInterfaces(it) {
+        if (it.genericInterfaces) {
+            print " :interfaces "
+            Utils.printAsLispList(it.genericInterfaces.collect { intf -> typeString(intf, true) })
+        }
+    }
+    
     def getMembersInternal(Class c, Set seenMethods) {
         ClassReader cr = getClassReader(c.name);
         ClassInfo cir = new ClassInfo();
@@ -281,6 +296,8 @@ class Classpath
 
         def classPrinter = {
             print "(class :name " + quotify(it.simpleName)
+            printSuperclass(it)
+            printInterfaces(it)
             printModifiers(it)
             printDeclaringClass(it)
             printTypeParameters(it)
@@ -318,23 +335,28 @@ class Classpath
     }
 
     def typeString(type) {
+        return typeString(type, false);
+    }
+    
+    def typeString(type, qualify) {
         if (type instanceof Class) {
+            def name = qualify ? type.name : type.simpleName
             if (type.enclosingClass) {
-                return typeString(type.enclosingClass) + "." + type.simpleName
+                return typeString(type.enclosingClass, qualify) + "." + name
             }
-            return type.simpleName
+            return name
         }
         if (type instanceof GenericArrayType) {
-            return typeString(type.genericComponentType) + "[]"
+            return typeString(type.genericComponentType, qualify) + "[]"
         }
         if (type instanceof ParameterizedType) {
-            def str = typeString(type.rawType)
+            def str = typeString(type.rawType, qualify)
             str += "<";
             type.actualTypeArguments.eachWithIndex{ it, i ->
                 if (i > 0) {
                     str += ", "
                 }
-                str += typeString(it)
+                str += typeString(it, qualify)
             }
             str += ">"
             return str;
@@ -345,7 +367,7 @@ class Classpath
                 if (type.bounds.length > 1 ||
                     type.bounds[0] != Object.class) {
                     str += " extends "
-                    str += type.bounds.collect{ typeString(it) }.join(" & ")
+                    str += type.bounds.collect{ typeString(it, qualify) }.join(" & ")
                 }
             }
             return str
