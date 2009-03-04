@@ -16,16 +16,7 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(when load-file-name
-  (add-to-list 'load-path (file-name-directory load-file-name))
-  (add-to-list 'load-path (replace-regexp-in-string "test" "main"
-                                                    (file-name-directory load-file-name)
-                                                    t t)))
-
-(require 'elk-test)
 (require 'malabar-util)
-
-(setq elk-test-run-on-define nil)
 
 (deftest "start-with empty"
   (assert-nil (string-starts-with "" "foo")))
@@ -68,10 +59,3 @@
 
 (deftest "delete-whitespace"
   (assert-equal "abcdf" (string-delete-whitespace " \na b c \n\n\t d f")))
-
-(apply #'elk-test-group "all-tests" (mapcar #'car elk-test-alist))
-
-(let ((result (elk-test-run "all-tests")))
-  (mapc #'message result)
-  (when (and result noninteractive)
-    (kill-emacs 1)))
