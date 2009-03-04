@@ -107,7 +107,7 @@
   (let ((case-fold-search nil))
     (and (> (length token) 1)
          (some (lambda (re)
-                 (string-match (concat "^" re "$") token))
+                 (string-match-p (concat "^" re "$") token))
                java-font-lock-extra-types))))
 
 (defun malabar-class-defined-in-buffer-p (classname &optional buffer)
@@ -121,10 +121,10 @@
     (let ((import-tag (find classname tags
                             :key #'semantic-tag-name
                             :test #'equal)))
-      (or (and (> (count ?. classname) 1)
-               classname)
-          (and import-tag
-               (semantic-tag-name import-tag))
+      (or (when (> (count ?. classname) 1)
+            classname)
+          (when import-tag
+            (semantic-tag-name import-tag))
           (malabar-find-imported-class-from-wildcard-imports classname buffer)
           (find (concat "java.lang." classname)
                 (malabar-qualify-class-name classname buffer)
@@ -162,11 +162,11 @@ automatically imported.")
 (defun malabar-import-current-package-p (qualified-class)
   (let ((package (malabar-get-package-name)))
     (when package
-      (string-match (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class))))
+      (string-match-p (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class))))
 
 (defun malabar-import-exclude (qualified-class)
   (or (some (lambda (re)
-              (string-match re qualified-class))
+              (string-match-p re qualified-class))
             malabar-import-excluded-classes-regexp-list)
       (malabar-import-current-package-p qualified-class)))
 
@@ -524,7 +524,8 @@ using 'mvn test -Dtestname'."
   :arguments
   :declaring-class
   :members
-  :throws)
+  :throws
+  :type)
 
 (defmacro define-spec-modifier-predicates (&rest props)
   `(progn
@@ -1026,39 +1027,89 @@ accessible constructors."
           ((array-reference unknown)
            (error "Cannot (yet) resolve type of %s (%s)" expression kind)))
         (cond (relative-type
-               ;; TODO: Resolve exp-and-kind in relative-type
-               nil)
-              ;; Resolve exp-and-kind in class at point
+               (malabar--resolve-type-of-in-type
+                exp kind
+                (malabar-qualify-class-name-in-buffer relative-type)))
               (t
                (malabar--resolve-type-of-locally exp kind (malabar-get-class-tag-at-point)))))))
 
-(defun malabar--find-tag-named (name tag-list)
-  (find name tag-list
-        :key #'semantic-tag-name
-        :test #'equal))
+(defun malabar--resolve-type-of-in-type (exp kind type)
+  (let ((expression (if (eq kind 'function-call)
+                        (malabar--invoked-function-name exp)
+                      exp))
+        (candidates (remove* (ecase kind
+                               (variable 'field)
+                               (function-call 'method))
+                             (malabar-get-members type)
+                             :test-not #'eq
+                             :key #'car)))
+    (if (eq kind 'variable)
+        (malabar--get-type (find expression
+                                 candidates
+                                 :test #'equal
+                                 :key #'malabar--get-name))
+      (let ((arg-count (malabar--invocation-argument-count exp)))
+        ;; TODO: Filter methods on argument types
+        (malabar--get-return-type
+         (find-if (lambda (method)
+                    (and (equal expression (malabar--get-name method))
+                         (= (length (malabar--get-arguments method))
+                            arg-count)))
+                  candidates))))))
 
-(defun malabar--find-member-named (name type-tag)
-  (malabar--find-tag-named name (semantic-tag-type-members type-tag)))
+(defun malabar--find-tags-named (name tag-list)
+  (remove* name
+           tag-list
+           :key #'semantic-tag-name
+           :test-not #'equal))
+
+(defun malabar--find-members-named (name type-tag)
+  (malabar--find-tags-named name (semantic-tag-type-members type-tag)))
+
+(defun malabar--invocation-argument-count (expression)
+  (if (string-match-p "()" expression)
+      0
+    (1+ (count ?, expression))))
+
+(defun malabar--invoked-function-name (expression)
+  (string-match "^[^(]+" expression)
+  (match-string 0 expression))
 
 (defun malabar--resolve-type-of-locally (exp kind class-tag)
   (save-excursion
     (let* ((expression (if (eq kind 'function-call)
-                           (progn (string-match "^[^(]+" exp)
-                                  (match-string 0 exp))
+                           (malabar--invoked-function-name exp)
                          exp))
-           (local-type (let ((local-variable (and (eq kind 'variable)
-                                                  (malabar--find-tag-named expression (semantic-get-local-variables))))
-                             (member (malabar--find-member-named expression class-tag)))
-                         (semantic-tag-type (or local-variable
-                                                member)))))
-      (or local-type
-          (malabar--resolve-type-of (cons exp kind) (malabar-get-superclass class-tag))
-          (some (lambda (i)
-                  (malabar--resolve-type-of (cons exp kind) i))
-                (semantic-tag-type-interfaces class-tag))
-          (when (and (not (member "static" (semantic-tag-modifiers class-tag)))
-                     (not (semantic-up-context (semantic-tag-start class-tag) 'type)))
-            (malabar--resolve-type-of-locally exp kind (semantic-current-tag-of-class 'type)))
-          (error "Failed to resolve type of %s (%s)" exp kind)))))
+           (candidates (let ((local-variables
+                              (when (eq kind 'variable)
+                                (malabar--find-tags-named expression
+                                                          (semantic-get-local-variables))))
+                             (members (malabar--find-members-named expression class-tag)))
+                         (or local-variables
+                             ;; TODO: Filter on argument types
+                             (let ((arg-count (malabar--invocation-argument-count exp)))
+                               (remove-if-not (lambda (args)
+                                                (= (length args) arg-count))
+                                              members
+                                              :key #'semantic-tag-function-arguments))))))
+      (or
+       ;; local match
+       (when candidates
+         (if (= (length candidates) 1)
+             (semantic-tag-type (car candidates))
+           (error "Failed to resolve type of %s (%s): Multiple matches (flying pigs)"
+                  exp kind)))
+       ;; Try superclass
+       (malabar--resolve-type-of (cons exp kind) (malabar-get-superclass class-tag))
+       ;; Maybe in an interface?
+       (some (lambda (i)
+               (malabar--resolve-type-of (cons exp kind) i))
+             (semantic-tag-type-interfaces class-tag))
+       ;; If we are a non-static inner class, try our outer
+       (when (and (not (member "static" (semantic-tag-modifiers class-tag)))
+                  (not (semantic-up-context (semantic-tag-start class-tag) 'type)))
+         (malabar--resolve-type-of-locally exp kind (semantic-current-tag-of-class 'type)))
+       ;; TILT
+       (error "Failed to locally resolve type of %s (%s)" exp kind)))))
 
 (provide 'malabar-mode)
