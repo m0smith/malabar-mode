@@ -1214,7 +1214,7 @@ block_statements_reverse
 block_statement
   : local_variable_declaration_statement
   | statement
-    () ;; TODO
+    (progn $1)
   | class_declaration
   | enum_declaration
   | interface_declaration
@@ -1278,6 +1278,7 @@ statement_without_trailing_substatement
 
 empty_statement
   : SEMICOLON
+    ()
   ;
 
 labeled_statement
@@ -1290,6 +1291,7 @@ labeled_statement_no_short_if
 
 expression_statement
   : statement_expression SEMICOLON
+    ()
   ;
 
 statement_expression
@@ -1304,20 +1306,24 @@ statement_expression
 
 if_then_statement
   : IF LPAREN expression RPAREN statement
+    (progn $5)
   ;
 
 if_then_else_statement
   : IF LPAREN expression RPAREN statement_no_short_if 
     ELSE statement
+    (nconc $5 $7)
   ;
 
 if_then_else_statement_no_short_if
   : IF LPAREN expression RPAREN statement_no_short_if
     ELSE statement_no_short_if
+    (nconc $5 $7)
   ;
 
 switch_statement
   : SWITCH LPAREN expression RPAREN switch_block
+    ()
   ;
 
 switch_block
@@ -1359,6 +1365,7 @@ while_statement_no_short_if
 
 do_statement
   : DO statement WHILE LPAREN expression RPAREN SEMICOLON
+    ()
   ;
 
 foreach_statement
@@ -1429,18 +1436,22 @@ identifier_opt
 
 break_statement
   : BREAK identifier_opt SEMICOLON
+    ()
   ;
 
 continue_statement
   : CONTINUE identifier_opt SEMICOLON
+    ()
   ;
 
 return_statement
   : RETURN expression_opt SEMICOLON
+    ()
   ;
 
 throw_statement
   : THROW expression SEMICOLON
+    ()
   ;
 
 synchronized_statement
@@ -1449,7 +1460,9 @@ synchronized_statement
 
 try_statement
   : TRY block catches
+    (list $2 $3)
   | TRY block catches_opt finally
+    (list $2 $3 $4)
   ;
 
 catches_opt
@@ -1464,15 +1477,19 @@ catches
 
 catch_clause
   : CATCH LPAREN formal_parameter RPAREN block
+    (progn $3)
   ;
 
 finally
   : FINALLY block
+    (progn $2)
   ;
 
 assert_statement
   : ASSERT expression SEMICOLON
+    ()
   | ASSERT expression COLON expression SEMICOLON
+    ()
   ;
 
 ;;; 19.12) Expressions
