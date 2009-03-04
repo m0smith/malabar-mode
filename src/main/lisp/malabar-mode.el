@@ -524,6 +524,8 @@ using 'mvn test -Dtestname'."
   :arguments
   :declaring-class
   :members
+  :super-class
+  :interfaces
   :throws
   :type)
 
@@ -979,7 +981,7 @@ accessible constructors."
 (defun malabar--expression-at-point ()
   (let* ((point (point))
          (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
-    (buffer-substring-no-properties pseudo-statement-start point)))
+    (string-trim (buffer-substring-no-properties pseudo-statement-start point))))
 
 (defun malabar--expression-components (expression)
   (let ((result nil))
@@ -1024,14 +1026,24 @@ accessible constructors."
           (constructor-call
            (string-match "^new \\([A-Za-z_][^(]*\\)" expression)
            (match-string 1 expression))
+          (this-reference
+           (or relative-type
+               (malabar-unqualified-class-name-of-buffer)))
+          (super-reference
+           (if relative-type
+               (malabar--get-super-class
+                (malabar-get-class-info
+                 (malabar-qualify-class-name-in-buffer relative-type)))
+             (malabar-get-superclass-at-point)))
           ((array-reference unknown)
            (error "Cannot (yet) resolve type of %s (%s)" expression kind)))
         (cond (relative-type
                (malabar--resolve-type-of-in-type
-                exp kind
+                expression kind
                 (malabar-qualify-class-name-in-buffer relative-type)))
               (t
-               (malabar--resolve-type-of-locally exp kind (malabar-get-class-tag-at-point)))))))
+               (malabar--resolve-type-of-locally expression kind
+                                                 (malabar-get-class-tag-at-point)))))))
 
 (defun malabar--resolve-type-of-in-type (exp kind type)
   (let ((expression (if (eq kind 'function-call)
