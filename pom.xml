@@ -93,7 +93,7 @@
                 <argument>-Q</argument>
                 <argument>--batch</argument>
                 <argument>-l</argument>
-                <argument>src/test/lisp/malabar-util.elk</argument>
+                <argument>src/test/lisp/all-tests.el</argument>
               </arguments>
             </configuration>
           </execution>
