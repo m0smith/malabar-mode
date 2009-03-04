@@ -211,9 +211,9 @@ case a message describing the errors or success is displayed and returned."
         (error "Undefined test <%s>" name)
       (setq error-list (if (equal (car test-or-group) 'group)
                            ;; is test group
-                           (mapcan 'elk-test-run (cdr test-or-group))
+                           (mapcar 'elk-test-run (cdr test-or-group))
                          ;; is simple test
-                         (elk-test-run-internal test-or-group)))
+                         (cons name (elk-test-run-internal test-or-group))))
       (if (or string-result (interactive-p))
           (message (if error-list
                        (mapconcat 'identity error-list "\n")
