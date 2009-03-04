@@ -34,7 +34,7 @@
                                         r))
                                     (elk-test-run "all-tests")))))
   (mapc (lambda (r)
-          (message "%s: %s" (car r) (cdr r)))
+          (message "***FAIL: %s: %s" (car r) (cdr r)))
         failures)
   (when (and failures noninteractive)
     (kill-emacs 1)))
