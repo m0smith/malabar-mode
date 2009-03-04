@@ -170,11 +170,13 @@ pop to the Groovy console buffer."
 (defvar malabar-groovy--eval-callback nil)
 
 (defun malabar-groovy--init-compile-server-buffer ()
-  (add-hook 'comint-output-filter-functions
-            'malabar-groovy--compile-filter
+  (malabar-groovy-mode)
+  (add-hook 'comint-redirect-hook
+            'malabar-groovy--compile-handle-exit
             nil t))
   
 (defun malabar-groovy--init-eval-buffer ()
+  (malabar-groovy-mode)
   (when (assq 'comint-output-filter-functions (buffer-local-variables))
     ;; HACK: There is no reliable way to remove a closure from this
     ;; list; just clear it, but only if it is already buffer-local
@@ -245,16 +247,11 @@ pop to the Groovy console buffer."
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
     (let ((groovy-process (get-buffer-process malabar-groovy-compile-server-buffer-name)))
-      (malabar-groovy-eval-in-process groovy-process string))))
+      (comint-redirect-send-command-to-process string malabar-groovy-compilation-buffer-name
+                                               groovy-process nil))))
 
-(defun malabar-groovy--compile-filter (string)
+(defun malabar-groovy--compile-handle-exit ()
   (with-current-buffer malabar-groovy-compilation-buffer-name
-    (insert (replace-regexp-in-string malabar-groovy-prompt-regexp "" string t t))
-    (when (string-match "===>" string)
-      (malabar-groovy--compile-handle-exit (current-buffer)))))
-
-(defun malabar-groovy--compile-handle-exit (buffer)
-  (with-current-buffer buffer
     (let ((result (progn (goto-char (point-max))
                          (re-search-backward "===> \\(.*\\)$")
                          (match-string-no-properties 1))))
