@@ -171,11 +171,6 @@ class Classpath
         }
     }
     
-    def getMembers(String className) {
-        Class c = this.classLoader.loadClass(className)
-        getMembers(c)
-    }
-
     def getMembers(Class c) {
         print "("
         getMembersInternal(c, [] as Set)
