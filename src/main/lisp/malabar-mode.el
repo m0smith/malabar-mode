@@ -57,6 +57,7 @@
                              :test-not #'eql
                              :key #'semantic-tag-class)
                     result))))))
+    (push (semantic-tag-function-arguments (semantic-current-tag-of-class 'function)) result)
     (apply 'append result)))
 
 (defvar malabar-mode-map
