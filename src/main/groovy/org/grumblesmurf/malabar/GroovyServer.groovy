@@ -37,19 +37,11 @@ class GroovyServer
         return io.get()?.out ?: System.out
     }
     
-    static Closure printlnClosure = { String it ->
-        GroovyServer.getOut().println(it)
-    }
-    
-    static Closure printClosure = { String it ->
-        GroovyServer.getOut().print(it)
-    }
-    
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
         
-        Object.metaClass.println = printlnClosure;
-        Object.metaClass.print = printClosure;
+        Object.metaClass.println = Utils.&println; 
+        Object.metaClass.print = Utils.&print;
         
         def cli = new CliBuilder();
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');

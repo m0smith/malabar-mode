@@ -20,6 +20,14 @@ package org.grumblesmurf.malabar
 
 class Utils 
 {
+    static print(Object v) {
+        GroovyServer.getOut().print(v);
+    }
+    
+    static println(Object v) {
+        GroovyServer.getOut().println(v);
+    }
+    
     static printAsLispList(List list) {
         print "("
         list.each {
