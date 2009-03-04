@@ -430,12 +430,8 @@ return the corresponding cdr."
   (let* ((class-name (match-string-no-properties 2))
          (class-file (malabar-class-name-to-filename class-name)))
     (list
-     (malabar-locate-file
-      class-file
-      malabar-compilation-project-test-source-directories))))
-
-(defun malabar-locate-file (file directories)
-  (locate-file file directories))
+     (locate-file class-file
+                  malabar-compilation-project-test-source-directories))))
 
 (defvar malabar-test-class-suffix "Test")
 
@@ -458,7 +454,7 @@ return the corresponding cdr."
                                       (malabar-maven-find-project-file buffer))))
         (funcall
          (if silent #'find-file-noselect #'find-file)
-         (or (malabar-locate-file class-file test-source-directories)
+         (or (locate-file class-file test-source-directories)
              (expand-file-name class-file (car test-source-directories))))))))
 
 (defun malabar-run-test-internal (test-starter)
