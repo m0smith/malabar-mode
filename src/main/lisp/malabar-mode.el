@@ -21,6 +21,11 @@
 (require 'semantic-ctxt)
 (require 'semantic-find)
 (require 'semantic-wisent)
+
+;; HACK
+(provide 'wisent-java-wy)
+(require 'wisent-java)
+
 (require 'wisent-malabar-java-wy)
 (require 'cl)
 (require 'thingatpt)
@@ -42,7 +47,7 @@
         (let ((these-blocks (semantic-parse-region
                              (point)
                              (save-excursion (semantic-end-of-context) (point))
-                             ;; See this production in wisent-java.wy.
+                             ;; See this production in wisent-malabar-java.wy.
                              'block_statements
                              nil t)))
           (dolist (block these-blocks)
@@ -70,7 +75,9 @@
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
-  ;; Funky stuff here
+  ;; HACK
+  (flet ((wisent-java-wy--install-parser () nil))
+    (wisent-java-default-setup))
   (add-hook 'semantic-init-hooks #'malabar-semantic-setup)
   (setq semantic-lex-depth 10)
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
