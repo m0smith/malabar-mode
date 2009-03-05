@@ -6,6 +6,11 @@
   <version>1.0-SNAPSHOT</version>
   <name>A better Java mode for Emacs</name>
   <inceptionYear>2009</inceptionYear>
+  <scm>
+    <url>http://github.com/espenhw/malabar-mode</url>
+    <connection>scm:git:git://github.com/espenhw/malabar-mode.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/espenhw/malabar-mode.git</developerConnection>
+  </scm>
   <licenses>
     <license>
       <name>The GNU General Public License, Version 2</name>
