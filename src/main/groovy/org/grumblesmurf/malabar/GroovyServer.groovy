@@ -66,7 +66,7 @@ class GroovyServer
     
     static startConsole() {
         IO io = new IO();
-        Utils.setOut(io.out);
+        Utils.setIO(io);
         Binding binding = new Binding();
         binding['io'] = io;
         new Groovysh(binding, io).run();
@@ -106,7 +106,7 @@ class GroovySocketServer
             Socket client = server.accept();
             try {
                 IO io = new IO(client.inputStream, client.outputStream, client.outputStream);
-                Utils.setOut(io.out);
+                Utils.setIO(io);
                 Binding binding = new Binding();
                 binding['io'] = io;
                 new Groovysh(binding, io).run();

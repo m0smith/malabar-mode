@@ -16,18 +16,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
  */ 
-package org.grumblesmurf.malabar
+package org.grumblesmurf.malabar;
 
+import org.codehaus.groovy.tools.shell.IO;
+    
 class Utils 
 {
-    static ThreadLocal<PrintWriter> _out = new ThreadLocal<PrintWriter>();
+    static ThreadLocal<IO> _io = new ThreadLocal<IO>();
 
     static getOut() {
-        return _out.get() ?: System.out
+        return _io.get()?.out ?: System.out
     }
 
-    static setOut(PrintWriter out) {
-        _out.set(out);
+    static setIO(IO io) {
+        _io.set(io);
     }
     
     static print(Object v) {

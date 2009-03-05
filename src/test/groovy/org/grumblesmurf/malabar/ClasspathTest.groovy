@@ -44,7 +44,7 @@ class ClasspathTest
     @Before
     void setIO() {
         out = new ByteArrayOutputStream();
-        Utils.setOut(new IO(System.in, out, out).out)
+        Utils.setIO(new IO(System.in, out, out));
     }
     
     @AfterClass
