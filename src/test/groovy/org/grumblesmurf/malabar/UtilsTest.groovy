@@ -30,4 +30,14 @@ class UtilsTest
     void emptyListIsEmpty() {
         assertThat(Utils.asLispList([]), is("()"))
     }
+
+    @Test
+    void singletonList() {
+        assertThat(Utils.asLispList(['a']), is('("a")'))
+    }
+
+    @Test
+    void nestedList() {
+        assertThat(Utils.asLispList(['a', ['b'], 'c']), is('("a" ("b") "c")'))
+    }
 }
