@@ -61,17 +61,24 @@
     (push (semantic-tag-function-arguments (semantic-current-tag-of-class 'function)) result)
     (apply 'append result)))
 
+(defvar malabar-mode-key-prefix [?\C-c ?\C-v]
+  "The prefix key for malabar-mode commands.")
+
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [?\C-c ?\C-v ?\C-b] 'malabar-install-project)
-    (define-key map [?\C-c ?\C-v ?\C-c] 'malabar-compile-file)
-    (define-key map [?\C-c ?\C-v ?t] 'malabar-run-test)
-    (define-key map [?\C-c ?\C-v ?\C-t] 'malabar-run-junit-test-no-maven)
-    (define-key map [?\C-c ?\C-v ?\M-t] 'malabar-run-all-tests)
-    (define-key map [?\C-c ?\C-v ?\C-z] 'malabar-import-one-class)
-    (define-key map [?\C-c ?\C-v ?\C-o] 'malabar-override-method)
-    (define-key map [?\C-c ?\C-v ?\C-e] 'malabar-extend-class)
-    (define-key map [?\C-c ?\C-v ?\C-i] 'malabar-implement-interface)
+    (let ((prefix-map (make-sparse-keymap)))
+      (define-key prefix-map [?\C-b] 'malabar-install-project)
+      (define-key prefix-map [?\C-c] 'malabar-compile-file)
+      (define-key prefix-map [?t] 'malabar-run-test)
+      (define-key prefix-map [?\C-t] 'malabar-run-junit-test-no-maven)
+      (define-key prefix-map [?\M-t] 'malabar-run-all-tests)
+      (define-key prefix-map [?\C-z] 'malabar-import-one-class)
+      (define-key prefix-map [?\C-o] 'malabar-override-method)
+      (define-key prefix-map [?\C-e] 'malabar-extend-class)
+      (define-key prefix-map [?\C-i] 'malabar-implement-interface)
+      (define-key prefix-map [?.] 'malabar-complete)
+      (define-key prefix-map [?\C-.] 'malabar-complete)
+      (define-key map malabar-mode-key-prefix prefix-map))
     map)
   "Keymap for Malabar mode.")
 
@@ -580,16 +587,22 @@ using 'mvn test -Dtestname'."
 (defun malabar--cleaned-modifiers (spec)
   (remove 'native (remove 'abstract (malabar--get-modifiers spec))))
 
-(defun malabar-create-simplified-method-signature (method-spec)
-  "Creates a readable method signature suitable for
+(defun malabar-create-simplified-signature (spec)
+  "Creates a readable signature suitable for
 e.g. `malabar-choose'."
-  (assert (malabar--method-p method-spec))
-  (let ((modifiers (malabar--cleaned-modifiers method-spec))
-        (return-type (malabar--get-return-type method-spec))
-        (name (malabar--get-name method-spec))
-        (arguments (malabar--get-arguments method-spec)))
-    (concat name (malabar--stringify-arguments-with-types arguments)
-            " : " return-type
+  (let ((modifiers (malabar--cleaned-modifiers spec))
+        (type (cond ((malabar--method-p spec)
+                     (malabar--get-return-type spec))
+                    ((malabar--field-p spec)
+                     (malabar--get-type spec))
+                    (t
+                     (error "Can't create signature for a %s" (car spec)))))
+        (name (malabar--get-name spec))
+        (arguments (malabar--get-arguments spec)))
+    (concat name (if (malabar--method-p spec)
+                     (malabar--stringify-arguments-with-types arguments)
+                   "")
+            " : " type
             " (" (mapconcat #'symbol-name modifiers " ") ")")))
 
 (defun malabar--stringify-arguments-with-types (arguments)
@@ -658,9 +671,9 @@ e.g. `malabar-choose'."
   (or (car (semantic-tag-type-superclasses class-tag))
        "Object"))
   
-(defun malabar-override-method-make-choose-spec (method-spec)
-  (cons (malabar-create-simplified-method-signature method-spec)
-        method-spec))
+(defun malabar-make-choose-spec (spec)
+  (cons (malabar-create-simplified-signature spec)
+        spec))
 
 (defun malabar-get-class-tag-at-point ()
   (or (semantic-current-tag-of-class 'type)
@@ -719,7 +732,7 @@ for the method to override."
     (unless method-spec
       (setq method-spec
             (malabar-choose "Method to override: "
-                            (mapcar 'malabar-override-method-make-choose-spec
+                            (mapcar 'malabar-make-choose-spec
                                     overridable-methods))))
     (when method-spec
       (malabar--override-method method-spec overridable-methods nil nil t))))
@@ -931,7 +944,7 @@ accessible constructors."
                   (insert (malabar-create-constructor-signature constructor) " {\n"
                           "// TODO: Stub\n"
                           "super" (malabar--stringify-arguments
-                                   (malabar--get-arguments constructor)) ";"
+                                   (malabar--get-arguments constructor)) ";\n"
                           "}\n\n")
                   (forward-line -2)
                   (c-indent-defun)
@@ -1152,8 +1165,26 @@ accessible constructors."
   (interactive)
   (when (member (char-before (point)) '(?\] ?\)))
     (error "Cannot complete here."))
-  (message "%s" (malabar--complete-internal (malabar--expression-at-point))))
+  (destructuring-bind (seed &rest completions)
+      (malabar--complete-internal (malabar--expression-at-point))
+    (malabar--insert-completion
+     seed
+     (if (null (cdr completions)) ;; Single completion
+         (car completions)
+       (malabar-choose "Completion: "
+                       (mapcar 'malabar-make-choose-spec
+                               completions))))))
 
+(defun malabar--insert-completion (seed spec)
+  (insert (substring (cond ((malabar--field-p spec)
+                            (malabar--get-name spec))
+                           ((malabar--method-p spec)
+                            (concat (malabar--get-name spec)
+                                    (malabar--stringify-arguments
+                                     (malabar--get-arguments spec))))
+                           (t (error "Cannot insert a %s" (car spec))))
+                     (length seed))))
+    
 (defun malabar--complete-internal (expression)
   (if (position ?. expression)
       ;; go back to before last dot, find type, and complete using last component
@@ -1166,14 +1197,17 @@ accessible constructors."
                (local-type-tag (find raw-type (malabar--type-tags-in-buffer)
                                      :key #'semantic-tag-name
                                      :test #'string=)))
-          (remove-if-not (lambda (spec)
-                           (string-starts-with (malabar--get-name spec)
-                                               completion-seed))
-                         (if local-type-tag
-                             (mapcar #'malabar--tag-to-spec
-                                     (semantic-tag-type-members local-type-tag))
-                           (malabar-get-members
-                            (malabar-qualify-class-name-in-buffer last-component-type))))))
+          (cons completion-seed
+                (remove-if-not (lambda (spec)
+                                 (and (malabar--get-name spec)
+                                      (string-starts-with (malabar--get-name spec)
+                                                          completion-seed)))
+                               (if local-type-tag
+                                   (mapcar #'malabar--tag-to-spec
+                                           (semantic-tag-type-members local-type-tag))
+                                 (malabar-get-members
+                                  (malabar-qualify-class-name-in-buffer
+                                   last-component-type)))))))
     (malabar--complete-internal "this.")))
 
 (defun malabar--tag-to-spec (tag)
