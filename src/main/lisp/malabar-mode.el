@@ -979,9 +979,10 @@ accessible constructors."
         (forward-line back-lines)))))
 
 (defun malabar--expression-at-point ()
-  (let* ((point (point))
-         (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
-    (string-trim (buffer-substring-no-properties pseudo-statement-start point))))
+  (save-excursion
+    (let* ((point (point))
+           (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
+      (string-trim (buffer-substring-no-properties pseudo-statement-start point)))))
 
 (defun malabar--expression-components (expression)
   (let ((result nil))
@@ -999,6 +1000,16 @@ accessible constructors."
     (mapcar (lambda (exp)
               (cons exp (malabar--expression-kind exp)))
             (nreverse result))))
+
+(defun malabar--expression-components-with-types (components)
+  (let ((result nil))
+    (dolist (exp-and-kind components)
+      (push (cons (car exp-and-kind)
+                  (malabar--resolve-type-of exp-and-kind
+                                            (malabar-qualify-class-name-in-buffer
+                                             (cdr (car-safe result)))))
+            result))
+    (nreverse result)))
 
 (defun malabar--expression-kind (expression)
   (cond ((string-match-p "^new .*)$" expression)
@@ -1029,6 +1040,7 @@ accessible constructors."
           (this-reference
            (or relative-type
                (malabar-unqualified-class-name-of-buffer)))
+          ;; TODO: Static dereferencing
           (super-reference
            (if relative-type
                (malabar--get-super-class
@@ -1094,8 +1106,19 @@ accessible constructors."
                          exp))
            (candidates (let ((local-variables
                               (when (eq kind 'variable)
-                                (malabar--find-tags-named expression
-                                                          (semantic-get-local-variables))))
+                                (save-excursion
+                                  ;; HACK!
+                                  (forward-line 0)
+                                  (let ((old-point (point)))
+                                    (unwind-protect
+                                        (progn
+                                          (forward-line)
+                                          (comment-region old-point (point))
+                                          (semantic-fetch-tags)
+                                          (malabar--find-tags-named
+                                           expression
+                                           (semantic-get-local-variables)))
+                                      (uncomment-region old-point (point)))))))
                              (members (malabar--find-members-named expression class-tag)))
                          (or local-variables
                              ;; TODO: Filter on argument types
@@ -1108,6 +1131,7 @@ accessible constructors."
        ;; local match
        (when candidates
          (if (= (length candidates) 1)
+             ;; TODO: Deal with arrays here
              (semantic-tag-type (car candidates))
            (error "Failed to resolve type of %s (%s): Multiple matches (flying pigs)"
                   exp kind)))
@@ -1124,4 +1148,67 @@ accessible constructors."
        ;; TILT
        (error "Failed to locally resolve type of %s (%s)" exp kind)))))
 
+(defun malabar-complete ()
+  (interactive)
+  (when (member (char-before (point)) '(?\] ?\)))
+    (error "Cannot complete here."))
+  (message "%s" (malabar--complete-internal (malabar--expression-at-point))))
+
+(defun malabar--complete-internal (expression)
+  (if (position ?. expression)
+      ;; go back to before last dot, find type, and complete using last component
+      (let* ((components (malabar--expression-components expression))
+             (completion-seed (caar (last components)))
+             (last-component-type
+              (cdar
+               (last (malabar--expression-components-with-types (butlast components))))))
+        (let* ((raw-type (malabar--raw-type last-component-type))
+               (local-type-tag (find raw-type (malabar--type-tags-in-buffer)
+                                     :key #'semantic-tag-name
+                                     :test #'string=)))
+          (remove-if-not (lambda (spec)
+                           (string-starts-with (malabar--get-name spec)
+                                               completion-seed))
+                         (if local-type-tag
+                             (mapcar #'malabar--tag-to-spec
+                                     (semantic-tag-type-members local-type-tag))
+                           (malabar-get-members
+                            (malabar-qualify-class-name-in-buffer last-component-type))))))
+    (malabar--complete-internal "this.")))
+
+(defun malabar--tag-to-spec (tag)
+  (let ((type (ecase (semantic-tag-class tag)
+                (variable 'field)
+                (type
+                 (if (semantic-tag-get-attribute tag :enum-constant-flag)
+                     'field
+                   'class))
+                ;; TODO: class
+                (function
+                 (if (semantic-tag-function-constructor-p tag)
+                     'constructor
+                   'method)))))
+    `(,type
+      ,@(unless (eq type 'constructor)
+          (list :name (semantic-tag-name tag)))
+      :modifiers (semantic-tag-modifiers tag)
+      ;; TODO :type-parameters
+      ;; TODO: Deal with arrays here, too
+      ,@(when (eq type 'method)
+          (list :return-type (semantic-tag-type tag)))
+      ,@(when (eq type 'field)
+          (list :type (semantic-tag-type tag)))
+      ,@(when (or (eq type 'method)
+                  (eq type 'constructor))
+          (list :arguments (mapcar (lambda (arg)
+                                     (list :name (semantic-tag-name arg)
+                                           :type (semantic-tag-type arg)))
+                                   (semantic-tag-function-arguments tag))
+                :throws (semantic-tag-function-throws tag))))))
+
+(defun malabar--type-tags-in-buffer (&optional buffer)
+  (semantic-find-tags-by-class 'type
+                               (semantic-flatten-tags-table (or buffer
+                                                                (current-buffer)))))
+        
 (provide 'malabar-mode)
