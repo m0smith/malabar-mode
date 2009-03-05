@@ -44,10 +44,9 @@ class ClasspathTest
     @Before
     void setIO() {
         out = new ByteArrayOutputStream();
-        GroovyServer.io.set(new IO(System.in, out, out));
+        Utils.setOut(new IO(System.in, out, out).out)
     }
     
-
     @AfterClass
     static void setExceptionHandler() {
         Thread[] threads = new Thread[Thread.activeCount() * 2];
@@ -76,25 +75,25 @@ class ClasspathTest
     @Test
     void inputStreamImplementsCloseable() {
         String result = classInfo("java.io.InputStream");
-        assertThat(result, containsString(':interfaces ("java.io.Closeable" )'));
+        assertThat(result, containsString(':interfaces ("java.io.Closeable")'));
     }
 
     @Test
     void outputStreamImplementsCloseableAndFlushable() {
         String result = classInfo("java.io.OutputStream");
-        assertThat(result, containsString(':interfaces ("java.io.Closeable" "java.io.Flushable" )'));
+        assertThat(result, containsString(':interfaces ("java.io.Closeable" "java.io.Flushable")'));
     }
 
     @Test
     void collectionImplementsIterableE() {
         String result = classInfo("java.util.Collection");
-        assertThat(result, containsString(':interfaces ("java.lang.Iterable<E>" )'));
+        assertThat(result, containsString(':interfaces ("java.lang.Iterable<E>")'));
     }
 
     @Test
     void scannerImplementsIteratorString() {
         String result = classInfo("java.util.Scanner");
-        assertThat(result, containsString(':interfaces ("java.util.Iterator<java.lang.String>" )'));
+        assertThat(result, containsString(':interfaces ("java.util.Iterator<java.lang.String>")'));
     }
 
     def classInfo(name) {

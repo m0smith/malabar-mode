@@ -20,26 +20,40 @@ package org.grumblesmurf.malabar
 
 class Utils 
 {
+    static ThreadLocal<PrintWriter> _out = new ThreadLocal<PrintWriter>();
+
+    static getOut() {
+        return _out.get() ?: System.out
+    }
+
+    static setOut(PrintWriter out) {
+        _out.set(out);
+    }
+    
     static print(Object v) {
-        GroovyServer.getOut().print(v);
+        getOut().print(v);
     }
     
     static println(Object v) {
-        GroovyServer.getOut().println(v);
+        getOut().println(v);
     }
-    
+
     static printAsLispList(List list) {
-        print "("
-        list.each {
+        print asLispList(list)
+    }
+
+    static asLispList(List list) {
+        def result = new StringBuilder("(");
+        result << list.collect {
             if (it instanceof String) {
-                print '"' + it + '"'
+                "\"${it}\""
             } else if (it instanceof List) {
-                printAsLispList(it)
+                asLispList(it)
             } else {
-                print it
+                it
             }
-            print " "
-        }
-        print ")"
+        }.join(" ");
+        result << ")";
+        return result as String;
     }
 }

@@ -31,12 +31,6 @@ class GroovyServer
 {
     static ready = new CountDownLatch(2);
 
-    static ThreadLocal<IO> io = new ThreadLocal<IO>();
-
-    static def getOut() {
-        return io.get()?.out ?: System.out
-    }
-    
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
         
@@ -72,7 +66,7 @@ class GroovyServer
     
     static startConsole() {
         IO io = new IO();
-        GroovyServer.io.set(io);
+        Utils.setOut(io.out);
         Binding binding = new Binding();
         binding['io'] = io;
         new Groovysh(binding, io).run();
@@ -112,7 +106,7 @@ class GroovySocketServer
             Socket client = server.accept();
             try {
                 IO io = new IO(client.inputStream, client.outputStream, client.outputStream);
-                GroovyServer.io.set(io);
+                Utils.setOut(io.out);
                 Binding binding = new Binding();
                 binding['io'] = io;
                 new Groovysh(binding, io).run();
