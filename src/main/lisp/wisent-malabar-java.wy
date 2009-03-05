@@ -1479,7 +1479,7 @@ catches
   : catch_clause
     (progn $1)
   | catches catch_clause
-    (cons $1 $3)
+    (cons $1 $2)
   ;
 
 catch_clause
