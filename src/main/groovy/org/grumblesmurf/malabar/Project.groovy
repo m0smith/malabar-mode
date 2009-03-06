@@ -84,15 +84,20 @@ class Project
     def runJunit(testname) {
         // Extra care must be taken to ensure class reloadability
         def classloader = testClasspath.newClassLoader()
-        def junitcore = classloader.loadClass("org.junit.runner.JUnitCore")
+        def junitcore = classloader.loadClass("org.junit.runner.JUnitCore").newInstance()
         def testclass = classloader.loadClass(testname)
-        def result = junitcore.runClasses(testclass);
-        result.failures.each{
-            println it
+        // our RunListener must be loaded by a descendant of the test
+        // classloader, otherwise all kinds of weird errors happen
+        def byteStream = new ByteArrayOutputStream();
+        this.class.classLoader.getResourceAsStream(MalabarRunListener.name.replace('.', '/') + ".class").eachByte{
+            byteStream.write(it)
         }
-        println "Failures: ${result.failureCount}  Tests run: ${result.runCount}  Ignored: ${result.ignoreCount}"
-        def seconds = result.runTime / 1000.0
-        println "Took ${seconds} seconds"
+        def runListenerClassLoader =
+            new SingleClassClassLoader(MalabarRunListener.name,
+                                       byteStream.toByteArray(),
+                                       classloader);
+        junitcore.addListener(runListenerClassLoader.loadClass(MalabarRunListener.name).newInstance(Utils.getOut()));
+        def result = junitcore.run(testclass);
         return result.wasSuccessful();
     }
     

@@ -449,6 +449,22 @@ return the corresponding cdr."
      (locate-file class-file
                   malabar-compilation-project-test-source-directories))))
 
+(defun malabar-find-test-class-from-junit-failure ()
+  (let ((class-file (match-string-no-properties 1)))
+    (list
+     (catch 'found
+       (dolist (dir malabar-compilation-project-test-source-directories)
+         (malabar--find-file class-file dir))
+       class-file))))
+
+(defun malabar--find-file (file directory)
+  (dolist (dir-file (directory-files directory 'full "^[^\\.]"))
+    (if (file-accessible-directory-p dir-file)
+        (malabar--find-file file dir-file)
+      (and (file-readable-p dir-file)
+           (string= file (file-name-nondirectory dir-file))
+           (throw 'found dir-file)))))
+
 (defvar malabar-test-class-suffix "Test")
 
 (defun malabar-corresponding-test-class-name (buffer)
@@ -505,10 +521,16 @@ using 'mvn test -Dtestname'."
   (malabar-build-project 'test))
 
 (defvar malabar-failed-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
+(defvar malabar-failed-junit-test-re "^  Failure point:  \\([^:]+\\):\\([0-9]+\\)$")
 
 (add-to-list 'compilation-error-regexp-alist
              (list malabar-failed-test-re                ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
+
+(add-to-list 'compilation-error-regexp-alist
+             (list malabar-failed-junit-test-re                  ;; RE
+                   'malabar-find-test-class-from-junit-failure   ;; FILE
+                   2))                                           ;; LINE
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
   (malabar-groovy-eval-and-lispeval
