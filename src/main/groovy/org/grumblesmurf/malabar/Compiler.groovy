@@ -43,7 +43,7 @@ class Compiler
         Iterable<? extends JavaFileObject> compilationUnits =
             fileManager.getJavaFileObjectsFromStrings(Arrays.asList(file));
         JavaCompiler.CompilationTask task =
-            compiler.getTask(GroovyServer.io.get().out, fileManager, null,
+            compiler.getTask(Utils.getOut(), fileManager, null,
                              ["-cp", classpath.asClassPath(),
                               "-g", "-deprecation",
                               "-d", output,
