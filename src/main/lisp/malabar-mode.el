@@ -138,7 +138,11 @@
                 :test #'equal)))))
 
 (defun malabar-find-imported-class-from-wildcard-imports (class &optional buffer)
-  (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer))))
+  (let ((tags
+         (remove-if-not (lambda (package)
+                          (string-ends-with package "*"))
+                        (semantic-find-tags-by-class 'include (or buffer (current-buffer)))
+                        :key #'semantic-tag-name))
         (classes (malabar-qualify-class-name class buffer)))
     (some (lambda (tag)
             (find (concat (malabar-get-package-of (semantic-tag-name tag)) "." class)
