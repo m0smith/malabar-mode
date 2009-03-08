@@ -17,6 +17,9 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
+(require 'cl)
+(require 'semantic)
+
 (defun string-starts-with (string start)
   (string= (substring string 0 (min (length string) (length start))) start))
 
@@ -75,4 +78,61 @@ keyed by the function's first parameter."
                  (puthash ,key ,gensym ,cache-name))
                ,gensym))))))
 
+(defun malabar-choose (prompt choices &optional default)
+  "Prompts (with completion) for an element of CHOICES,
+defaulting to DEFAULT.  CHOICES may be either a list of strings
+or a alist; if an alist, will prompt for a car of CHOICES and
+return the corresponding cdr."
+  (let ((res (completing-read prompt (if (consp (car choices))
+                                         (mapcar #'car choices)
+                                       choices) nil t default)))
+    (unless (equal "" res)
+      (if (consp (car choices))
+          (cdr (assoc res choices))
+        res))))
+
+(defun malabar--type-tags-in-buffer (&optional buffer)
+  (semantic-find-tags-by-class 'type
+                               (semantic-flatten-tags-table (or buffer
+                                                                (current-buffer)))))
+(defun malabar-class-defined-in-buffer-p (classname &optional buffer)
+  (let ((tags (malabar--type-tags-in-buffer buffer)))
+    (find classname tags
+          :key #'semantic-tag-name
+          :test #'equal)))
+
+(defun malabar-get-package-of (classname)
+  (let ((lastdot (position ?. classname :from-end t)))
+    (if lastdot
+        (substring classname 0 lastdot)
+      "")))
+
+(defun malabar-class-name-to-filename (class-name)
+  (concat (replace-regexp-in-string "\\." "/" class-name)
+          ".java"))
+
+(defun malabar--find-file (file directory)
+  (dolist (dir-file (directory-files directory 'full "^[^\\.]"))
+    (if (file-accessible-directory-p dir-file)
+        (malabar--find-file file dir-file)
+      (and (file-readable-p dir-file)
+           (string= file (file-name-nondirectory dir-file))
+           (throw 'found dir-file)))))
+
+(defun malabar-get-package-tag (&optional buffer)
+  (car (semantic-find-tags-by-class 'package (or buffer
+                                                 (current-buffer)))))
+
+(defun malabar-get-package-name (&optional buffer)
+  (let ((package-tag (malabar-get-package-tag)))
+    (when package-tag
+      (semantic-tag-name package-tag))))
+
+(defun malabar-get-class-tag-at-point ()
+  (or (semantic-current-tag-of-class 'type)
+      (car (semantic-find-tags-by-class 'type (current-buffer)))))
+
 (provide 'malabar-util)
+;; Local Variables:
+;; byte-compile-warnings:(not cl-functions)
+;; End:

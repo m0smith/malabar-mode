@@ -34,6 +34,7 @@
 ;; Lifted verbatim from JDEE, with renames for malabar-mode
 
 ;;; Code:
+(require 'cc-vars)
 
 (defun c-prepend-offset (symbol offset)
   "Find the offset entry for SYMBOL and add OFFSET at the front of the list.

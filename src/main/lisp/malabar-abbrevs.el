@@ -19,23 +19,8 @@
 ;;
 
 (require 'skeleton)
-
-(defvar malabar-case-fixed-abbrevs
-  '(("pu" "public")
-    ("pri" "private")
-    ("pro" "protected")
-    ("st" "static")
-    ("vo" "void")
-    ("ab" "abstract")
-    ("bo" "boolean")
-    ("cl" "class")
-    ("impl" "implements")
-    ("ext" "extends")
-    ("pa" "package")
-    ("re" "return")
-    ("#Test" hook malabar-abbrevs-create-test))
-  "The list of abbrevs which should be recognized only in the
-specified case.")
+(require 'cl)
+(require 'malabar-variables)
 
 (defun malabar-abbrevs-delete-abbrev ()
   "Delete the abbrev (prior to expanding)."
