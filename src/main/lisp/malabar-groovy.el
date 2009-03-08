@@ -100,6 +100,13 @@ for hacking on Malabar itself).")
                                       (cdr (assoc buffer initial-points-alist)) t))))
     (accept-process-output (get-buffer-process buffer))))
 
+(defun malabar-groovy-stop ()
+  "Stop the inferior Groovy."
+  (interactive)
+  (malabar-groovy-eval-in-process (get-buffer-process malabar-groovy-buffer-name)
+                                  "exit")
+  (message nil))
+
 (defun malabar-groovy-start (&optional silent)
   "Start groovy and wait for it to come up.  If SILENT is NIL,
 pop to the Groovy console buffer."
