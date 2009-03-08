@@ -1023,7 +1023,7 @@ accessible constructors."
 (defun malabar--expression-at-point ()
   (save-excursion
     (let* ((point (point))
-           (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=" nil t) (point))))
+           (pseudo-statement-start (progn (c-syntactic-skip-backward "^;,=:" nil t) (point))))
       (string-trim (buffer-substring-no-properties pseudo-statement-start point)))))
 
 (defun malabar--expression-components (expression)
