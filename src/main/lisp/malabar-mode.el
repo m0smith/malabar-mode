@@ -622,6 +622,8 @@ e.g. `malabar-choose'."
                      (malabar--get-return-type spec))
                     ((malabar--field-p spec)
                      (malabar--get-type spec))
+                    ((malabar--class-p spec)
+                     "class")
                     (t
                      (error "Can't create signature for a %s" (car spec)))))
         (name (malabar--get-name spec))
