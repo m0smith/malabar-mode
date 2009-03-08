@@ -127,7 +127,8 @@
   (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer)))))
     (let ((import-tag (find classname tags
                             :key #'semantic-tag-name
-                            :test #'equal)))
+                            :test (lambda (classname tag)
+                                    (string-ends-with tag classname)))))
       (or (when (> (count ?. classname) 1)
             classname)
           (when import-tag
