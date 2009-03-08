@@ -883,24 +883,28 @@ present."
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
-(defun malabar-implement-interface (&optional interface)
+(defun malabar-implement-interface (&optional interface implement-keyword)
   "Adds INTERFACE to the current class's implements clause and
 adds stub implementations of all the interface's methods."
   (interactive)
+  (unless implement-keyword
+    (setq implement-keyword "implement"))
   (destructuring-bind (interface qualified-interface interface-info)
-      (malabar-prompt-for-and-qualify-class "Interface to implement: " interface)
+      (malabar-prompt-for-and-qualify-class (format "Interface to %s: "
+                                                    implement-keyword)
+                                            interface)
     (unless (malabar--interface-p interface-info)
-      (error "You cannot implement %s, it is not an interface"
-             qualified-interface))
+      (error "You cannot %s %s, it is not an interface"
+             implement-keyword qualified-interface))
     (unless (malabar--class-accessible-p qualified-interface interface-info)
-      (error "You cannot implement %s, it is not accessible from %s"
-             qualified-interface (malabar-get-package-name)))
+      (error "You cannot %s %s, it is not accessible from %s"
+             implement-keyword qualified-interface (malabar-get-package-name)))
     (malabar--implement-interface-move-to-insertion-point)
     (if (semantic-tag-type-interfaces (malabar-get-class-tag-at-point))
         (insert ", ")
       (unless (bolp)
         (newline))
-      (insert "implements ")
+      (insert implement-keyword "s ")
       (indent-according-to-mode))
     (insert interface)
     (when (malabar--get-type-parameters interface-info)
@@ -925,61 +929,64 @@ adds stub implementations of all the interface's methods."
 implementations of any abstract methods from CLASS and of
 accessible constructors."
   (interactive)
-  (unless (equal "class" (semantic-tag-type (malabar-get-class-tag-at-point)))
-    (error "Only classes can extend other classes; this is an %s"
-           (semantic-tag-type (malabar-get-class-tag-at-point))))
-  (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
-    (error "Java is limited to single inheritance, class already extends %s"
-           (malabar-get-superclass-at-point)))
-  (destructuring-bind (class qualified-class class-info)
-      (malabar-prompt-for-and-qualify-class "Class to extend: " class)
-    (when (equal qualified-class "java.lang.Enum")
-      (error "You cannot extend %s, see the Java Language Specification" qualified-class))
-    (unless (malabar--class-accessible-p qualified-class class-info)
-      (error "You cannot extend %s, it is not accessible from %s"
-             qualified-class (malabar-get-package-name)))
-    (when (malabar--final-p class-info)
-      (error "You cannot extends %s, it is declared final"
-             qualified-class))
-    (when (malabar--interface-p class-info)
-      (error "You cannot extends %s, it is an interface"
-             qualified-class))
-    (let* ((members (malabar--get-members class-info))
-           (accessible-constructors
-            (remove-if-not (lambda (s)
-                             (and (malabar--constructor-p s)
-                                  (malabar-overridable-method-p s)))
-                           members)))
-      (unless accessible-constructors
-        (error "You cannot extends %s, it has no accessible constructors"
-               qualified-class))
-      (let ((type-params (malabar--get-type-parameters class-info)))
-        (unless (malabar-find-imported-class qualified-class)
-          (malabar-import-insert-imports (list qualified-class)))
-        (let* ((class-tag (malabar-get-class-tag-at-point))
-               (class-start (semantic-tag-start class-tag)))
-          (goto-char class-start)
-          (skip-chars-forward "^{")
-          (search-backward "implements" class-start t)
-          (insert "extends " class
-                  (if type-params
-                      (concat "<" (mapconcat #'identity type-params ", ") ">")
-                    ""))
-          (indent-according-to-mode)
-          (newline-and-indent)
-          (semantic-clear-toplevel-cache)
-          (malabar--extend-class-move-to-constructor-insertion-point)
-          (mapc (lambda (constructor)
-                  (insert (malabar-create-constructor-signature constructor) " {\n"
-                          "// TODO: Stub\n"
-                          "super" (malabar--stringify-arguments
-                                   (malabar--get-arguments constructor)) ";\n"
-                          "}\n\n")
-                  (forward-line -2)
-                  (c-indent-defun)
-                  (forward-line 2))
-                accessible-constructors)
-          (malabar--override-all (malabar--get-abstract-methods class-info) nil))))))
+  (let* ((class-tag (malabar-get-class-tag-at-point))
+         (this-kind (semantic-tag-type class-tag)))
+    (if (equal this-kind "interface")
+        (malabar-implement-interface class "extend")
+      (unless (equal this-kind "class")
+        (error "Only classes and interfaces can extend other types; this is an %s"
+               this-kind))
+      (unless (equal "java.lang.Object" (malabar-get-superclass-at-point))
+        (error "Java is limited to single inheritance, class already extends %s"
+               (malabar-get-superclass-at-point)))
+      (destructuring-bind (class qualified-class class-info)
+          (malabar-prompt-for-and-qualify-class "Class to extend: " class)
+        (when (equal qualified-class "java.lang.Enum")
+          (error "You cannot extend %s, see the Java Language Specification" qualified-class))
+        (unless (malabar--class-accessible-p qualified-class class-info)
+          (error "You cannot extend %s, it is not accessible from %s"
+                 qualified-class (malabar-get-package-name)))
+        (when (malabar--final-p class-info)
+          (error "You cannot extends %s, it is declared final"
+                 qualified-class))
+        (when (malabar--interface-p class-info)
+          (error "You cannot extends %s, it is an interface"
+                 qualified-class))
+        (let* ((members (malabar--get-members class-info))
+               (accessible-constructors
+                (remove-if-not (lambda (s)
+                                 (and (malabar--constructor-p s)
+                                      (malabar-overridable-method-p s)))
+                               members)))
+          (unless accessible-constructors
+            (error "You cannot extends %s, it has no accessible constructors"
+                   qualified-class))
+          (let ((type-params (malabar--get-type-parameters class-info)))
+            (unless (malabar-find-imported-class qualified-class)
+              (malabar-import-insert-imports (list qualified-class)))
+            (let ((class-start (semantic-tag-start class-tag)))
+              (goto-char class-start)
+              (skip-chars-forward "^{")
+              (search-backward "implements" class-start t)
+              (insert "extends " class
+                      (if type-params
+                          (concat "<" (mapconcat #'identity type-params ", ") ">")
+                        ""))
+              (indent-according-to-mode)
+              (newline-and-indent)
+              (semantic-clear-toplevel-cache)
+              (malabar--extend-class-move-to-constructor-insertion-point)
+              (mapc (lambda (constructor)
+                      (insert (malabar-create-constructor-signature constructor) " {\n"
+                              "// TODO: Stub\n"
+                              "super" (malabar--stringify-arguments
+                                       (malabar--get-arguments constructor)) ";\n"
+                              "}\n\n")
+                      (forward-line -2)
+                      (c-indent-defun)
+                      (forward-line 2))
+                    accessible-constructors)
+              (malabar--override-all (malabar--get-abstract-methods class-info) nil))))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))
