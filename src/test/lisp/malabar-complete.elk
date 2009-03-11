@@ -18,18 +18,14 @@
 ;;
 
 ;;; Mocking
-(provide 'semantic-load)
+(provide 'semantic)
 (provide 'semantic-ctxt)
-(provide 'semantic-find)
-(provide 'semantic-wisent)
-(provide 'wisent-java)
 (provide 'working)
-(provide 'wisent-malabar-java-wy)
 
 (defmacro define-mode-local-override (&rest ignore)
   nil)
 
-(require 'malabar-mode)
+(require 'malabar-complete)
 
 (deftest "expression-kind constructor"
   (assert-eq 'constructor-call (malabar--expression-kind "new Foo()")))
