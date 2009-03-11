@@ -59,3 +59,24 @@
 
 (deftest "delete-whitespace"
   (assert-equal "abcdf" (string-delete-whitespace " \na b c \n\n\t d f")))
+
+(deftest "string-with-newline empty"
+  (assert-equal "\n" (string-with-newline "")))
+
+(deftest "string-with-newline nonl"
+  (assert-equal "foo\n" (string-with-newline "foo")))
+
+(deftest "string-with-newline"
+  (assert-equal "foo\n" (string-with-newline "foo\n")))
+
+(deftest "get-package-of nopackage"
+  (assert-equal "" (malabar-get-package-of "foo")))
+
+(deftest "get-package-of with-package"
+  (assert-equal "com.example" (malabar-get-package-of "com.example.Foo")))
+
+(deftest "class-to-filename nopackage"
+  (assert-equal "Foo.java" (malabar-class-name-to-filename "Foo")))
+
+(deftest "class-to-filename with-package"
+  (assert-equal "com/example/Foo.java" (malabar-class-name-to-filename "com.example.Foo")))
