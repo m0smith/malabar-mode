@@ -120,24 +120,24 @@ pop to the Groovy console buffer."
                                                 malabar-groovy-compile-server-buffer-name
                                                 malabar-groovy-eval-server-buffer-name))))
         (working-dynamic-status nil "starting process")
-        (set-buffer (get-buffer malabar-groovy-buffer-name))
-        (apply #'make-comint
-               malabar-groovy-comint-name
-               malabar-groovy-java-command
-               nil
-               "-cp"
-               (mapconcat #'expand-file-name
-                          (append malabar-groovy-extra-classpath
-                                  (directory-files malabar-groovy-lib-dir t
-                                                   ".*\\.jar$"))
-                          path-separator)
-               (append malabar-groovy-java-options
-                       (list malabar-groovy-server-class
-                             "-c" (number-to-string malabar-groovy-compile-server-port)
-                             "-e" (number-to-string malabar-groovy-eval-server-port))))
-        (unless silent
-          (pop-to-buffer malabar-groovy-buffer-name))
-        (malabar-groovy-mode)
+        (with-current-buffer (get-buffer malabar-groovy-buffer-name)
+          (unless silent
+            (display-buffer malabar-groovy-buffer-name))
+          (apply #'make-comint
+                 malabar-groovy-comint-name
+                 malabar-groovy-java-command
+                 nil
+                 "-cp"
+                 (mapconcat #'expand-file-name
+                            (append malabar-groovy-extra-classpath
+                                    (directory-files malabar-groovy-lib-dir t
+                                                     ".*\\.jar$"))
+                            path-separator)
+                 (append malabar-groovy-java-options
+                         (list malabar-groovy-server-class
+                               "-c" (number-to-string malabar-groovy-compile-server-port)
+                               "-e" (number-to-string malabar-groovy-eval-server-port))))
+          (malabar-groovy-mode))
         (working-dynamic-status nil "waiting for main prompt")
         (malabar-groovy--wait-for-prompt malabar-groovy-buffer-name initial-points-alist)
         (working-dynamic-status nil "connecting to servers")
@@ -161,7 +161,9 @@ pop to the Groovy console buffer."
         (with-current-buffer malabar-groovy-compile-server-buffer-name
           (malabar-groovy--init-compile-server-buffer))
         (with-current-buffer malabar-groovy-eval-server-buffer-name
-          (malabar-groovy--init-eval-buffer))))))
+          (malabar-groovy--init-eval-buffer)))))
+  (unless silent
+    (pop-to-buffer malabar-groovy-buffer-name)))
 
 (defun malabar-groovy-eval-in-process (process string)
   (let ((string (string-with-newline string)))
