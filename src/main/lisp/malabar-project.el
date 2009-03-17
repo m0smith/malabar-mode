@@ -46,6 +46,11 @@
     (when dir
       (expand-file-name "pom.xml" dir))))
 
+(defun malabar-visit-project-file ()
+  "Visits the project file."
+  (interactive)
+  (find-file-other-window (malabar-find-project-file)))
+
 (defun malabar-build-project (goals)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)

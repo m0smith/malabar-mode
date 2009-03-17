@@ -34,6 +34,7 @@
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
       (define-key prefix-map [?.] 'semantic-ia-complete-symbol-menu)
       (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
+      (define-key prefix-map [?\C-p] 'malabar-visit-project-file)
       (define-key map malabar-mode-key-prefix prefix-map))
     map)
   "Keymap for Malabar mode.")
