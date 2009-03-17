@@ -35,7 +35,6 @@
 (require 'malabar-abbrevs)
 (require 'malabar-annotations)
 (require 'malabar-codegen)
-(require 'malabar-complete)
 (require 'malabar-groovy)
 (require 'malabar-import)
 (require 'malabar-misc)
@@ -44,6 +43,7 @@
 (require 'malabar-test)
 (require 'malabar-util)
 (require 'malabar-variables)
+(require 'malabar-semanticdb)
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
@@ -138,7 +138,10 @@ present."
                              :test-not #'eql
                              :key #'semantic-tag-class)
                     result))))))
-    (push (semantic-tag-function-arguments (semantic-current-tag-of-class 'function)) result)
+    ;; Add this and super
+    (push (list (semantic-tag-new-variable "this" (semantic-tag-name (semantic-current-tag-of-class 'type)))
+                (semantic-tag-new-variable "super" (semantic-tag-type-superclasses (semantic-current-tag-of-class 'type))))
+          result)
     (apply 'append result)))
 
 (provide 'malabar-mode)

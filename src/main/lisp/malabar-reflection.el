@@ -249,6 +249,42 @@ e.g. `malabar-choose'."
                unqualified))
       (error "Class not found %s" unqualified)))
 
+(defun malabar--get-type-tag (typename &optional buffer)
+  (let ((class-info (malabar-get-class-info typename buffer)))
+    (when class-info
+      (semantic-tag-new-type (malabar--get-name class-info)
+                             (cond ((malabar--interface-p class-info)
+                                    "interface")
+                                   ;; TODO enums
+                                   (t
+                                    "class"))
+                             (remove nil
+                                     (mapcar (lambda (spec)
+                                               (cond ((malabar--field-p spec)
+                                                      (malabar--as-variable-tag spec))
+                                                     ((malabar--method-p spec)
+                                                      (malabar--as-function-tag spec))
+                                                     (t
+                                                      nil)))
+                                             (malabar--get-members class-info)))
+                             (cons (malabar--get-super-class class-info)
+                                   (malabar--get-interfaces class-info))))))
+
+(defun malabar--as-variable-tag (spec)
+  nil)
+
+(defun malabar--as-function-tag (spec)
+  (semantic-tag-new-function (malabar--get-name spec)
+                             (malabar--get-return-type spec)
+                             (let ((arg-name-maker (malabar--arg-name-maker)))
+                               (mapcar (lambda (arg)
+                                         (semantic-tag-new-variable
+                                          (funcall arg-name-maker arg)
+                                          (getf arg :type)))
+                                       (malabar--get-arguments spec)))
+                             :typemodifiers (mapcar #'symbol-name
+                                                    (malabar--get-modifiers spec))))
+
 (provide 'malabar-reflection)
 
 ;; Local Variables:
