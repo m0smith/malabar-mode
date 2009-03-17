@@ -57,7 +57,7 @@ class ClasspathTest
             }
         }
     }
-    
+
     @Test
     void objectHasNoSuper() {
         String result = classInfo("java.lang.Object");
@@ -94,6 +94,12 @@ class ClasspathTest
     void scannerImplementsIteratorString() {
         String result = classInfo("java.util.Scanner");
         assertThat(result, containsString(':interfaces ("java.util.Iterator<java.lang.String>")'));
+    }
+
+    @Test
+    void classInfoOfEnumDoesntInfLoop() {
+        String result = classInfo("java.lang.Enum");
+        assertThat(result, containsString('valueOf'));
     }
 
     def classInfo(name) {

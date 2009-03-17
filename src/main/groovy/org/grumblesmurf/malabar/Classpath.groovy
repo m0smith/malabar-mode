@@ -334,46 +334,36 @@ class Classpath
         }
     }
 
-    def typeString(type) {
-        return typeString(type, false);
-    }
-    
-    def typeString(type, qualify) {
+    def typeString(type, qualify=false) {
+        def str;
+
         if (type instanceof Class) {
-            def name = qualify ? type.name : type.simpleName
-            if (type.enclosingClass) {
-                return typeString(type.enclosingClass, qualify) + "." + name
+            str = type.name;
+
+            if (type.typeParameters) {
+                str += "<"
+                str += type.typeParameters.join(", ")
+                str += ">"
             }
-            return name
-        }
-        if (type instanceof GenericArrayType) {
-            return typeString(type.genericComponentType, qualify) + "[]"
-        }
-        if (type instanceof ParameterizedType) {
-            def str = typeString(type.rawType, qualify)
-            str += "<";
-            type.actualTypeArguments.eachWithIndex{ it, i ->
-                if (i > 0) {
-                    str += ", "
-                }
-                str += typeString(it, qualify)
+        } else if (type instanceof TypeVariable) {
+            str = type.name;
+            if (type.bounds.length > 1 ||
+                type.bounds[0] != Object) {
+                str += " extends "
+                str += type.bounds.collect{ typeString(it, qualify) }.join(" & ")
             }
-            str += ">"
-            return str;
-        }
-        if (type instanceof TypeVariable) {
-            def str = type.name
-            if (type.bounds) {
-                if (type.bounds.length > 1 ||
-                    type.bounds[0] != Object.class) {
-                    str += " extends "
-                    str += type.bounds.collect{ typeString(it, qualify) }.join(" & ")
-                }
-            }
-            return str
+        } else {
+            str = type.toString();
         }
         
-        return type.toString()
+        if (qualify) {
+            return str;
+        }
+        def brackpos = str.indexOf("<")
+        if (brackpos < 0)
+            brackpos = str.length()
+
+        return str.substring(str.lastIndexOf(".", brackpos) + 1)
     }
 
     def methodDescriptor(Constructor cons) {
