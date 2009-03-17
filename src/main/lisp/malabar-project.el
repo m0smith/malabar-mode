@@ -19,6 +19,7 @@
 ;;
 (require 'malabar-variables)
 (require 'malabar-groovy)
+(require 'malabar-util)
 
 (defun malabar-setup-compilation-buffer ()
   (setq malabar-compilation-project-file (malabar-find-project-file))
@@ -31,10 +32,13 @@
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
 
 (defun malabar-classpath-of-buffer (&optional buffer)
-  (if (locate-file (buffer-file-name buffer)
-                   (malabar-project-test-source-directories (malabar-find-project-file buffer)))
-      "testClasspath"
-    "compileClasspath"))
+  (let ((file (file-name-nondirectory (buffer-file-name buffer))))
+    (if (catch 'found
+          (dolist (dir (malabar-project-test-source-directories
+                        (malabar-find-project-file buffer)))
+            (malabar--find-file file dir)))
+        "testClasspath"
+      "compileClasspath")))
 
 (defun malabar-find-project-file (&optional buffer)
   (let ((dir (locate-dominating-file (buffer-file-name (or buffer (current-buffer)))
