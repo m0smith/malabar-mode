@@ -76,7 +76,7 @@
          (or (locate-file class-file test-source-directories)
              (expand-file-name class-file (car test-source-directories))))))))
 
-(defun malabar-run-test-internal (test-starter)
+(defun malabar-run-test-internal (test-starter &optional requires-qualification)
   (with-current-buffer (malabar-visit-corresponding-test (current-buffer) t)
     (malabar-setup-compilation-buffer)
     (setq malabar-compilation-project-test-source-directories
@@ -84,7 +84,9 @@
     (display-buffer malabar-groovy-compilation-buffer-name t)
     (malabar-groovy-eval-as-compilation
      (format test-starter
-             (malabar-qualified-class-name-of-buffer (current-buffer))))))
+             (if requires-qualification
+                 (malabar-qualified-class-name-of-buffer (current-buffer))
+               (malabar-unqualified-class-name-of-buffer (current-buffer)))))))
 
 (defun malabar-run-junit-test ()
   "Runs the current buffer (or its corresponding test) as a
@@ -92,7 +94,8 @@ standalone JUnit test."
   (interactive)
   (malabar-run-test-internal 
    (format "%s.runJunit('%%s')"
-           (malabar-project (current-buffer)))))
+           (malabar-project (current-buffer)))
+   t))
 
 (defun malabar-run-test ()
   "Runs the current buffer (or its corresponding test) as a test,
