@@ -69,6 +69,7 @@
 (defun malabar-compile-file ()
   "Compiles the current buffer."
   (interactive)
+  (save-some-buffers (not compilation-ask-about-save) nil)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
