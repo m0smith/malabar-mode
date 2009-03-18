@@ -78,8 +78,11 @@
 
 (defun malabar-compute-package-name (&optional buffer)
   (let* ((dir (file-name-directory (buffer-file-name buffer)))
-         (source-directories (malabar-project-source-directories
-                              (malabar-find-project-file buffer))))
+         (project-file (malabar-find-project-file buffer))
+         (source-directories (append (malabar-project-source-directories
+                                      project-file)
+                                     (malabar-project-test-source-directories
+                                      project-file))))
     (replace-regexp-in-string
      "/" "."
      (substring dir (1+ (length
