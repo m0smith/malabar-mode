@@ -32,17 +32,15 @@ import org.apache.maven.errors.DefaultCoreErrorReporter;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
-import org.apache.maven.wagon.events.TransferEvent;
-import org.codehaus.plexus.logging.AbstractLogEnabled;
 
 import java.util.Arrays;
 import java.util.Properties;
 
 import java.io.File;
 
-public enum MvnServer
+public class MvnServer
 {
-    INSTANCE;
+    static MvnServer INSTANCE = new MvnServer();
     
     private Configuration configuration;
     private MavenEmbedder mavenEmbedder;
@@ -214,75 +212,5 @@ public class MvnServerLogger
     }
 
     public void close() {
-    }
-}
-
-class MvnServerTransferListener
-    extends AbstractLogEnabled
-    implements MavenTransferListener
-{
-    private boolean showChecksumEvents = false;
-    
-    protected boolean showEvent(TransferEvent event) {
-        if (!event.resource) {
-            return true;
-        }
-
-        String resource = event.resource.name;
-
-        if (!resource) {
-            return true;
-        }
-
-        if (resource.endsWith(".sha1") || resource.endsWith(".md5")) {
-            return showChecksumEvents;
-        }
-
-        return true;
-    }
-
-    public void transferInitiated(TransferEvent transferEvent) {
-        if (!showEvent(transferEvent)) {
-            return;
-        }
-        
-        String message =
-            transferEvent.requestType == TransferEvent.REQUEST_PUT ? "Uploading" : "Downloading";
-
-        String url = transferEvent.wagon.repository.url;
-
-        Utils.println(message + ": " + url + "/" + transferEvent.resource.name);
-    }
-
-    public void transferStarted(TransferEvent transferEvent) {
-    }
-
-    public void transferProgress(TransferEvent transferEvent, byte[] buffer, int length) {
-    }
-
-    public void transferCompleted(TransferEvent transferEvent) {
-        long contentLength = transferEvent.resource.contentLength;
-        if (contentLength != WagonConstants.UNKNOWN_LENGTH) {
-            String type = (transferEvent.requestType() == TransferEvent.REQUEST_PUT ? "uploaded" : "downloaded");
-            String l = contentLength >= 1024 ? (contentLength / 1024) + "K" : contentLength + "b";
-            Utils.println(l + " " + type);
-        }
-    }
-
-    public void transferError(TransferEvent event) {
-        Utils.println(event.getException().getMessage());
-    }
-
-    public void debug(String message) {
-    }
-
-    public boolean isShowChecksumEvents()
-    {
-        return showChecksumEvents;
-    }
-
-    public void setShowChecksumEvents(boolean showChecksumEvents)
-    {
-        this.showChecksumEvents = showChecksumEvents;
     }
 }
