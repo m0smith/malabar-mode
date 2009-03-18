@@ -92,10 +92,15 @@
   "Runs the current buffer (or its corresponding test) as a
 standalone JUnit test."
   (interactive)
-  (malabar-run-test-internal 
-   (format "%s.runJunit('%%s')"
-           (malabar-project (current-buffer)))
-   t))
+  (let ((cur-buf (current-buffer)))
+    (malabar-compile-file)
+    (with-current-buffer (malabar-visit-corresponding-test cur-buf t)
+      (unless (eq cur-buf (current-buffer))
+        (malabar-compile-file))
+      (malabar-run-test-internal 
+       (format "%s.runJunit('%%s')"
+               (malabar-project cur-buf))
+       t))))
 
 (defun malabar-run-test ()
   "Runs the current buffer (or its corresponding test) as a test,
