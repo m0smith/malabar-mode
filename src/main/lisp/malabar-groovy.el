@@ -252,14 +252,36 @@ pop to the Groovy console buffer."
     (compilation-mode)
     (setq buffer-read-only nil)))
 
+(defvar malabar-groovy--compilation-backlog nil)
+
 (defun malabar-groovy-eval-as-compilation (string)
   "Passes STRING to groovysh for evaluation in the compile server."
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
-    (let ((groovy-process (get-buffer-process malabar-groovy-compile-server-buffer-name)))
-      (comint-redirect-send-command-to-process string malabar-groovy-compilation-buffer-name
-                                               groovy-process nil))))
+    (let* ((groovy-process (get-buffer-process malabar-groovy-compile-server-buffer-name))
+           (thunk (lexical-let ((string string)
+                                (groovy-process groovy-process))
+                    (lambda ()
+                      (setq compilation-in-progress
+                            (cons groovy-process compilation-in-progress))
+                      (comint-redirect-send-command-to-process
+                       string malabar-groovy-compilation-buffer-name
+                       groovy-process nil)))))
+      (if (memq groovy-process compilation-in-progress)
+          (add-to-list 'malabar-groovy--compilation-backlog thunk t)
+        (funcall thunk)))))
+
+(defun malabar-groovy--process-backlog (buffer message)
+  (message "%s" message)
+  (when (and (equal (buffer-name buffer) malabar-groovy-compilation-buffer-name)
+             malabar-groovy--compilation-backlog)
+    (if (equal message "finished\n")
+        (funcall (pop malabar-groovy--compilation-backlog))
+      (message "Compilation failed, clearing backlog")
+      (setq malabar-groovy--compilation-backlog nil))))
+
+(add-hook 'compilation-finish-functions 'malabar-groovy--process-backlog)
 
 (defun malabar-groovy--compile-handle-exit ()
   (with-current-buffer malabar-groovy-compilation-buffer-name
@@ -267,9 +289,12 @@ pop to the Groovy console buffer."
                          (re-search-backward "===> \\(.*\\)$")
                          (match-string-no-properties 1))))
       (replace-match "" t t)
+      (setq compilation-in-progress
+            (delq (get-buffer-process malabar-groovy-compile-server-buffer-name)
+                  compilation-in-progress))
       (apply #'compilation-handle-exit 'exit
              (if (equal result "true")
                  (list 0 "finished\n")
-               (list 0 "exited abnormally"))))))
+               (list 1 "exited abnormally"))))))
 
 (provide 'malabar-groovy)
