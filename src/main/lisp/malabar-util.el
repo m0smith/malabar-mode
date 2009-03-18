@@ -112,12 +112,13 @@ return the corresponding cdr."
           ".java"))
 
 (defun malabar--find-file (file directory)
-  (dolist (dir-file (directory-files directory 'full "^[^\\.]"))
-    (if (file-accessible-directory-p dir-file)
-        (malabar--find-file file dir-file)
-      (and (file-readable-p dir-file)
-           (string= file (file-name-nondirectory dir-file))
-           (throw 'found dir-file)))))
+  (when (file-accessible-directory-p directory)
+    (dolist (dir-file (directory-files directory 'full "^[^\\.]"))
+      (if (file-accessible-directory-p dir-file)
+          (malabar--find-file file dir-file)
+        (and (file-readable-p dir-file)
+             (string= file (file-name-nondirectory dir-file))
+             (throw 'found dir-file))))))
 
 (defun malabar-get-package-tag (&optional buffer)
   (car (semantic-find-tags-by-class 'package (or buffer
