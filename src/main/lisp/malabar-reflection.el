@@ -62,11 +62,12 @@
         (t
          (let* ((buffer (or buffer (current-buffer)))
                 (package (malabar-get-package-name buffer))
-                (imported-class (malabar-find-imported-class class buffer)))
-           (or imported-class
+                (class-tag (malabar-class-defined-in-buffer-p class buffer)))
+           (if class-tag
                (if package
                    (concat package "." class)
-                 class))))))
+                 class)
+             (malabar-find-imported-class class buffer))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
   (malabar-groovy-eval-and-lispeval
