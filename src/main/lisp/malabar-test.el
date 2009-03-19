@@ -22,7 +22,7 @@
 
 (defvar malabar-test-class-suffix "Test")
 
-(defvar malabar-failed-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
+(defvar malabar-failed-maven-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
 (defvar malabar-failed-junit-test-re "^  Failure point:  \\([^:]+\\):\\([0-9]+\\)$")
 
 (defun malabar-test-class-buffer-p (buffer)
@@ -116,7 +116,7 @@ using 'mvn test -Dtestname'."
   (malabar-build-project 'test))
 
 (add-to-list 'compilation-error-regexp-alist
-             (list malabar-failed-test-re                ;; RE
+             (list malabar-failed-maven-test-re          ;; RE
                    'malabar-find-test-class-from-error)) ;; FILE
 
 (add-to-list 'compilation-error-regexp-alist
