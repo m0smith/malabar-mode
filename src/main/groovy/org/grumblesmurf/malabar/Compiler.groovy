@@ -36,12 +36,13 @@ class Compiler
             output = project.testClassesDirectory
             classpath = project.testClasspath
         }
+        (output as File).mkdirs()
         
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager =
             compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
         Iterable<? extends JavaFileObject> compilationUnits =
-            fileManager.getJavaFileObjectsFromStrings(Arrays.asList(file));
+            fileManager.getJavaFileObjectsFromStrings([file]);
         JavaCompiler.CompilationTask task =
             compiler.getTask(Utils.getOut(), fileManager, null,
                              ["-cp", classpath.asClassPath(),
