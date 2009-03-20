@@ -54,7 +54,7 @@
 (defun malabar-project-locate-source-file (filename dirs)
   (catch 'found
     (dolist (dir dirs)
-      (malabar--find-file filename dir)))))
+      (malabar--find-file filename dir))))
 
 (defun malabar-project (buffer)
   (format "Project.makeProject('%s')" (malabar-find-project-file buffer)))
