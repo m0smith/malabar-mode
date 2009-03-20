@@ -26,6 +26,17 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <developers>
+    <developer>
+      <id>espenhw</id>
+      <name>Espen Wiborg</name>
+      <email>espenhw@grumblesmurf.org</email>
+      <roles>
+        <role>Evil mastermind</role>
+      </roles>
+    </developer>
+  </developers>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
