@@ -130,4 +130,11 @@
       </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <site>
+      <id>grumblesmurf-site</id>
+      <url>scpexe://java.grumblesmurf.org/srv/www/java.grumblesmurf.org/htdocs/</url>
+    </site>
+  </distributionManagement>
 </project>
