@@ -6,6 +6,10 @@
   <version>1.1-SNAPSHOT</version>
   <name>A better Java mode for Emacs</name>
   <inceptionYear>2009</inceptionYear>
+  <description>
+    A new, better Java mode for Emacs.
+  </description>
+  <url>http://github.com/espenhw/malabar-mode</url>
   <scm>
     <url>http://github.com/espenhw/malabar-mode</url>
     <connection>scm:git:git://github.com/espenhw/malabar-mode.git</connection>
