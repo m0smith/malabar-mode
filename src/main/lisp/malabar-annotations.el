@@ -41,7 +41,7 @@
 See `c-set-offset' for a description of OFFSET and SYMBOL."
   (let ((old-offset (cdr-safe (or (assq symbol c-offsets-alist)
                                   (assq symbol (get 'c-offsets-alist
-                                                      'c-stylevar-fallback))))))
+                                                    'c-stylevar-fallback))))))
     (if old-offset
         (if (listp old-offset)
             (c-set-offset symbol (cons offset old-offset))
@@ -71,11 +71,11 @@ followed by either a '@' or a '(' then it returns t."
     (condition-case err ;; return nil if  any errors are thrown by forward-sexp
         (let* ((lim (1- (c-point 'bol)))
                (throws (catch 'notAnno
-		     (goto-char (cdr langelem))
-		     (while (< (point) lim)
-                       (if (not (looking-at "\\(\\s \\|\n\\)*\\(@\\|(\\)"))
-			   (throw 'notAnno t))
-                       (forward-sexp 1)))))
+                         (goto-char (cdr langelem))
+                         (while (< (point) lim)
+                           (if (not (looking-at "\\(\\s \\|\n\\)*\\(@\\|(\\)"))
+                               (throw 'notAnno t))
+                           (forward-sexp 1)))))
           (if (not throws)
               t)))))
 
@@ -139,7 +139,7 @@ instead of
 ...
 
 Argument LANGELEM The language element being indented."
-    (if (c-only-java-annotations-p langelem)
+  (if (c-only-java-annotations-p langelem)
       c-basic-offset))
 
 (provide 'malabar-annotations)
