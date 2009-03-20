@@ -11,6 +11,10 @@
     <connection>scm:git:git://github.com/espenhw/malabar-mode.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/espenhw/malabar-mode.git</developerConnection>
   </scm>
+  <issueManagement>
+    <system>Lighthouse</system>
+    <url>http://espenhw.lighthouseapp.com/projects/26275-malabar-mode</url>
+  </issueManagement>
   <licenses>
     <license>
       <name>The GNU General Public License, Version 2</name>
