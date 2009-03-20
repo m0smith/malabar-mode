@@ -40,12 +40,10 @@
     (list class qualified-class class-info)))
 
 (defun malabar-goto-start-of-class ()
-  (interactive)
   (let ((class-tag (malabar-get-class-tag-at-point)))
     (goto-char (semantic-tag-start class-tag))))
 
 (defun malabar-goto-end-of-class ()
-  (interactive)
   (let ((class-tag (malabar-get-class-tag-at-point)))
     (goto-char (1- (semantic-tag-end class-tag)))))
 
