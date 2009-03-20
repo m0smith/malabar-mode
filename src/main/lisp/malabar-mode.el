@@ -115,7 +115,6 @@ present."
           (semantic-parse-tree-set-needs-rebuild))))))
 
 (defun malabar-forward-comment ()
-  (interactive)
   (c-forward-single-comment)
   (unless (bolp)
     (forward-line 1)))
