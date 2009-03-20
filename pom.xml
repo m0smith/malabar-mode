@@ -102,6 +102,22 @@
               </arguments>
             </configuration>
           </execution>
+          <execution>
+            <id>run-loadability-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>emacs</executable>
+              <arguments>
+                <argument>-Q</argument>
+                <argument>--batch</argument>
+                <argument>-l</argument>
+                <argument>src/test/lisp/load-all.el</argument>
+              </arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
