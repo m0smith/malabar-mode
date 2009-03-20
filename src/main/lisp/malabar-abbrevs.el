@@ -39,7 +39,8 @@
   "Create a test method"
   nil
   > "@Test" \n
-  > "public void " _ "() throws Exception {" \n
+  "public void " _ "() throws Exception {" \n
+  "fail(\"Unfinished test\");" \n
   "}" > \n)
 
 (defvar malabar-abbrevs-abbrev-regexp
