@@ -83,32 +83,64 @@ and more.
  Installation
 ==============
 
-As malabar-mode is still in a state of considerable flux, there is no
-released version.  Fortunately, building is pretty easy:
+1. You probably already have Emacs.  However, you may want to consider
+   getting Emacs 23 (at the time of writing it is in pre-test), as
+   that's what I develop this beast for.
 
-1. Make sure you have Maven and Groovy installed (and git)
+2. Get CEDET_ and arrange for it to be on you Emacs load-path (I
+   develop using CVS HEAD; older versions may or may not work),
+   e.g. by linking the CEDET directory into your site-lisp directory.
+
+3. Clone the repository from git://github.com/espenhw/malabar-mode.git.
    
-2. Clone the repository from git://github.com/espenhw/malabar-mode.git
+4. Build with ``mvn package``.  If load-test.el fails, it is most
+   likely because CEDET is not on your load-path.
    
-3. Build with ``mvn package``
+5. Unpack the resulting ``malabar-<version>-dist.zip`` somewhere
    
-4. Unpack the resulting ``malabar-<version>-dist.zip`` somewhere
+6. Add ``malabar-<version>/lisp`` to your Emacs load-path
    
-5. Add ``malabar-<version>/lisp`` to your Emacs load-path
-   
-6. Add the following to your .emacs::
-   
+7. Add the following to your .emacs::
+
+     (require 'cedet)
+     (semantic-load-enable-minimum-features) ;; or enable more if you wish
      (require 'malabar-mode)
      (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
-     ;; If groovysh is not on your PATH
-     (setq malabar-groovy-command "/path/to/groovysh")
      (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
 
 =======
  Usage
 =======
 
-Here is a list of available interactive commands:
+Here is a list of available interactive commands, with default
+keybindings where applicable:
+
+malabar-compile-file : C-c C-v C-c
+  Compiles the current file.
+
+malabar-clear-typecache
+  Clears the type cache (used for code completion) if it gets
+  confused.  If you have to use this often, please file a bug.
+  
+malabar-extend-class : C-c C-v C-e
+  Prompts for a class, adds stub implementations of all that class's
+  abstract methods and accessible constructors and inserts the
+  appropriate extends clause.
+
+malabar-groovy-start
+  Start the Groovy console, or pop to it if it is running.
+
+malabar-groovy-stop
+  Kill the Groovy console process.
+
+malabar-implement-interface : C-c C-v C-i
+  Prompts for an interface, adds stub implementations of all that
+  interface's methods and adds the interface to the class's implements
+  clause.
+
+malabar-import-all : C-c C-v z
+  Adds import statements for all unqualified classes in the buffer, as
+  if by performing ``malabar-import-one-class`` on each.
 
 malabar-import-one-class : C-c C-v C-z
   Adds an import statement for a single unqualified class (defaults to
@@ -121,15 +153,29 @@ malabar-import-one-class : C-c C-v C-z
   default value excludes classes from ``java.lang``, JRE internal
   classes and inner classes.
 
-malabar-import-all : C-c C-v z
-  Adds import statements for all unqualified classes in the buffer, as
-  if by performing malabar-import-one-class on each.
-
 malabar-install-project : C-c C-v C-b
   Runs ``mvn install`` on your project.
 
-malabar-compile-file : C-c C-v C-c
-  Compiles the current file.
+malabar-override-method : C-c C-v C-o
+  Prompts for an eligible method from the superclass of the class at
+  point and adds a stub implementation of that method.  If the chosen
+  method is one of ``Object.equals`` or ``Object.hashCode``, override both of them.
+
+malabar-run-all-tests : C-c C-v M-t
+  Runs ``mvn test`` on your project.
+  
+malabar-run-junit-test-no-maven : C-c C-v C-t
+  Compiles the current file, performs
+  ``malabar-visit-corresponding-test``, compiles that file (if not the
+  same as where we started) and runs the now-current buffer as a
+  standalone JUnit test.
+
+malabar-run-test : C-c C-v t
+  Runs the corresponding test to this buffer using Maven (``mvn test -Dtest=classname``)
+
+malabar-update-package
+  Updates the package statement of the current buffer to match its place
+  in the source directory.
 
 malabar-visit-corresponding-test
   Visits the corresponding test class; that is, the file in the
@@ -142,51 +188,31 @@ malabar-visit-corresponding-test
   ``src/test/java/org/grumblesmurf/malabar/MvnServerTest.java`` with
   the default value of ``malabar-test-class-suffix``.
 
-  If the current buffer satisfies ``malabar-test-class-buffer-p``,
-  this command does nothing.
+  If the current buffer looks like a test class, this command does nothing.
 
-malabar-run-junit-test-no-maven : C-c C-v C-t
-  Runs the corresponding test to this buffer using JUnit.
+malabar-visit-project-file : C-c C-v C-p
+  Visit the project file, that is the closed file named ``pom.xml``
+  searching upwards in the directory structure.
 
-malabar-run-test : C-c C-v t
-  Runs the corresponding test to this buffer using Maven (``mvn test -Dtest=classname``)
+In addition, `standard Semantic code completion`_ is available; trigger
+this however you wish.  By default, ``semantic-ia-complete-symbol`` is
+bound to ``C-c C-v C-.`` and ``semantic-ia-complete-symbol-menu`` is
+bound to ``C-c C-v .``.
 
-malabar-goto-start-of-class
-  Moves point to the beginning of the class at point (supports inner classes).
+Abbrevs
+=======
 
-malabar-goto-end-of-class
-  Moves point to the end of the class at point (supports inner classes).
+Some default abbrevs are set up, see the variable
+``malabar-case-fixed-abbrevs`` for the current list.
 
-malabar-override-method : C-c C-v C-o
-  Prompts for an eligible method from the superclass of the class at
-  point and adds a stub implementation of that method.  If the chosen
-  method is Object.equals or Object.hashCode, override both.
+Note the presence of the ``#Test`` abbrev; this expands to::
 
-malabar-update-package
-  Updates the package statement of the current buffer to match its place
-  in the source directory.
+     @Test
+     public void |() throws Exception {
+         fail("Unfinished test");
+     }
 
-malabar-implement-interface : C-c C-v C-i
-  Prompts for an interface, adds stub implementations of all that
-  interface's methods and adds the interface to the class's implements
-  clause.
-
-malabar-extend-class : C-c C-v C-e
-  Prompts for a class, adds stub implementations of all that class's
-  abstract methods and accessible constructors and inserts the
-  appropriate extends clause.
-
-malabar-test-class-buffer-p
-  Not really a command, but it is central to malabar-mode's function;
-  this predicate decides whether a buffer uses Maven's test or compile
-  scope.
-
-  In essence, the predicate tests whether the primary class in the
-  current buffer either
-
-  a. extends junit.framework.TestCase or junit.framework.TestSuite or
-
-  b. contains a method annotated with an annotation named Test
+With point left at the position marked with ``|``.
 
 ============================
 This is cool, I want to help
@@ -202,21 +228,31 @@ But where do I send patches?
 
 To the issue tracker (see the next section).
 
-===========================
- I found a bug!  You suck!
-===========================
+===============
+ I found a bug!
+===============
 
-Quite possibly.  I have an issue tracker over at Lighthouse_; create a
-ticket there and I will do my best to help you.
+Good for you.  I have an issue tracker over at Lighthouse_; create a
+ticket there and stuff will happen.
 
-Hint:  Bugs with patches tend to be fixed faster...
+Hint #1:  Tell me what you did, what you expected to happen and what
+actually happened.  Include any error messages (Emacs backtraces,
+output in the buffers named starting with ``*Malabar``, interesting
+stuff from ``*Messages*`` etc.).
+
+Hint #2:  Bugs with patches tend to be fixed faster (see the previous
+section).
 
 ==============================================
  Wouldn't it be cool if malabar-mode could...
 ==============================================
 
-Yes!  Either describe the feature that you want in the issue tracker,
-or (even better) fork, code, and ask me to pull.
+Yes, it probably would!  Either describe the feature that you want in
+the issue tracker, or (even better) fork, code, and ask me to pull.
+
+And of course, if I nix your feature request, you're free to maintain
+your own local patch branch if you wish (or, for that matter, a
+complete fork).  malabar-mode is Open Source, after all.
 
 =================
  Acknowledgments
@@ -225,12 +261,32 @@ or (even better) fork, code, and ask me to pull.
 * JDEE for being a source of frustration and inspiration (and sometimes of code)
 * `Nikolaj Schumacher`_ for fringe-helper and elk-test
 
+====================
+ Boring legal stuff
+====================
+
+malabar-mode is copyright (c) 2009 Espen Wiborg <espenhw@grumblesmurf.org>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+For the full text of the GPL, see http://www.gnu.org/licenses/gpl2.txt.
+
 .. _JDEE: http://jdee.sourceforge.net/
 .. _run jdb on an applet: http://jdee.sourceforge.net/jdedoc/html/jde-ug/jde-ug-content.html#d0e4142
 .. _BeanShell: http://www.beanshell.org/
 .. _my blog: http://blog.grumblesmurf.org/
 .. _Maven: http://maven.apache.org/
+.. _CEDET: http://cedet.sourceforge.net/
 .. _Groovy: http://groovy.codehaus.org/
 .. _Junit: http://www.junit.org/
 .. _Lighthouse: http://espenhw.lighthouseapp.com/projects/26275-malabar-mode/
 .. _Nikolaj Schumacher: http://nschum.de/src/emacs/
+.. _standard Semantic code completion: http://cedet.sourceforge.net/intellisense.shtml
