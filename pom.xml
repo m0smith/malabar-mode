@@ -4,7 +4,7 @@
   <groupId>org.grumblesmurf</groupId>
   <artifactId>malabar</artifactId>
   <version>1.1-SNAPSHOT</version>
-  <name>A better Java mode for Emacs</name>
+  <name>Malabar: A better Java mode for Emacs</name>
   <inceptionYear>2009</inceptionYear>
   <description>
     A new, better Java mode for Emacs.
@@ -30,7 +30,7 @@
     <developer>
       <id>espenhw</id>
       <name>Espen Wiborg</name>
-      <email>espenhw@grumblesmurf.org</email>
+      <email>http://mailhide.recaptcha.net/d?k=01GFbnCG21M-KIunkjRjxWJw==&amp;c=BsOjYVXpToqQKNHwMd0ZRx5XPNMia6agfhzc3Fwtink=</email>
       <roles>
         <role>Evil mastermind</role>
       </roles>
@@ -148,10 +148,41 @@
     </plugins>
   </build>
 
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report>
+              <report>summary</report>
+              <report>dependencies</report>
+              <report>scm</report>
+              <report>license</report>
+              <report>project-team</report>
+              <report>issue-tracking</report>
+              <report>plugins</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+        <configuration>
+          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+          <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+  
   <distributionManagement>
     <site>
       <id>grumblesmurf-site</id>
-      <url>scpexe://java.grumblesmurf.org/srv/www/java.grumblesmurf.org/htdocs/</url>
+      <url>scpexe://java.grumblesmurf.org/srv/www/java.grumblesmurf.org/htdocs/malabar/</url>
     </site>
   </distributionManagement>
 </project>
