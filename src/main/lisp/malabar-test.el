@@ -20,7 +20,10 @@
 (require 'malabar-misc)
 (require 'malabar-util)
 
-(defvar malabar-test-class-suffix "Test")
+(defcustom malabar-test-class-suffix "Test"
+  "The suffix of a test class."
+  :group 'malabar-mode
+  :type 'string)
 
 (defvar malabar-failed-maven-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
 (defvar malabar-failed-junit-test-re "^  Failure point:  \\([^:]+\\):\\([0-9]+\\)$")

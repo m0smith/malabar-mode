@@ -24,6 +24,10 @@
 
 (require 'malabar-util)
 
+(defgroup malabar-groovy nil
+  "Customization of malabar-mode's inferior Groovy."
+  :group 'malabar-mode)
+
 (defvar malabar-groovy-comint-name "Malabar Groovy")
 
 (defvar malabar-groovy-compile-server-comint-name "Malabar Compile Server")
@@ -42,40 +46,60 @@
 (defvar malabar-groovy-eval-server-buffer-name
   (concat "*" malabar-groovy-eval-server-comint-name "*"))
 
-(defvar malabar-groovy-java-command "java"
+(defcustom malabar-groovy-java-command "java"
   "The command to invoke Java.  Include the full path if
-necessary.")
+necessary."
+  :group 'malabar-groovy
+  :type 'string)
 
-(defvar malabar-groovy-server-class "org.grumblesmurf.malabar.GroovyServer"
+(defcustom malabar-groovy-server-class "org.grumblesmurf.malabar.GroovyServer"
   "The class name of the Malabar Groovy server.  Don't touch
-unless you know what you're doing.")
+unless you know what you're doing."
+  :group 'malabar-groovy
+  :type 'string)
 
-(defvar malabar-groovy-lib-dir "~/malabar/lib"
-  "The location of all Malabar's JARs.")
+(defcustom malabar-groovy-lib-dir "~/malabar/lib"
+  "The location of all Malabar's JARs."
+  :group 'malabar-groovy
+  :type 'directory)
 
-(defvar malabar-groovy-extra-classpath '("~/src/malabar/target/classes")
+(defcustom malabar-groovy-extra-classpath '("~/src/malabar/target/classes")
   "Extra classpath elements to pass to groovysh (mainly useful
-for hacking on Malabar itself).")
+for hacking on Malabar itself)."
+  :group 'malabar-groovy
+  :type '(repeat (choice directory file)))
 
-(defvar malabar-groovy-mode-hook '()
-  "Hook that gets called when entering malabar-groovy-mode.")
+(defcustom malabar-groovy-mode-hook '()
+  "Hook that gets called when entering malabar-groovy-mode."
+  :group 'malabar-groovy
+  :type 'hook)
 
-(defvar malabar-groovy-prompt-regexp "^groovy:[^>]*> "
-  "Regexp to recognize the groovysh prompt.")
+(defcustom malabar-groovy-prompt-regexp "^groovy:[^>]*> "
+  "Regexp to recognize the groovysh prompt."
+  :group 'malabar-groovy
+  :type 'regexp)
 
-(defvar malabar-groovy-initial-statements
+(defcustom malabar-groovy-initial-statements
   '("import org.grumblesmurf.malabar.*"
     "import java.lang.reflect.*")
-  "Statements to execute immediately after starting groovysh.")
+  "Statements to execute immediately after starting groovysh."
+  :group 'malabar-groovy
+  :type '(repeat string))
 
-(defvar malabar-groovy-compile-server-port 5555
-  "The port on which the Groovy compile server should listen.")
+(defcustom malabar-groovy-compile-server-port 5555
+  "The port on which the Groovy compile server should listen."
+  :group 'malabar-groovy
+  :type 'integer)
 
-(defvar malabar-groovy-eval-server-port 6666
-  "The port on which the Groovy eval server should listen.")
+(defcustom malabar-groovy-eval-server-port 6666
+  "The port on which the Groovy eval server should listen."
+  :group 'malabar-groovy
+  :type 'integer)
 
-(defvar malabar-groovy-java-options nil
-  "Extra options to pass to Java.")
+(defcustom malabar-groovy-java-options nil
+  "Extra options to pass to Java."
+  :group 'malabar-groovy
+  :type '(repeat string))
 
 (defun malabar-groovy-mode ()
   "A major mode for the Groovy console."

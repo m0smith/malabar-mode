@@ -17,8 +17,13 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(defvar malabar-mode-key-prefix [?\C-c ?\C-v]
-  "The prefix key for malabar-mode commands.")
+(defgroup malabar-mode nil
+  "A better Java mode")
+
+(defcustom malabar-mode-key-prefix [?\C-c ?\C-v]
+  "The prefix key for malabar-mode commands."
+  :group 'malabar-mode
+  :type 'sexp)
 
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
@@ -42,7 +47,7 @@
 (defvar malabar-compilation-project-file nil)
 (defvar malabar-compilation-project-test-source-directories nil)
 
-(defvar malabar-case-fixed-abbrevs
+(defcustom malabar-case-fixed-abbrevs
   '(("pu" "public")
     ("pri" "private")
     ("pro" "protected")
@@ -55,8 +60,11 @@
     ("ext" "extends")
     ("pa" "package")
     ("re" "return")
-    ("#Test" hook malabar-abbrevs-create-test))
+    ("#Test" malabar-abbrevs-create-test))
   "The list of abbrevs which should be recognized only in the
-specified case.")
+specified case."
+  :group 'malabar-mode
+  :type '(alist :key-type string :value-type (group (choice string
+                                                            function))))
 
 (provide 'malabar-variables)

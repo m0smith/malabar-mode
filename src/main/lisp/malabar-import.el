@@ -22,7 +22,7 @@
 (require 'malabar-util)
 (require 'malabar-reflection)
 
-(defvar malabar-import-excluded-classes-regexp-list
+(defcustom malabar-import-excluded-classes-regexp-list
   '("^java\\.lang\\.[^.]+$"                 ;; Always imported
     "^sun\\."                               ;; Implementation internals
     "^com\\.sun\\..*\\.internal\\."         ;; ...
@@ -31,9 +31,11 @@
                                             ;; yourself
     )
   "Any class that matches a regexp on this list will never be
-automatically imported.")
+automatically imported."
+  :group 'malabar-mode
+  :type '(repeat regexp))
 
-(defvar malabar-import-precedence-order
+(defcustom malabar-import-precedence-order
   '("java.util"
     "java.io"
     "java.net"
@@ -43,7 +45,9 @@ automatically imported.")
     "javax.swing")
   "Sort order by package for classes to import.  A class from a
 package not in this list will sort after a class from any package
-in the list")
+in the list."
+  :group 'malabar-mode
+  :type '(repeat string))
 
 (defun malabar-type-token-candidates ()
   (remove nil (mapcar (lambda (token)

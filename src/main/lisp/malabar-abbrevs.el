@@ -43,10 +43,12 @@
   "fail(\"Unfinished test\");" \n
   "}" > \n)
 
-(defvar malabar-abbrevs-abbrev-regexp
+(defcustom malabar-abbrevs-abbrev-regexp
   "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*"
   "The regexp to recognize abbrevs.  Group one is used for abbrev
-lookup.")
+lookup."
+  :group 'malabar-mode
+  :type 'regexp)
   
 (defun malabar-abbrevs-setup ()
   (abbrev-table-put malabar-mode-abbrev-table :regexp malabar-abbrevs-abbrev-regexp)

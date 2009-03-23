@@ -32,6 +32,7 @@
 (require 'thingatpt)
 (require 'compile)
 
+(require 'malabar-variables)
 (require 'malabar-abbrevs)
 (require 'malabar-annotations)
 (require 'malabar-codegen)
@@ -42,7 +43,6 @@
 (require 'malabar-reflection)
 (require 'malabar-test)
 (require 'malabar-util)
-(require 'malabar-variables)
 (require 'malabar-semanticdb)
 
 (define-derived-mode malabar-mode java-mode "malabar"
