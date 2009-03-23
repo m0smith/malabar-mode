@@ -68,9 +68,7 @@
                    (concat package "." class)
                  class)
              (or (malabar-find-imported-class class buffer)
-                 (find (concat (or package "") "." class)
-                       (malabar-qualify-class-name class buffer)
-                       :test #'equal)))))))
+                 (concat (or package "") "." class)))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
   (malabar-groovy-eval-and-lispeval
@@ -247,11 +245,10 @@ e.g. `malabar-choose'."
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
 (define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
-  (or (malabar-groovy-eval-and-lispeval
-       (format "%s.getClasses('%s')"
-               (malabar-project-classpath (or buffer (current-buffer)))
-               unqualified))
-      (error "Class not found %s" unqualified)))
+  (malabar-groovy-eval-and-lispeval
+   (format "%s.getClasses('%s')"
+           (malabar-project-classpath (or buffer (current-buffer)))
+           unqualified)))
 
 (defun malabar--get-type-tag (typename &optional buffer)
   (let ((class-info (malabar-get-class-info typename buffer)))
