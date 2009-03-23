@@ -129,14 +129,31 @@ present."
       (let* ((project-file (malabar-find-project-file buffer))
              (qualified-type (or (malabar-qualify-class-name-in-buffer type buffer)
                                  type))
-             (file (locate-file
-                    (malabar-class-name-to-filename qualified-type)
-                    (append (malabar-project-source-directories project-file)
-                            (malabar-project-test-source-directories project-file)))))
-        (if file
-            (find-file file)
-          ;; disassemble?
-          (error "Cannot find type %s" qualified-type))))))
+             (type-file (malabar-class-name-to-filename qualified-type))
+             (existing-file
+              (locate-file
+               type-file
+               (append (malabar-project-source-directories project-file)
+                       (malabar-project-test-source-directories project-file)))))
+        (cond (existing-file
+               (find-file existing-file))
+              ((equal (malabar-get-package-of qualified-type)
+                      (malabar-get-package-name buffer))
+               (find-file
+                (expand-file-name
+                 type-file
+                 (car
+                  (case (intern (malabar-choose "Create type in which tree: "
+                                                '("main" "test")
+                                                "main"))
+                    (main
+                     (malabar-project-source-directories project-file))
+                    (test
+                     (malabar-project-test-source-directories project-file))))))
+               (malabar-update-package))
+              (t
+               ;; disassemble?
+               (error "Cannot find type %s" qualified-type)))))))
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
