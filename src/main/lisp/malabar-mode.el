@@ -119,6 +119,25 @@ present."
   (unless (bolp)
     (forward-line 1)))
 
+(defun malabar-goto-type-at-point (&optional point)
+  (interactive "d")
+  (let* ((buffer (current-buffer))
+         (type (car (semantic-ctxt-current-symbol)))
+         (type-tag (malabar-class-defined-in-buffer-p type buffer)))
+    (if type-tag
+        (goto-char (semantic-tag-start type-tag))
+      (let* ((project-file (malabar-find-project-file buffer))
+             (qualified-type (or (malabar-qualify-class-name-in-buffer type buffer)
+                                 type))
+             (file (locate-file
+                    (malabar-class-name-to-filename qualified-type)
+                    (append (malabar-project-source-directories project-file)
+                            (malabar-project-test-source-directories project-file)))))
+        (if file
+            (find-file file)
+          ;; disassemble?
+          (error "Cannot find type %s" qualified-type))))))
+
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
   "Get local variable declarations from the current context."
