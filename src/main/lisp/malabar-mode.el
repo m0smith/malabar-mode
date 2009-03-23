@@ -152,8 +152,7 @@ present."
                      (malabar-project-test-source-directories project-file))))))
                (malabar-update-package))
               (t
-               ;; disassemble?
-               (error "Cannot find type %s" qualified-type)))))))
+               (semantic-ia-describe-class qualified-type)))))))
 
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
