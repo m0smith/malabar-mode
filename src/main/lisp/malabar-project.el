@@ -27,34 +27,44 @@
 
 (defun malabar--clean-compilation-messages (buffer &optional message)
   (when (equal buffer (get-buffer malabar-groovy-compilation-buffer-name))
-    (let ((source-dirs
-           (append (malabar-project-source-directories malabar-compilation-project-file)
-                   (malabar-project-test-source-directories malabar-compilation-project-file))))
-      (with-current-buffer buffer
-        (remove-hook 'after-change-functions 'font-lock-after-change-function t)
-        (font-lock-fontify-buffer)
-        (save-excursion
-          (goto-char (point-min))
-          (let (locus)
-            (ignore-errors
-              (while t
-                ;; Grubbing in compile's internals, here
-                (setq locus (compilation-next-error 1 nil (point)))
-                (setq file (car (car (nth 2 (car locus)))))
-                (unless (file-readable-p file)
-                  (let ((end (or (text-property-not-all (point) (point-max) 'message locus)
-                                 (point-max)))
-                        (file (malabar-project-locate-source-file file source-dirs)))
-                    (if (null file)
-                        (set-text-properties (point) end nil)
-                      (rplaca (car (nth 2 (car locus))) file)
-                      (put-text-property (point) end 'message locus))))))))))))
+    (with-current-buffer buffer
+      (remove-hook 'after-change-functions 'font-lock-after-change-function t)
+      (font-lock-fontify-buffer)
+      (save-excursion
+        (goto-char (point-min))
+        (let (locus)
+          (ignore-errors
+            (while t
+              ;; Grubbing in compile's internals, here
+              (setq locus (compilation-next-error 1 nil (point)))
+              (setq file (car (car (nth 2 (car locus)))))
+              (unless (file-readable-p file)
+                (let ((end (or (text-property-not-all (point) (point-max) 'message locus)
+                               (point-max)))
+                      (file (malabar-project-locate-source-file
+                             file malabar-compilation-project-file)))
+                  (if (null file)
+                      (set-text-properties (point) end nil)
+                    (rplaca (car (nth 2 (car locus))) file)
+                    (put-text-property (point) end 'message locus)))))))))))
 
 (add-hook 'compilation-finish-functions 'malabar--clean-compilation-messages)
 
-(defun malabar-project-locate-source-file (filename dirs)
+(defun malabar-project-locate-source-file (filename project-file)
+  (or (malabar-project-locate-in-source-path filename project-file)
+      (malabar-project-locate-in-test-source-path filename project-file)))
+
+(defun malabar-project-locate-in-source-path (filename project-file)
+  (malabar--locate-in-path filename
+                           (malabar-project-source-directories project-file)))
+
+(defun malabar-project-locate-in-test-source-path (filename project-file)
+  (malabar--locate-in-path filename
+                           (malabar-project-test-source-directories project-file)))
+
+(defun malabar--locate-in-path (filename path)
   (catch 'found
-    (dolist (dir dirs)
+    (dolist (dir path)
       (malabar--find-file filename dir))))
 
 (defun malabar-project (buffer)
@@ -65,10 +75,7 @@
 
 (defun malabar-classpath-of-buffer (&optional buffer)
   (let ((file (file-name-nondirectory (buffer-file-name buffer))))
-    (if (catch 'found
-          (dolist (dir (malabar-project-test-source-directories
-                        (malabar-find-project-file buffer)))
-            (malabar--find-file file dir)))
+    (if (malabar-project-locate-in-source-path file (malabar-find-project-file buffer))
         "testClasspath"
       "compileClasspath")))
 

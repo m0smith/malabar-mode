@@ -51,11 +51,8 @@
 
 (defun malabar-find-test-class-from-junit-failure ()
   (let ((class-file (match-string-no-properties 1)))
-    (list
-     (catch 'found
-       (dolist (dir malabar-compilation-project-test-source-directories)
-         (malabar--find-file class-file dir))
-       class-file))))
+    (list (or (malabar--locate-in-path class-file malabar-compilation-project-test-source-directories)
+              class-file))))
 
 (defun malabar-corresponding-test-class-name (buffer)
   (let ((package (malabar-get-package-name buffer))
