@@ -67,7 +67,10 @@
                (if package
                    (concat package "." class)
                  class)
-             (malabar-find-imported-class class buffer))))))
+             (or (malabar-find-imported-class class buffer)
+                 (find (concat (or package "") "." class)
+                       (malabar-qualify-class-name class buffer)
+                       :test #'equal)))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
   (malabar-groovy-eval-and-lispeval
