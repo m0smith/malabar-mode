@@ -51,7 +51,6 @@
   ;; function isn't defined; give it a dummy definition
   (flet ((wisent-java-wy--install-parser () nil))
     (wisent-java-default-setup))
-  (add-hook 'semantic-init-hooks #'malabar-semantic-setup)
   (setq semantic-lex-depth 10)
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
@@ -59,12 +58,6 @@
   (malabar-annotations-setup)
   (malabar-abbrevs-setup)
   (malabar-groovy-start t))
-
-(remove-hook 'java-mode-hook 'wisent-java-default-setup)
-
-(defun malabar-semantic-setup ()
-  (remove-hook 'semantic-init-hooks 'malabar-semantic-setup)
-  (semantic-idle-scheduler-mode 1))
 
 (defun malabar-compile-file ()
   "Compiles the current buffer."
