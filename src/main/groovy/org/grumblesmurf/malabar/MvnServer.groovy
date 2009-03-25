@@ -40,8 +40,6 @@ import java.io.File;
 
 public class MvnServer
 {
-    static MvnServer INSTANCE = new MvnServer();
-    
     private Configuration configuration;
     private MavenEmbedder mavenEmbedder;
     private CoreErrorReporter errorReporter;
@@ -68,14 +66,14 @@ public class MvnServer
         }
     }
 
-    public static MavenEmbedder getEmbedder() {
-        return INSTANCE.mavenEmbedder;
+    public MavenEmbedder getEmbedder() {
+        return mavenEmbedder;
     }
 
-    public static MavenExecutionRequest newRequest() {
+    public MavenExecutionRequest newRequest() {
         MavenExecutionRequest req = new DefaultMavenExecutionRequest();
-        req.setErrorReporter(INSTANCE.errorReporter);
-        req.setTransferListener(INSTANCE.transferListener);
+        req.setErrorReporter(errorReporter);
+        req.setTransferListener(transferListener);
         return req;
     }
 
@@ -115,15 +113,11 @@ public class MvnServer
     }
 
     public RunDescriptor run(String pomFileName, boolean recursive, String... goals) {
-        RunDescriptor run = new RunDescriptor();
+        RunDescriptor run = new RunDescriptor(this);
         run.setPom(new File(pomFileName));
         run.setRecursive(recursive);
         run.setGoals(goals);
         return run;
-    }
-
-    public static void main(String[] args) {
-        INSTANCE.run(args[0], false, "test").addProperty("maven.test.skip", "true").run();
     }
 }
 
@@ -133,6 +127,11 @@ class RunDescriptor
     boolean recursive;
     String[] goals;
     Properties properties = new Properties();
+    MvnServer mvnServer;
+
+    RunDescriptor(mvnServer) {
+        this.mvnServer = mvnServer;
+    }
         
     public void setPom(File pom) {
         this.pom = pom;
@@ -151,7 +150,7 @@ class RunDescriptor
         MavenExecutionRequest request = new DefaultMavenExecutionRequest()
             .setBaseDirectory(pom.getParentFile())
             .setGoals(Arrays.asList(goals))
-            .setTransferListener(MvnServer.INSTANCE.transferListener)
+            .setTransferListener(mvnServer.transferListener)
             .setRecursive(recursive)
             .setProperties(properties);
 
@@ -163,8 +162,8 @@ class RunDescriptor
                 System.setErr(new PrintStream(Utils._io.get().errorStream));
             }
                     
-            MavenExecutionResult result = MvnServer.INSTANCE.mavenEmbedder.execute(request);
-            CLIReportingUtils.logResult(request, result, MvnServer.INSTANCE.logger);
+            MavenExecutionResult result = mvnServer.mavenEmbedder.execute(request);
+            CLIReportingUtils.logResult(request, result, mvnServer.logger);
             return !result.hasExceptions();
         } finally {
             System.setOut(oldOut);

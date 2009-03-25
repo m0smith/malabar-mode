@@ -18,15 +18,36 @@
  */ 
 package org.grumblesmurf.malabar;
 
+import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.execution.*;
+
 class Projects
 {
     static def projects = [:];
 
-    static void put(pom, project) {
-        projects[pom] = project
-    }
+    static Project getAt(pom) {
+        Project p = projects[pom]
+        File pomFile = pom as File
+        if (p && p.modStamp >= pomFile.lastModified()) {
+            return p
+        }
 
-    static Project get(pom) {
-        return projects[pom]
+        MvnServer mvnServer = GroovyServer.mvnServer;
+        MavenEmbedder embedder = mvnServer.embedder
+        MavenExecutionRequest req = mvnServer.newRequest()
+        req.baseDirectory = pomFile.parentFile
+        MavenExecutionResult result = embedder.readProjectWithDependencies(req)
+        if (result.hasExceptions()) {
+            // handle exceptions
+            println '(error "%s" "' + result.exceptions + '")'
+            return null;
+        } else if (result.artifactResolutionResult.missingArtifacts) {
+            println '(error "Missing artifacts: %s" "' + result.artifactResolutionResult.missingArtifacts + '")'
+            return null;
+        } else {
+            Project me = new Project(pom, result, mvnServer);
+            projects[pom] = me
+            return me;
+        }
     }
 }

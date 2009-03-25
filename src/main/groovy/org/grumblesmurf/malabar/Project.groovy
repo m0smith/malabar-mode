@@ -18,9 +18,6 @@
  */ 
 package org.grumblesmurf.malabar
 
-import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.execution.*;
-
 class Project
 {
     def compileClasspath;
@@ -49,35 +46,17 @@ class Project
     def mavenProject;
 
     def compiler;
+
+    def mvnServer;
     
-    static Project makeProject(pom) {
-        Project p = Projects.get(pom)
-        File pomFile = pom as File
-        if (p && p.modStamp >= pomFile.lastModified()) {
-            return p
-        }
-        
-        MavenEmbedder embedder = MvnServer.embedder
-        MavenExecutionRequest req = MvnServer.newRequest()
-        req.baseDirectory = pomFile.parentFile
-        MavenExecutionResult result = embedder.readProjectWithDependencies(req)
-        if (result.hasExceptions()) {
-            // handle exceptions
-            println '(error "%s" "' + result.exceptions + '")'
-            return null;
-        } else if (result.artifactResolutionResult.missingArtifacts) {
-            println '(error "Missing artifacts: %s" "' + result.artifactResolutionResult.missingArtifacts + '")'
-            return null;
-        } else {
-            Project me = new Project(pom, result);
-            Projects.put(pom, me)
-            return me;
-        }
+    def runtest(testname) {
+        def run = mvnServer.run(pomFile, false, "test");
+        run.addProperty("test", testname);
+        return run.run();
     }
 
-    def runtest(testname) {
-        def run = MvnServer.INSTANCE.run(pomFile, false, "test");
-        run.addProperty("test", testname);
+    def run(goal) {
+        def run = mvnServer.run(pomFile, false, goal);
         return run.run();
     }
 
@@ -89,19 +68,21 @@ class Project
         // our RunListener must be loaded by a descendant of the test
         // classloader, otherwise all kinds of weird errors happen
         def byteStream = new ByteArrayOutputStream();
-        this.class.classLoader.getResourceAsStream(MalabarRunListener.name.replace('.', '/') + ".class").eachByte{
+        def listenerName = MalabarRunListener.name;
+        this.class.classLoader.getResourceAsStream(listenerName.replace('.', '/') + ".class").eachByte {
             byteStream.write(it)
         }
         def runListenerClassLoader =
-            new SingleClassClassLoader(MalabarRunListener.name,
+            new SingleClassClassLoader(listenerName,
                                        byteStream.toByteArray(),
                                        classloader);
-        junitcore.addListener(runListenerClassLoader.loadClass(MalabarRunListener.name).newInstance(Utils.getOut()));
+        junitcore.addListener(runListenerClassLoader.loadClass(listenerName).newInstance(Utils.getOut()));
         def result = junitcore.run(testclass);
         return result.wasSuccessful();
     }
     
-    private Project(pom, result) {
+    private Project(pom, result, mvnServer) {
+        this.mvnServer = mvnServer
         pomFile = pom
         modStamp = (pom as File).lastModified()
         mavenProject = result.project
@@ -110,14 +91,14 @@ class Project
 
         srcDirectories = mavenProject.compileSourceRoots
         classesDirectory = mavenProject.build.outputDirectory
-        resources = mavenProject.resources.collect{
+        resources = mavenProject.resources.collect {
             // TODO: better resource handling
             it.directory
         }
 
         testSrcDirectories = mavenProject.testCompileSourceRoots
         testClassesDirectory = mavenProject.build.testOutputDirectory
-        testResources = mavenProject.testResources.collect{
+        testResources = mavenProject.testResources.collect {
             // TODO: better resource handling
             it.directory
         }

@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 class GroovyServer
 {
     static ready = new CountDownLatch(2);
+    static mvnServer = new MvnServer();
 
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
@@ -68,7 +69,7 @@ class GroovyServer
         IO io = new IO();
         Utils.setIO(io);
         Binding binding = new Binding();
-        binding['io'] = io;
+        binding['mvnServer'] = mvnServer;
         new Groovysh(binding, io).run();
     }
 }
@@ -108,7 +109,7 @@ class GroovySocketServer
                 IO io = new IO(client.inputStream, client.outputStream, client.outputStream);
                 Utils.setIO(io);
                 Binding binding = new Binding();
-                binding['io'] = io;
+                binding['mvnServer'] = GroovyServer.mvnServer;
                 new Groovysh(binding, io).run();
             } finally {
                 client.close();
