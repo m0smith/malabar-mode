@@ -42,9 +42,9 @@ class Project
     def testSrcDirectories;
     def testClassesDirectory;
 
-    def encoding = "UTF-8";
-    def source = "1.3";
-    def target = "1.1";
+    def encoding = "UTF-8" as String;
+    def source = "1.3" as String;
+    def target = "1.1" as String;
 
     def mavenProject;
 
@@ -128,9 +128,9 @@ class Project
 
         def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin").configuration
         if (compilerConfig) {
-            encoding = (compilerConfig.getChild("encoding") ?: encoding).value
-            source = (compilerConfig.getChild("source") ?: source).value
-            target = (compilerConfig.getChild("target") ?: target).value
+            encoding = compilerConfig.getChild("encoding")?.value ?: encoding
+            source = compilerConfig.getChild("source")?.value ?: source
+            target = compilerConfig.getChild("target")?.value ?: target
         }
 
         compiler = new Compiler(this);
