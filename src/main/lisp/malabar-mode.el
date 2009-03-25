@@ -59,6 +59,8 @@
   (malabar-abbrevs-setup)
   (malabar-groovy-start t))
 
+(remove-hook 'java-mode-hook 'wisent-java-default-setup)
+
 (defun malabar-compile-file ()
   "Compiles the current buffer."
   (interactive)
