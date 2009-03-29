@@ -49,6 +49,13 @@ in the list."
   :group 'malabar-mode
   :type '(repeat string))
 
+(defcustom malabar-import-post-insert-function nil
+  "Function run after inserting imports."
+  :group 'malabar-mode
+  :type '(radio (const nil)
+                (function-item malabar-import-sort-imports)
+                function))
+
 (defun malabar-type-token-candidates ()
   (remove nil (mapcar (lambda (token)
                         (when (eq (car token) 'IDENTIFIER)
@@ -185,7 +192,24 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
         (dolist (qualified-class qualified-classes)
           (when (> (length qualified-class) 0)
             (insert "import " qualified-class ";\n")
-            (message "Imported %s" qualified-class)))))))
+            (message "Imported %s" qualified-class)))
+        (when malabar-import-post-insert-function
+          (funcall malabar-import-post-insert-function))))))
+
+(defun malabar-import-sort-imports ()
+  "Sort imports alphabetically, removing blank lines."
+  (interactive)
+  ;; This screws any inline comments on imports.  Watch me care.
+  (let* ((tags (semantic-fetch-tags))
+         (import-tags (semantic-brute-find-tag-by-class 'include tags))
+         (first-import (car import-tags))
+         (last-import (car (last import-tags))))
+    (sort-lines nil
+                (semantic-tag-start first-import)
+                (semantic-tag-end last-import))
+    (delete-matching-lines "^\\s-*$"
+                           (semantic-tag-start first-import)
+                           (semantic-tag-end last-import))))
 
 (provide 'malabar-import)
 ;; Local Variables:
