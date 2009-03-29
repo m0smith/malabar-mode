@@ -196,20 +196,60 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
         (when malabar-import-post-insert-function
           (funcall malabar-import-post-insert-function))))))
 
-(defun malabar-import-sort-imports ()
-  "Sort imports alphabetically, removing blank lines."
-  (interactive)
-  ;; This screws any inline comments on imports.  Watch me care.
+(defun malabar-import--imports-region ()
   (let* ((tags (semantic-fetch-tags))
          (import-tags (semantic-brute-find-tag-by-class 'include tags))
          (first-import (car import-tags))
          (last-import (car (last import-tags))))
-    (sort-lines nil
-                (semantic-tag-start first-import)
-                (semantic-tag-end last-import))
-    (delete-matching-lines "^\\s-*$"
-                           (semantic-tag-start first-import)
-                           (semantic-tag-end last-import))))
+    (list (semantic-tag-start first-import)
+          (semantic-tag-end last-import))))
+
+(defun malabar-import-sort-imports ()
+  "Sort imports alphabetically, removing blank lines."
+  (interactive)
+  ;; This screws any inline comments on imports.  Watch me care.
+  (destructuring-bind (start end)
+      (malabar-import--imports-region)
+    (sort-lines nil start end)
+    (delete-matching-lines "^\\s-*$" start end)))
+
+(defcustom malabar-import-group-token-count 2
+  "The number of tokens to consider when grouping imports.
+Mostly this controls the positioning of blank lines.  If the
+symbol ALL, consider the entire package."
+  :group 'malabar-mode
+  :type '(choice integer
+                 (const all)))
+
+(defun malabar-import-group-imports ()
+  "Sort imports, and then group them by
+`malabar-import-group-token-count' tokens."
+  (interactive)
+  ;; This screws any inline comments on imports.  Watch me care.
+  (malabar-import-sort-imports)
+  (let* ((region (malabar-import--imports-region))
+         (start (car region))
+         (end (cadr region)))
+    (goto-char start)
+    (let ((last-tag (semantic-current-tag-of-class 'include))
+          (tag (progn (forward-line 1)
+                      (semantic-current-tag-of-class 'include))))
+      (flet ((package (include-tag)
+                      (let ((package-tokens
+                             (nreverse
+                              (split-string
+                               (semantic-tag-name include-tag)
+                               "\\."))))
+                        (nreverse (if (eq malabar-import-group-token-count 'all)
+                                      (cdr package-tokens)
+                                    (last package-tokens
+                                          malabar-import-group-token-count))))))
+        (while tag
+          (unless (equal (package last-tag) (package tag))
+            (insert "\n"))
+          (forward-line 1)
+          (setq last-tag tag)
+          (setq tag (semantic-current-tag-of-class 'include)))))))
 
 (provide 'malabar-import)
 ;; Local Variables:
