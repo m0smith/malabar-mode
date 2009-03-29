@@ -68,7 +68,10 @@
       (malabar--find-file filename dir))))
 
 (defun malabar-project (buffer)
-  (format "Projects['%s']" (malabar-find-project-file buffer)))
+  (malabar-project-expression (malabar-find-project-file buffer)))
+
+(defun malabar-project-expression (project-file)
+  (format "Projects['%s']" project-file))
 
 (defun malabar-project-classpath (buffer)
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
@@ -110,12 +113,12 @@
 
 (defun malabar-project-test-source-directories (project-file)
   (malabar-groovy-eval-and-lispeval
-   (format "Utils.printAsLispList(%s).testSrcDirectories)"
-           (malabar-project project-file))))
+   (format "Utils.printAsLispList(%s.testSrcDirectories)"
+           (malabar-project-expression project-file))))
 
 (defun malabar-project-source-directories (project-file)
   (malabar-groovy-eval-and-lispeval
-   (format "Utils.printAsLispList(%s).srcDirectories)"
-           (malabar-project project-file))))
+   (format "Utils.printAsLispList(%s.srcDirectories)"
+           (malabar-project-expression project-file))))
 
 (provide 'malabar-project)
