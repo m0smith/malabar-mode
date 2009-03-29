@@ -17,6 +17,8 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
+(require 'srecode)
+
 (defgroup malabar-mode nil
   "A better Java mode")
 
@@ -30,14 +32,15 @@
     (let ((prefix-map (make-sparse-keymap)))
       (define-key prefix-map [?\C-b] 'malabar-install-project)
       (define-key prefix-map [?\C-c] 'malabar-compile-file)
-      (define-key prefix-map [?t] 'malabar-run-test)
+      (define-key prefix-map [?\C-g] 'malabar-insert-getset)
+      (define-key prefix-map [?t]    'malabar-run-test)
       (define-key prefix-map [?\C-t] 'malabar-run-junit-test)
       (define-key prefix-map [?\M-t] 'malabar-run-all-tests)
       (define-key prefix-map [?\C-z] 'malabar-import-one-class)
       (define-key prefix-map [?\C-o] 'malabar-override-method)
       (define-key prefix-map [?\C-e] 'malabar-extend-class)
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
-      (define-key prefix-map [?.] 'semantic-ia-complete-symbol-menu)
+      (define-key prefix-map [?.]    'semantic-ia-complete-symbol-menu)
       (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
       (define-key prefix-map [?\C-p] 'malabar-visit-project-file)
       (define-key map malabar-mode-key-prefix prefix-map))
@@ -66,5 +69,18 @@ specified case."
   :group 'malabar-mode
   :type '(alist :key-type string :value-type (group (choice string
                                                             function))))
+
+(defcustom malabar-srecode-template-directory
+  (file-name-as-directory (expand-file-name "srecode"
+                                            (file-name-directory load-file-name)))
+  "The directory where malabar-mode's srecode templates live."
+  :group 'malabar-mode
+  :type 'directory
+  :set (lambda (symbol value)
+         (when (boundp symbol)
+           (setq srecode-map-load-path (remove (symbol-value symbol) srecode-map-load-path)))
+         (set-default symbol value)
+         (add-to-list 'srecode-map-load-path value)
+         (srecode-map-update-map t)))
 
 (provide 'malabar-variables)

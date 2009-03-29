@@ -32,6 +32,8 @@
 (require 'thingatpt)
 (require 'compile)
 
+(require 'srecode)
+
 (require 'malabar-variables)
 (require 'malabar-abbrevs)
 (require 'malabar-annotations)
@@ -52,8 +54,10 @@
   (flet ((wisent-java-wy--install-parser () nil))
     (wisent-java-default-setup))
   (setq semantic-lex-depth 10)
+  (setq semantic-idle-scheduler-idle-time 1)
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
+  (srecode-minor-mode 1)
   ;; Set up indentation of Java annotations.
   (malabar-annotations-setup)
   (malabar-abbrevs-setup)

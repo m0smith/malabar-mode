@@ -19,7 +19,10 @@
 ;;
 (require 'cl)
 (require 'cc-cmds)
+(require 'cc-subword)
+(require 'srecode-getset)
 
+(require 'malabar-variables)
 (require 'malabar-util)
 (require 'malabar-reflection)
 (require 'malabar-import)
@@ -258,6 +261,32 @@ accessible constructors."
         (newline insert-lines)
         (forward-line back-lines)))))
 
+(defun c-capitalize-subword-string (string)
+  "Perform `c-capitalize-subword' on STRING and return the result."
+  (with-temp-buffer
+    (insert string)
+    (goto-char (point-min))
+    (c-capitalize-subword 1)
+    (buffer-substring-no-properties (point-min) (point-max))))
+
+(defun malabar-insert-getset (all)
+  (interactive "P")
+  ;; We need the latest and greatest parse
+  (semantic-fetch-tags)
+  (if (not all)
+      (srecode-insert-getset)
+    (let* ((class (srecode-auto-choose-class (point)))
+           (members (semantic-tag-type-members class))
+           (member-names (mapcar #'semantic-tag-name members)))
+      (dolist (field members)
+        (when (eq 'variable (semantic-tag-class field))
+          (let* ((cap-name (c-capitalize-subword-string (semantic-tag-name field)))
+                 (setter-name (concat "set" cap-name))
+                 (getter-name (concat "get" cap-name)))
+            (unless (or (member setter-name member-names)
+                        (member getter-name member-names))
+              (srecode-insert-getset class field))))))))
+      
 (provide 'malabar-codegen)
 
 ;; Local Variables:
