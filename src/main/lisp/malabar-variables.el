@@ -17,7 +17,7 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'srecode)
+(require 'srecode-map)
 
 (defgroup malabar-mode nil
   "A better Java mode")
