@@ -338,12 +338,16 @@ class Classpath
         def str;
 
         if (type instanceof Class) {
-            str = type.name;
+            if (type.isArray()) {
+                str = typeString(type.componentType, qualify) + "[]"
+            } else {
+                str = type.name;
 
-            if (type.typeParameters) {
-                str += "<"
-                str += type.typeParameters.join(", ")
-                str += ">"
+                if (type.typeParameters) {
+                    str += "<"
+                    str += type.typeParameters.join(", ")
+                    str += ">"
+                }
             }
         } else if (type instanceof TypeVariable) {
             str = type.name;

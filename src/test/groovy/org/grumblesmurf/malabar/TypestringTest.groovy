@@ -93,4 +93,16 @@ class TypestringTest
         assertThat(cp.typeString(Enum.genericInterfaces[0], true),
                    is("java.lang.Comparable<E>"));
     }
+
+    @Test
+    void qualifiedTypeStringOfArray() {
+        assertThat(cp.typeString(Object[], true),
+                   is("java.lang.Object[]"))
+    }
+
+    @Test
+    void qualifiedTypeStringOfMultiDimArray() {
+        assertThat(cp.typeString(int[][], true),
+                   is("int[][]"))
+    }
 }
