@@ -36,6 +36,7 @@ class SemanticReflector
     def members = new Symbol(":members");
     def interfaces = new Symbol(":interfaces");
     def dereference = new Symbol(":dereference");
+    def declaringClass = new Symbol(":declaring-class");
 
     def modifierSpec(modifiers) {
         modifiers ? [ typemodifiers, Modifier.toString(modifiers).tokenize() ] : []
@@ -80,14 +81,19 @@ class SemanticReflector
                 typeString(it, true)
             } ] : []
     }
-    
-    def variable(name, type, modifiers=null) {
-        [ name, variable,
-          modifierSpec(modifiers) +
-          typeSpec(type, true) ]
+
+    def declaringSpec(declarer) {
+        declarer ? [ declaringClass, declarer.name ] : []
     }
     
-    def function(name, parameterTypes,
+    def variable(name, type, declarer=null, modifiers=null) {
+        [ name, variable,
+          modifierSpec(modifiers) +
+          typeSpec(type, true) +
+          declaringSpec(declarer) ]
+    }
+    
+    def function(name, parameterTypes, declarer,
                  modifiers=null, type=null, typeParameters=null, exceptions=null,
                  constructor=false) {
         [ name, function,
@@ -96,7 +102,8 @@ class SemanticReflector
           argumentSpec(parameterTypes) +
           typeSpec(type) +
           templateSpec(typeParameters) +
-          throwSpec(exceptions) ]
+          throwSpec(exceptions) +
+          declaringSpec(declarer) ]
     }
 
     def asSemanticTag(f) {
@@ -104,18 +111,18 @@ class SemanticReflector
     }
 
     def asSemanticTagList(Field f) {
-        variable(f.name, f.type, f.modifiers);
+        variable(f.name, f.type, f.declaringClass, f.modifiers);
     }
 
     def asSemanticTagList(Constructor c) {
-        function(c.declaringClass.simpleName, c.genericParameterTypes,
+        function(c.declaringClass.simpleName, c.genericParameterTypes, c.declaringClass,
                  c.modifiers, null, c.typeParameters,
                  c.genericExceptionTypes,
                  true)
     }
 
     def asSemanticTagList(Method m) {
-        function(m.name, m.genericParameterTypes,
+        function(m.name, m.genericParameterTypes, m.declaringClass,
                  m.modifiers, m.genericReturnType,
                  m.typeParameters, m.genericExceptionTypes)
     }
@@ -142,8 +149,11 @@ class SemanticReflector
                   typeString(it, true)
               } ] : []) +
           templateSpec(c.typeParameters) +
-          [ members, classMembers.collect { asSemanticTagList(it) } ] +
-          [ type, tag ] ]
+          [ members, classMembers.collect {
+                  asSemanticTagList(it)
+              } ] +
+          [ type, tag ] +
+          declaringSpec(c.declaringClass) ]
     }
 
     def typeString(type, qualify=false) {
