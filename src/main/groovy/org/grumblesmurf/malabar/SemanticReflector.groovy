@@ -31,6 +31,11 @@ class SemanticReflector
     def arguments = new Symbol(":arguments");
     def templateSpecifier = new Symbol(":template-specifier");
     def throwsSym = new Symbol(":throws");
+    def typeSym = new Symbol("type");
+    def superclasses = new Symbol(":superclasses");
+    def members = new Symbol(":members");
+    def interfaces = new Symbol(":interfaces");
+    def dereference = new Symbol(":dereference");
 
     // helper
     def classpath = new Classpath();
@@ -39,8 +44,26 @@ class SemanticReflector
         modifiers ? [ typemodifiers, Modifier.toString(modifiers).tokenize() ] : []
     }
     
-    def typeSpec(type) {
-        type ? [ this.type, classpath.typeString(type , true) ] : []
+    def typeSpec(type, variable=false) {
+        if (!type) {
+            return []
+        }
+
+        def baseType = type;
+        def extra = []
+        
+        if (variable && type instanceof GenericArrayType) {
+            int dim = 0;
+            while (baseType instanceof GenericArrayType) {
+                dim++;
+                baseType = baseType.genericComponentType
+            }
+            if (dim) {
+                extra = [ dereference, dim ]
+            }
+        }
+
+        [ this.type, classpath.typeString(baseType , true) ] + extra
     }
     
     def templateSpec(typeParameters) {
@@ -64,7 +87,7 @@ class SemanticReflector
     def variable(name, type, modifiers=null) {
         [ name, variable,
           modifierSpec(modifiers) +
-          typeSpec(type) ]
+          typeSpec(type, true) ]
     }
     
     def function(name, parameterTypes,
@@ -79,20 +102,50 @@ class SemanticReflector
           throwSpec(exceptions) ]
     }
 
-    def asSemanticTag(Field f) {
-        Utils.asLispList(variable(f.name, f.type, f.modifiers));
+    def asSemanticTag(f) {
+        Utils.asLispList(asSemanticTagList(f))
     }
 
-    def asSemanticTag(Constructor c) {
-        Utils.asLispList(function(c.declaringClass.simpleName, c.genericParameterTypes,
-                                  c.modifiers, null, c.typeParameters,
-                                  c.genericExceptionTypes,
-                                  true))
+    def asSemanticTagList(Field f) {
+        variable(f.name, f.type, f.modifiers);
     }
 
-    def asSemanticTag(Method m) {
-        Utils.asLispList(function(m.name, m.genericParameterTypes,
-                                  m.modifiers, m.genericReturnType,
-                                  m.typeParameters, m.genericExceptionTypes))
+    def asSemanticTagList(Constructor c) {
+        function(c.declaringClass.simpleName, c.genericParameterTypes,
+                 c.modifiers, null, c.typeParameters,
+                 c.genericExceptionTypes,
+                 true)
+    }
+
+    def asSemanticTagList(Method m) {
+        function(m.name, m.genericParameterTypes,
+                 m.modifiers, m.genericReturnType,
+                 m.typeParameters, m.genericExceptionTypes)
+    }
+
+    def asSemanticTagList(Class c) {
+        String tag = "class";
+        if (c.isInterface()) {
+            tag = "interface";
+        }
+        if (c.isEnum()) {
+            tag = "enum";
+        }
+
+        def classMembers = []
+        classMembers += c.declaredFields as List
+        classMembers += c.declaredClasses as List
+        classMembers += c.declaredConstructors as List
+        classMembers += c.declaredMethods as List
+        
+        [ c.name, typeSym,
+          modifierSpec(c.modifiers) +
+          (c.superclass ? [ superclasses, classpath.typeString(c.genericSuperclass, true) ] : []) +
+          (c.interfaces ? [ interfaces, c.genericInterfaces.collect {
+                  classpath.typeString(it, true)
+              } ] : []) +
+          templateSpec(c.typeParameters) +
+          [ members, classMembers.collect { asSemanticTagList(it) } ] +
+          [ type, tag ] ]
     }
 }

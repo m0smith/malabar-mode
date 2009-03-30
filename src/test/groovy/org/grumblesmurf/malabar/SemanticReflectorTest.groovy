@@ -93,12 +93,32 @@ class SemanticReflectorTest
     @Test
     void methodWithGenericReturnAndTypeArgument() throws Exception {
         Method m = List.getDeclaredMethod("toArray", Object[]);
-        assertThat(sr.asSemanticTag(m), is('("toArray" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "T[]"))) :type "T[]" :template-specifier "<T>"))'));
+        assertThat(sr.asSemanticTag(m), is('("toArray" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "T" :dereference 1))) :type "T[]" :template-specifier "<T>"))'));
     }
 
     @Test
     void staticMethodWithException() throws Exception {
         Method m = Thread.getDeclaredMethod("sleep", Long.TYPE);
         assertThat(sr.asSemanticTag(m), is('("sleep" function (:typemodifiers ("public" "static" "native") :arguments (("arg0" variable (:type "long"))) :type "void" :throws ("java.lang.InterruptedException")))'));
+    }
+
+    @Test
+    void simpleInterface() throws Exception {
+        assertThat(sr.asSemanticTag(Serializable), is('("java.io.Serializable" type (:typemodifiers ("public" "abstract" "interface") :members () :type "interface"))'))
+    }
+
+    @Test
+    void anotherSimpleInterface() throws Exception {
+        assertThat(sr.asSemanticTag(Iterable), is('("java.lang.Iterable" type (:typemodifiers ("public" "abstract" "interface") :template-specifier "<T>" :members (("iterator" function (:typemodifiers ("public" "abstract") :arguments () :type "java.util.Iterator<T>"))) :type "interface"))'))
+    }
+
+    @Test
+    void subInterfaceWithMembers() throws Exception {
+        assertThat(sr.asSemanticTag(Collection), is('("java.util.Collection" type (:typemodifiers ("public" "abstract" "interface") :interfaces ("java.lang.Iterable<E>") :template-specifier "<E>" :members (("add" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "E"))) :type "boolean")) ("hashCode" function (:typemodifiers ("public" "abstract") :arguments () :type "int")) ("clear" function (:typemodifiers ("public" "abstract") :arguments () :type "void")) ("equals" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean")) ("contains" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean")) ("isEmpty" function (:typemodifiers ("public" "abstract") :arguments () :type "boolean")) ("addAll" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.util.Collection<? extends E>"))) :type "boolean")) ("iterator" function (:typemodifiers ("public" "abstract") :arguments () :type "java.util.Iterator<E>")) ("size" function (:typemodifiers ("public" "abstract") :arguments () :type "int")) ("toArray" function (:typemodifiers ("public" "abstract") :arguments () :type "java.lang.Object[]")) ("toArray" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "T" :dereference 1))) :type "T[]" :template-specifier "<T>")) ("remove" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean")) ("containsAll" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean")) ("removeAll" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean")) ("retainAll" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean"))) :type "interface"))'))
+    }
+
+    @Test
+    void subClassWithInterface() throws Exception {
+        assertThat(sr.asSemanticTag(AbstractSet), is('("java.util.AbstractSet" type (:typemodifiers ("public" "abstract") :superclasses "java.util.AbstractCollection<E>" :interfaces ("java.util.Set<E>") :template-specifier "<E>" :members (("AbstractSet" function (:constructor-flag t :typemodifiers ("protected") :arguments ())) ("hashCode" function (:typemodifiers ("public") :arguments () :type "int")) ("equals" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean")) ("removeAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean"))) :type "class"))'));
     }
 }
