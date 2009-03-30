@@ -65,4 +65,34 @@ class SemanticReflectorTest
         Constructor c = ArrayList.getDeclaredConstructor(Integer.TYPE);
         assertThat(sr.asSemanticTag(c), is('("ArrayList" function (:constructor-flag t :typemodifiers ("public") :arguments (("arg0" variable (:type "int")))))'));
     }
+
+    @Test
+    void simpleMethod() throws Exception {
+        Method m = List.getDeclaredMethod("clear");
+        assertThat(sr.asSemanticTag(m), is('("clear" function (:typemodifiers ("public" "abstract") :arguments () :type "void"))'));
+    }
+
+    @Test
+    void methodWithOneArgument() throws Exception {
+        Method m = List.getDeclaredMethod("contains", Object);
+        assertThat(sr.asSemanticTag(m), is('("contains" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean"))'));
+    }
+
+    @Test
+    void methodWithGenericArgument() throws Exception {
+        Method m = List.getDeclaredMethod("add", Integer.TYPE, Object);
+        assertThat(sr.asSemanticTag(m), is('("add" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "int")) ("arg1" variable (:type "E"))) :type "void"))'));
+    }
+
+    @Test
+    void methodWithComplicatedGenericArgument() throws Exception {
+        Method m = List.getDeclaredMethod("addAll", Collection);
+        assertThat(sr.asSemanticTag(m), is('("addAll" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "java.util.Collection<? extends E>"))) :type "boolean"))'));
+    }
+
+    @Test
+    void methodWithGenericReturnAndTypeArgument() throws Exception {
+        Method m = List.getDeclaredMethod("toArray", Object[]);
+        assertThat(sr.asSemanticTag(m), is('("toArray" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "T[]"))) :type "T[]" :template-specifier "<T>"))'));
+    }
 }

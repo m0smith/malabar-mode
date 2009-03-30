@@ -29,6 +29,7 @@ class SemanticReflector
     def constructorFlag = new Symbol(":constructor-flag");
     def t = new Symbol("t");
     def arguments = new Symbol(":arguments");
+    def templateSpecifier = new Symbol(":template-specifier");
 
     // helper
     def classpath = new Classpath();
@@ -39,6 +40,10 @@ class SemanticReflector
     
     def typeSpec(type) {
         type ? [ this.type, classpath.typeString(type , true) ] : []
+    }
+    
+    def templateSpec(typeParameters) {
+        typeParameters ? [ this.templateSpecifier, "<" + typeParameters.join(",") + ">" ] : []
     }
     
     def argumentSpec(arguments) {
@@ -55,12 +60,14 @@ class SemanticReflector
           typeSpec(type) ]
     }
     
-    def function(name, parameterTypes, modifiers=null, type=null, constructor=false) {
+    def function(name, parameterTypes,
+                 modifiers=null, type=null, typeParameters=null, constructor=false) {
         [ name, function,
           (constructor ? [ constructorFlag, t ] : []) +
           modifierSpec(modifiers) +
           argumentSpec(parameterTypes) +
-          typeSpec(type) ]
+          typeSpec(type) +
+          templateSpec(typeParameters) ]
     }
 
     def asSemanticTag(Field f) {
@@ -68,7 +75,13 @@ class SemanticReflector
     }
 
     def asSemanticTag(Constructor c) {
-        Utils.asLispList(function(c.declaringClass.simpleName, c.parameterTypes,
-                                  c.modifiers, null, true))
+        Utils.asLispList(function(c.declaringClass.simpleName, c.genericParameterTypes,
+                                  c.modifiers, null, c.typeParameters, true))
+    }
+
+    def asSemanticTag(Method m) {
+        Utils.asLispList(function(m.name, m.genericParameterTypes,
+                                  m.modifiers, m.genericReturnType,
+                                  m.typeParameters))
     }
 }
