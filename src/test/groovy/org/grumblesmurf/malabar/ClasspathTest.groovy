@@ -61,15 +61,15 @@ class ClasspathTest
     @Test
     void objectHasNoSuper() {
         String result = classInfo("java.lang.Object");
-        assertThat(result, containsString('(class  :name "java.lang.Object"'));
-        assertThat(result, not(containsString(":super-class")));
+        assertThat(result, containsString('("java.lang.Object" type'));
+        assertThat(result, not(containsString(":superclasses")));
     }
 
     @Test
     void superOfIntegerIsNumber() {
         String result = classInfo("java.lang.Integer");
-        assertThat(result, containsString('(class  :name "java.lang.Integer"'));
-        assertThat(result, containsString(':super-class "java.lang.Number"'));
+        assertThat(result, containsString('("java.lang.Integer" type'));
+        assertThat(result, containsString(':superclasses "java.lang.Number"'));
     }
 
     @Test

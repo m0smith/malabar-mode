@@ -37,9 +37,6 @@ class SemanticReflector
     def interfaces = new Symbol(":interfaces");
     def dereference = new Symbol(":dereference");
 
-    // helper
-    def classpath = new Classpath();
-
     def modifierSpec(modifiers) {
         modifiers ? [ typemodifiers, Modifier.toString(modifiers).tokenize() ] : []
     }
@@ -63,7 +60,7 @@ class SemanticReflector
             }
         }
 
-        [ this.type, classpath.typeString(baseType , true) ] + extra
+        [ this.type, typeString(baseType , true) ] + extra
     }
     
     def templateSpec(typeParameters) {
@@ -80,7 +77,7 @@ class SemanticReflector
     
     def throwSpec(exceptions) {
         exceptions ? [ this.throwsSym, exceptions.collect {
-                classpath.typeString(it, true)
+                typeString(it, true)
             } ] : []
     }
     
@@ -140,12 +137,48 @@ class SemanticReflector
         
         [ c.name, typeSym,
           modifierSpec(c.modifiers) +
-          (c.superclass ? [ superclasses, classpath.typeString(c.genericSuperclass, true) ] : []) +
+          (c.superclass ? [ superclasses, typeString(c.genericSuperclass, true) ] : []) +
           (c.interfaces ? [ interfaces, c.genericInterfaces.collect {
-                  classpath.typeString(it, true)
+                  typeString(it, true)
               } ] : []) +
           templateSpec(c.typeParameters) +
           [ members, classMembers.collect { asSemanticTagList(it) } ] +
           [ type, tag ] ]
+    }
+
+    def typeString(type, qualify=false) {
+        def str;
+
+        if (type instanceof Class) {
+            if (type.isArray()) {
+                str = typeString(type.componentType, qualify) + "[]"
+            } else {
+                str = type.name;
+
+                if (type.typeParameters) {
+                    str += "<"
+                    str += type.typeParameters.join(", ")
+                    str += ">"
+                }
+            }
+        } else if (type instanceof TypeVariable) {
+            str = type.name;
+            if (type.bounds.length > 1 ||
+                type.bounds[0] != Object) {
+                str += " extends "
+                str += type.bounds.collect{ typeString(it, qualify) }.join(" & ")
+            }
+        } else {
+            str = type.toString();
+        }
+
+        if (qualify) {
+            return str;
+        }
+        def brackpos = str.indexOf("<")
+        if (brackpos < 0)
+            brackpos = str.length()
+
+        return str.substring(str.lastIndexOf(".", brackpos) + 1)
     }
 }

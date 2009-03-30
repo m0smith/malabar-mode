@@ -27,82 +27,82 @@ import static org.hamcrest.CoreMatchers.*;
 
 class TypestringTest 
 {
-    def cp;
+    def sr;
 
     @Before
-    void createClasspath() {
-        cp = new Classpath();
+    void createSemanticReflector() {
+        sr = new SemanticReflector();
     }
     
     @Test
     void typeStringOfObject() {
-        assertThat(cp.typeString(Object.class), is("Object"))
+        assertThat(sr.typeString(Object.class), is("Object"))
     }
     
     @Test
     void qualifiedTypeStringOfObject() {
-        assertThat(cp.typeString(Object.class, true), is("java.lang.Object"))
+        assertThat(sr.typeString(Object.class, true), is("java.lang.Object"))
     }
     
     @Test
     void typeStringOfCollections() {
-        assertThat(cp.typeString(Collections.class), is("Collections"))
+        assertThat(sr.typeString(Collections.class), is("Collections"))
     }
     
     @Test
     void qualifiedTypeStringOfCollections() {
-        assertThat(cp.typeString(Collections.class, true), is("java.util.Collections"))
+        assertThat(sr.typeString(Collections.class, true), is("java.util.Collections"))
     }
 
     @Test
     void collectionIsGeneric() {
-        assertThat(cp.typeString(Collection.class, true), is("java.util.Collection<E>"))
+        assertThat(sr.typeString(Collection.class, true), is("java.util.Collection<E>"))
     }
 
     @Test
     void mapHasTwoTypeparams() {
-        assertThat(cp.typeString(Map.class, true), is("java.util.Map<K, V>"))
+        assertThat(sr.typeString(Map.class, true), is("java.util.Map<K, V>"))
     }
 
     @Test
     void collectionsAddAllHasGenericFirstParam() {
-        assertThat(cp.typeString(Collections.methods.find {it.name == 'addAll'}.genericParameterTypes[0], true),
+        assertThat(sr.typeString(Collections.methods.find {it.name == 'addAll'}.genericParameterTypes[0], true),
                    is("java.util.Collection<? super T>"))
     }
 
     @Test
     void collectionsBinarySearchHasComplicatedFirstParam() {
-        assertThat(cp.typeString(Collections.methods.find {it.name == 'binarySearch'}.genericParameterTypes[0], true),
+        assertThat(sr.typeString(Collections.methods.find {it.name == 'binarySearch'}.genericParameterTypes[0], true),
                    is("java.util.List<? extends java.lang.Comparable<? super T>>"))
     }
 
     @Test
     void collectionsMaxHasAbsurdlyComplicatedTypeParam() {
-        assertThat(cp.typeString(Collections.getMethod("max", [ Collection ] as Class[]).typeParameters[0], true),
+        assertThat(sr.typeString(Collections.getMethod("max", [ Collection ] as Class[]).typeParameters[0], true),
                    is("T extends java.lang.Object & java.lang.Comparable<? super T>"))
     }
 
     @Test
     void collectionsMaxHasAbsurdlyComplicatedTypeParamUnqualified() {
-        assertThat(cp.typeString(Collections.getMethod("max", [ Collection ] as Class[]).typeParameters[0]),
+        assertThat(sr.typeString(Collections.getMethod("max", [ Collection ] as Class[]).typeParameters[0]),
                    is("T extends Object & Comparable<? super T>"))
     }
 
     @Test
     void enumHasRecursiveInterface() {
-        assertThat(cp.typeString(Enum.genericInterfaces[0], true),
+        assertThat(sr.typeString(Enum.genericInterfaces[0], true),
                    is("java.lang.Comparable<E>"));
     }
 
     @Test
     void qualifiedTypeStringOfArray() {
-        assertThat(cp.typeString(Object[], true),
+        assertThat(sr.typeString(Object[], true),
                    is("java.lang.Object[]"))
     }
 
     @Test
     void qualifiedTypeStringOfMultiDimArray() {
-        assertThat(cp.typeString(int[][], true),
+        assertThat(sr.typeString(int[][], true),
                    is("int[][]"))
     }
 }
