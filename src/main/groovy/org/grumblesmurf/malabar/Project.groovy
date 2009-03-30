@@ -97,6 +97,9 @@ class Project
         }
 
         testSrcDirectories = mavenProject.testCompileSourceRoots
+        testSrcDirectories += testSrcDirectories.collect {
+            it.replaceFirst('src/test/java', 'src/test/groovy')
+        }
         testClassesDirectory = mavenProject.build.testOutputDirectory
         testResources = mavenProject.testResources.collect {
             // TODO: better resource handling

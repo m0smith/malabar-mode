@@ -21,6 +21,9 @@ package org.grumblesmurf.malabar
 import javax.tools.*;
 import java.nio.charset.Charset;
 
+import org.codehaus.groovy.control.*;
+import org.codehaus.groovy.control.messages.WarningMessage;
+
 class Compiler
 {
     def project;
@@ -37,24 +40,44 @@ class Compiler
             classpath = project.testClasspath
         }
         (output as File).mkdirs()
-        
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager fileManager =
-            compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
-        Iterable<? extends JavaFileObject> compilationUnits =
-            fileManager.getJavaFileObjectsFromStrings([file]);
-        JavaCompiler.CompilationTask task =
-            compiler.getTask(Utils.getOut(), fileManager, null,
-                             ["-cp", classpath.asClassPath(),
-                              "-g", "-deprecation",
-                              "-d", output,
-                              "-source", project.source,
-                              "-target", project.target,
-                              "-encoding", project.encoding,
-                              "-Xlint:all", "-Xlint:-serial"],
-                             null, compilationUnits);
-        boolean success = task.call();
-        fileManager.close();
-        return success;
+
+        if (file.endsWith(".java")) {
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            StandardJavaFileManager fileManager =
+                compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
+            Iterable<? extends JavaFileObject> compilationUnits =
+                fileManager.getJavaFileObjectsFromStrings([file]);
+            JavaCompiler.CompilationTask task =
+                compiler.getTask(Utils.getOut(), fileManager, null,
+                                 ["-cp", classpath.asClassPath(),
+                                  "-g", "-deprecation",
+                                  "-d", output,
+                                  "-source", project.source,
+                                  "-target", project.target,
+                                  "-encoding", project.encoding,
+                                  "-Xlint:all", "-Xlint:-serial"],
+                                 null, compilationUnits);
+            boolean success = task.call();
+            fileManager.close();
+            return success;
+        } else if (file.endsWith(".groovy")) {
+            CompilerConfiguration cc = new CompilerConfiguration()
+            cc.classpath  = classpath.asClassPath()
+            cc.output = Utils.getOut()
+            cc.sourceEncoding = project.encoding
+            cc.targetDirectory = output as File
+            cc.tolerance = 0
+            cc.verbose = true
+            cc.warningLevel = WarningMessage.PARANOIA
+            
+            org.codehaus.groovy.tools.Compiler compiler = new org.codehaus.groovy.tools.Compiler(cc);
+            try {
+                compiler.compile(file);
+            } catch (CompilationFailedException e) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 }
