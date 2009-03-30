@@ -32,22 +32,43 @@ class SemanticReflector
 
     // helper
     def classpath = new Classpath();
+
+    def modifierSpec(modifiers) {
+        modifiers ? [ typemodifiers, Modifier.toString(modifiers).tokenize() ] : []
+    }
     
+    def typeSpec(type) {
+        type ? [ this.type, classpath.typeString(type , true) ] : []
+    }
+    
+    def argumentSpec(arguments) {
+        int counter = -1;
+        [ this.arguments, arguments.collect {
+                counter++;
+                variable("arg${counter}", it)
+            } ]
+    }
+    
+    def variable(name, type, modifiers=null) {
+        [ name, variable,
+          modifierSpec(modifiers) +
+          typeSpec(type) ]
+    }
+    
+    def function(name, parameterTypes, modifiers=null, type=null, constructor=false) {
+        [ name, function,
+          (constructor ? [ constructorFlag, t ] : []) +
+          modifierSpec(modifiers) +
+          argumentSpec(parameterTypes) +
+          typeSpec(type) ]
+    }
+
     def asSemanticTag(Field f) {
-        Utils.asLispList([ f.name, variable,
-                           [ typemodifiers, Modifier.toString(f.modifiers).tokenize(),
-                             type, classpath.typeString(f.getType(), true) ] ])
+        Utils.asLispList(variable(f.name, f.type, f.modifiers));
     }
 
     def asSemanticTag(Constructor c) {
-        int counter = -1;
-        Utils.asLispList([ c.declaringClass.simpleName, function,
-                           [ constructorFlag, t,
-                             typemodifiers, Modifier.toString(c.modifiers).tokenize(),
-                             arguments, c.parameterTypes.collect {
-                                 counter++;
-                                 [ "arg${counter}", variable,
-                                   [ type, classpath.typeString(it, true) ] ]
-                             } ] ])
+        Utils.asLispList(function(c.declaringClass.simpleName, c.parameterTypes,
+                                  c.modifiers, null, true))
     }
 }
