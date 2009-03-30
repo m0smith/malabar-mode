@@ -54,6 +54,7 @@ in the list."
   :group 'malabar-mode
   :type '(radio (const nil)
                 (function-item malabar-import-sort-imports)
+                (function-item malabar-import-group-imports)
                 function))
 
 (defun malabar-type-token-candidates ()
