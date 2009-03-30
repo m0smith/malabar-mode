@@ -49,6 +49,8 @@ class Utils
         result << list.collect {
             if (it instanceof String) {
                 "\"${it}\""
+            } else if (it instanceof GString) {
+                "\"${it}\""
             } else if (it instanceof List) {
                 asLispList(it)
             } else {
