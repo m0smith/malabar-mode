@@ -95,4 +95,10 @@ class SemanticReflectorTest
         Method m = List.getDeclaredMethod("toArray", Object[]);
         assertThat(sr.asSemanticTag(m), is('("toArray" function (:typemodifiers ("public" "abstract") :arguments (("arg0" variable (:type "T[]"))) :type "T[]" :template-specifier "<T>"))'));
     }
+
+    @Test
+    void staticMethodWithException() throws Exception {
+        Method m = Thread.getDeclaredMethod("sleep", Long.TYPE);
+        assertThat(sr.asSemanticTag(m), is('("sleep" function (:typemodifiers ("public" "static" "native") :arguments (("arg0" variable (:type "long"))) :type "void" :throws ("java.lang.InterruptedException")))'));
+    }
 }

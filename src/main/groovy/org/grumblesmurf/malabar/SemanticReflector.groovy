@@ -30,6 +30,7 @@ class SemanticReflector
     def t = new Symbol("t");
     def arguments = new Symbol(":arguments");
     def templateSpecifier = new Symbol(":template-specifier");
+    def throwsSym = new Symbol(":throws");
 
     // helper
     def classpath = new Classpath();
@@ -54,6 +55,12 @@ class SemanticReflector
             } ]
     }
     
+    def throwSpec(exceptions) {
+        exceptions ? [ this.throwsSym, exceptions.collect {
+                classpath.typeString(it, true)
+            } ] : []
+    }
+    
     def variable(name, type, modifiers=null) {
         [ name, variable,
           modifierSpec(modifiers) +
@@ -61,13 +68,15 @@ class SemanticReflector
     }
     
     def function(name, parameterTypes,
-                 modifiers=null, type=null, typeParameters=null, constructor=false) {
+                 modifiers=null, type=null, typeParameters=null, exceptions=null,
+                 constructor=false) {
         [ name, function,
           (constructor ? [ constructorFlag, t ] : []) +
           modifierSpec(modifiers) +
           argumentSpec(parameterTypes) +
           typeSpec(type) +
-          templateSpec(typeParameters) ]
+          templateSpec(typeParameters) +
+          throwSpec(exceptions) ]
     }
 
     def asSemanticTag(Field f) {
@@ -76,12 +85,14 @@ class SemanticReflector
 
     def asSemanticTag(Constructor c) {
         Utils.asLispList(function(c.declaringClass.simpleName, c.genericParameterTypes,
-                                  c.modifiers, null, c.typeParameters, true))
+                                  c.modifiers, null, c.typeParameters,
+                                  c.genericExceptionTypes,
+                                  true))
     }
 
     def asSemanticTag(Method m) {
         Utils.asLispList(function(m.name, m.genericParameterTypes,
                                   m.modifiers, m.genericReturnType,
-                                  m.typeParameters))
+                                  m.typeParameters, m.genericExceptionTypes))
     }
 }
