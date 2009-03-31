@@ -107,9 +107,9 @@ return the corresponding cdr."
         (substring classname 0 lastdot)
       "")))
 
-(defun malabar-class-name-to-filename (class-name)
+(defun malabar-class-name-to-filename (class-name &optional suffix)
   (concat (replace-regexp-in-string "\\." "/" class-name)
-          ".java"))
+          (or suffix ".java")))
 
 (defun malabar--find-file (file directory)
   (when (file-accessible-directory-p directory)

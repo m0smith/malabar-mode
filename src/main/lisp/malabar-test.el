@@ -68,7 +68,8 @@
     (if (malabar-test-class-buffer-p buffer)
         buffer
       (let ((class-file (malabar-class-name-to-filename
-                         (malabar-corresponding-test-class-name buffer)))
+                         (malabar-corresponding-test-class-name buffer)
+                         (file-name-extension (buffer-file-name buffer) t)))
             (test-source-directories (malabar-project-test-source-directories
                                       (malabar-find-project-file buffer))))
         (funcall
