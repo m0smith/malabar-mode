@@ -198,6 +198,7 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
           (funcall malabar-import-post-insert-function))))))
 
 (defun malabar-import--imports-region ()
+  (semantic-parse-tree-set-needs-rebuild)
   (let* ((tags (semantic-fetch-tags))
          (import-tags (semantic-brute-find-tag-by-class 'include tags))
          (first-import (car import-tags))
