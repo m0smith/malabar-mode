@@ -28,14 +28,14 @@
 (require 'malabar-import)
 (require 'malabar-misc)
 
-(defun malabar-overridable-method-p (method-spec)
-  (and (not (malabar--final-p method-spec))
-       (not (malabar-find-method-in-current-class method-spec))
-       (or (malabar--public-p method-spec)
-           (malabar--protected-p method-spec)
+(defun malabar-overridable-method-p (method-tag)
+  (and (not (malabar--final-p method-tag))
+       (not (malabar-find-method-in-current-class method-tag))
+       (or (malabar--public-p method-tag)
+           (malabar--protected-p method-tag)
            (equal (malabar-get-package-name)
                   (malabar-get-package-of
-                   (malabar--get-declaring-class method-spec))))))
+                   (malabar--get-declaring-class method-tag))))))
 
 (defun malabar-overridable-methods ()
   (remove-if-not (lambda (s)
@@ -44,34 +44,34 @@
                  (malabar-get-members
                   (malabar-get-superclass-at-point))))
 
-(defun malabar-override-method (&optional method-spec)
+(defun malabar-override-method (&optional method-tag)
   "Adds a stub implementation overriding method from the
-superclass to the class at point.  If METHOD-SPEC is NIL, prompts
+superclass to the class at point.  If METHOD-TAG is NIL, prompts
 for the method to override."
   (interactive)
   (let ((overridable-methods (malabar-overridable-methods)))
-    (unless method-spec
-      (setq method-spec
+    (unless method-tag
+      (setq method-tag
             (malabar-choose "Method to override: "
                             (mapcar 'malabar-make-choose-spec
                                     overridable-methods))))
-    (when method-spec
-      (malabar--override-method method-spec overridable-methods nil nil))))
+    (when method-tag
+      (malabar--override-method method-tag overridable-methods nil nil))))
 
-(defun malabar--override-method (method-spec overridable-methods
+(defun malabar--override-method (method-tag overridable-methods
                                              suppress-annotation no-indent-defun)
   (malabar-goto-end-of-class)
-  (let ((call-super (not (malabar--abstract-p method-spec))))
+  (let ((call-super (not (malabar--abstract-p method-tag))))
     (insert "\n" (if suppress-annotation
                      ""
                    "@Override\n")
-            (malabar-create-method-signature method-spec) " {\n"
+            (malabar-create-method-signature method-tag) " {\n"
             "// TODO: Stub\n"
             (let ((super-call
-                   (concat "super." (malabar--get-name method-spec)
+                   (concat "super." (malabar--get-name method-tag)
                            (malabar--stringify-arguments
-                            (malabar--get-arguments method-spec)))))
-              (if (equal (malabar--get-return-type method-spec) "void")
+                            (malabar--get-arguments method-tag)))))
+              (if (equal (malabar--get-return-type method-tag) "void")
                   (if call-super
                       (concat super-call ";\n")
                     "")
@@ -79,29 +79,29 @@ for the method to override."
                         (if call-super
                             super-call
                           (malabar-default-return-value
-                           (malabar--get-return-type method-spec)))
+                           (malabar--get-return-type method-tag)))
                         ";\n")))
             "}\n")
     (forward-line -2)
     (unless no-indent-defun
       (c-indent-defun))
     (back-to-indentation)
-    (let ((equals-spec (find-if (lambda (spec)
-                                  (and (equal (malabar--get-name spec) "equals")
-                                       (equal (malabar--get-declaring-class spec)
+    (let ((equals-tag (find-if (lambda (tag)
+                                  (and (equal (malabar--get-name tag) "equals")
+                                       (equal (malabar--get-declaring-class tag)
                                               "java.lang.Object")))
                                 overridable-methods))
-          (hashcode-spec (find-if (lambda (spec)
-                                    (and (equal (malabar--get-name spec) "hashCode")
-                                         (equal (malabar--get-declaring-class spec)
+          (hashcode-tag (find-if (lambda (tag)
+                                    (and (equal (malabar--get-name tag) "hashCode")
+                                         (equal (malabar--get-declaring-class tag)
                                                 "java.lang.Object")))
                                   overridable-methods)))
-      (cond ((and (equal method-spec equals-spec)
-                  hashcode-spec)
-             (malabar-override-method hashcode-spec))
-            ((and (equal method-spec hashcode-spec)
-                  equals-spec)
-             (malabar-override-method equals-spec))))))
+      (cond ((and (equal method-tag equals-tag)
+                  hashcode-tag)
+             (malabar-override-method hashcode-tag))
+            ((and (equal method-tag hashcode-tag)
+                  equals-tag)
+             (malabar-override-method equals-tag))))))
 
 (defun malabar--override-all (methods suppress-annotation)
   (let ((method-count (length methods))
@@ -142,10 +142,7 @@ adds stub implementations of all the interface's methods."
       (indent-according-to-mode))
     (insert interface)
     (when (malabar--get-type-parameters interface-info)
-      (insert (concat "<"
-                      (mapconcat #'identity (malabar--get-type-parameters interface-info)
-                                 ", ")
-                      ">")))
+      (insert (malabar--get-type-parameters interface-info)))
     (unless (eolp)
       (newline-and-indent))
     (malabar--override-all (malabar--get-abstract-methods interface-info) t)))
@@ -204,7 +201,7 @@ accessible constructors."
               (search-backward "implements" class-start t)
               (insert "extends " class
                       (if type-params
-                          (concat "<" (mapconcat #'identity type-params ", ") ">")
+                          type-params
                         ""))
               (indent-according-to-mode)
               (newline-and-indent)
@@ -286,7 +283,18 @@ accessible constructors."
             (unless (or (member setter-name member-names)
                         (member getter-name member-names))
               (srecode-insert-getset class field))))))))
-      
+
+(define-mode-local-override semantic-format-tag-prototype malabar-mode
+  (tag &optional parent color)
+  "As -default, but insert the template-specifier in the right place."
+  (let ((def (semantic-format-tag-prototype-default tag parent color)))
+    (if (and (malabar--get-type-parameters tag)
+             (string-match (regexp-quote (semantic-tag-type tag)) def))
+        (replace-match (concat (malabar--get-type-parameters tag) " "
+                               (match-string 0 def))
+                       t t def)
+      def)))
+
 (provide 'malabar-codegen)
 
 ;; Local Variables:

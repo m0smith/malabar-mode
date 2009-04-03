@@ -54,13 +54,13 @@
   (or (car (semantic-tag-type-superclasses class-tag))
        "Object"))
   
-(defun malabar-find-method-in-current-class (method-spec)
+(defun malabar-find-method-in-current-class (method-tag)
   (let ((class-tag (malabar-get-class-tag-at-point))
-        (method-name (malabar--get-name method-spec))
+        (method-name (malabar--get-name method-tag))
         (method-argument-types
          (mapcar (lambda (arg)
-                   (malabar-qualify-class-name-in-buffer (getf arg :type)))
-                 (malabar--get-arguments method-spec))))
+                   (malabar-qualify-class-name-in-buffer (malabar--get-type arg)))
+                 (malabar--get-arguments method-tag))))
     (some (lambda (tag)
             (and (equal method-name
                         (semantic-tag-name tag))

@@ -76,38 +76,45 @@
            (malabar-project-classpath (or buffer (current-buffer)))
            classname)))
 
-(defsubst malabar--get-property (spec prop)
-  (getf (cdr spec) prop))
+(defun malabar--get-name (tag)
+  (semantic-tag-name tag))
 
-(defmacro define-spec-properties (&rest props)
+(defun malabar--get-return-type (tag)
+  (semantic-tag-type tag))
+
+(defun malabar--get-type (tag)
+  (semantic-tag-type tag))
+
+(defun malabar--get-throws (tag)
+  (semantic-tag-function-throws tag))
+
+(defun malabar--get-arguments (tag)
+  (semantic-tag-function-arguments tag))
+
+(defun malabar--get-type-parameters (tag)
+  (semantic-tag-get-attribute tag :template-specifier))
+
+(defun malabar--get-declaring-class (tag)
+  (semantic-tag-get-attribute tag :declaring-class))
+
+(defun malabar--get-super-class (tag)
+  (semantic-tag-type-superclasses tag))
+
+(defun malabar--get-interfaces (tag)
+  (semantic-tag-type-interfaces tag))
+
+(defun malabar--get-modifiers (tag)
+  (semantic-tag-modifiers tag))
+
+(defmacro define-tag-modifier-predicates (&rest props)
   `(progn
      ,@(mapcar (lambda (p)
-                 `(defun ,(intern (concat "malabar--get-"
-                                          (substring (symbol-name p) 1))) (spec)
-                    (malabar--get-property spec ,p)))
+                 (let ((s (symbol-name p)))
+                   `(defun ,(intern (format "malabar--%s-p" s)) (tag)
+                      (member ,s (malabar--get-modifiers tag)))))
                props)))
 
-(define-spec-properties
-  :name
-  :modifiers
-  :type-parameters
-  :return-type
-  :arguments
-  :declaring-class
-  :members
-  :super-class
-  :interfaces
-  :throws
-  :type)
-
-(defmacro define-spec-modifier-predicates (&rest props)
-  `(progn
-     ,@(mapcar (lambda (p)
-                 `(defun ,(intern (format "malabar--%s-p" (symbol-name p))) (spec)
-                    (member ',p (malabar--get-modifiers spec))))
-               props)))
-
-(define-spec-modifier-predicates
+(define-tag-modifier-predicates
   abstract
   public
   private
@@ -115,22 +122,29 @@
   final
   interface)
 
-(defun malabar--package-private-p (spec)
-  (not (or (malabar--public-p spec)
-           (malabar--protected-p spec)
-           (malabar--private-p spec))))
+(defun malabar--package-private-p (tag)
+  (not (or (malabar--public-p tag)
+           (malabar--protected-p tag)
+           (malabar--private-p tag))))
 
-(defmacro define-spec-type-predicates (&rest types)
-  `(progn
-     ,@(mapcar (lambda (type)
-                 `(defsubst ,(intern (format "malabar--%s-p" (symbol-name type))) (spec)
-                    (eq ',type (car spec))))
-               types)))
+(defun malabar--method-p (tag)
+  (eq (semantic-tag-class tag) 'function))
 
-(define-spec-type-predicates method constructor class field)
+(defun malabar--constructor-p (tag)
+  (and (malabar--method-p tag)
+       (semantic-tag-function-constructor-p tag)))
+
+(defun malabar--class-p (tag)
+  (eq (semantic-tag-class tag) 'type))
+
+(defun malabar--field-p (tag)
+  (eq (semantic-tag-class tag) 'variable))
 
 (defun malabar-get-members (classname &optional buffer)
   (malabar--get-members (malabar-get-class-info classname buffer)))
+
+(defun malabar--get-members (class-tag)
+  (semantic-tag-type-members class-tag))
 
 (defun malabar-get-abstract-methods (classname &optional buffer)
   (malabar--get-abstract-methods (malabar-get-class-info classname buffer)))
@@ -148,39 +162,16 @@
           (format "arg%s"
                   (incf counter))))))
 
-(defun malabar--cleaned-modifiers (spec)
+(defun malabar--cleaned-modifiers (tag)
   (remove 'native (remove 'abstract (malabar--get-modifiers spec))))
 
-(defun malabar-create-simplified-signature (spec)
+(defun malabar-create-simplified-signature (tag)
   "Creates a readable signature suitable for
 e.g. `malabar-choose'."
-  (let ((modifiers (malabar--cleaned-modifiers spec))
-        (type (cond ((malabar--method-p spec)
-                     (malabar--get-return-type spec))
-                    ((malabar--field-p spec)
-                     (malabar--get-type spec))
-                    ((malabar--class-p spec)
-                     "class")
-                    (t
-                     (error "Can't create signature for a %s" (car spec)))))
-        (name (malabar--get-name spec))
-        (arguments (malabar--get-arguments spec)))
-    (concat name (if (malabar--method-p spec)
-                     (malabar--stringify-arguments-with-types arguments)
-                   "")
-            " : " type
-            " (" (mapconcat #'symbol-name modifiers " ") ")")))
-
-(defun malabar--stringify-arguments-with-types (arguments)
-  (let ((arg-name-maker (malabar--arg-name-maker)))
-    (concat "("
-            (mapconcat (lambda (arg)
-                         (format "%s %s"
-                                 (getf arg :type)
-                                 (funcall arg-name-maker arg)))
-                       arguments
-                       ", ")
-            ")")))
+  (let ((s (semantic-format-tag-uml-prototype tag)))
+    (if (assoc (substring s 0 1) semantic-format-tag-protection-image-alist)
+        (substring s 1)
+      s)))
 
 (defun malabar--stringify-arguments (arguments)
   (concat "("
@@ -189,50 +180,23 @@ e.g. `malabar-choose'."
                      ", ")
           ")"))
 
-(defun malabar-create-method-signature (method-spec)
+(defun malabar-create-method-signature (tag)
   "Creates a method signature for insertion in a class file."
-  (assert (malabar--method-p method-spec))
-  (let ((modifiers (malabar--cleaned-modifiers method-spec))
-        (return-type (malabar--get-return-type method-spec))
-        (name (malabar--get-name method-spec))
-        (arguments (malabar--get-arguments method-spec))
-        (type-parameters (malabar--get-type-parameters method-spec))
-        (throws (malabar--get-throws method-spec)))
-    (malabar--create-method-signature-helper
-     name
-     modifiers type-parameters return-type arguments throws)))
+  (let ((tag (semantic-tag-copy tag)))
+    (semantic-tag-put-attribute tag :typemodifiers
+                                (remove "abstract"
+                                        (remove "native"
+                                                (malabar--get-modifiers tag))))
+    (semantic-format-tag-prototype tag)))
 
-(defun malabar-create-constructor-signature (method-spec)
+(defun malabar-create-constructor-signature (tag)
   "Creates a constructor signature for insertion in a class file."
-  (assert (malabar--constructor-p method-spec))
-  (let ((modifiers (malabar--cleaned-modifiers method-spec))
-        (arguments (malabar--get-arguments method-spec))
-        (type-parameters (malabar--get-type-parameters method-spec))
-        (throws (malabar--get-throws method-spec)))
-    (malabar--create-method-signature-helper
-     (semantic-tag-name (malabar-get-class-tag-at-point))
-     modifiers type-parameters nil arguments throws)))
+  (malabar-create-method-signature
+   (semantic-tag-copy tag (semantic-tag-name (malabar-get-class-tag-at-point)))))
 
-(defun malabar--create-method-signature-helper (name modifiers type-parameters
-                                                     return-type arguments throws)
-  (concat (mapconcat #'symbol-name modifiers " ")
-          " "
-          (if type-parameters
-              (concat "<" (mapconcat #'identity type-parameters ", ") "> ")
-            "")
-          (if return-type
-              (concat return-type " ")
-            "")
-          name
-          (malabar--stringify-arguments-with-types arguments)
-          (if throws
-              (concat " throws "
-                      (mapconcat #'identity throws ", "))
-            "")))
-
-(defun malabar-make-choose-spec (spec)
-  (cons (malabar-create-simplified-signature spec)
-        spec))
+(defun malabar-make-choose-spec (tag)
+  (cons (malabar-create-simplified-signature tag)
+        tag))
 
 (defun malabar-default-return-value (type)
   (let ((cell (assoc type malabar-java-primitive-types-with-defaults)))
@@ -251,40 +215,7 @@ e.g. `malabar-choose'."
            unqualified)))
 
 (defun malabar--get-type-tag (typename &optional buffer)
-  (let ((class-info (malabar-get-class-info typename buffer)))
-    (when class-info
-      (semantic-tag-new-type (malabar--get-name class-info)
-                             (cond ((malabar--interface-p class-info)
-                                    "interface")
-                                   ;; TODO enums
-                                   (t
-                                    "class"))
-                             (remove nil
-                                     (mapcar (lambda (spec)
-                                               (cond ((malabar--field-p spec)
-                                                      (malabar--as-variable-tag spec))
-                                                     ((malabar--method-p spec)
-                                                      (malabar--as-function-tag spec))
-                                                     (t
-                                                      nil)))
-                                             (malabar--get-members class-info)))
-                             (cons (malabar--get-super-class class-info)
-                                   (malabar--get-interfaces class-info))))))
-
-(defun malabar--as-variable-tag (spec)
-  nil)
-
-(defun malabar--as-function-tag (spec)
-  (semantic-tag-new-function (malabar--get-name spec)
-                             (malabar--get-return-type spec)
-                             (let ((arg-name-maker (malabar--arg-name-maker)))
-                               (mapcar (lambda (arg)
-                                         (semantic-tag-new-variable
-                                          (funcall arg-name-maker arg)
-                                          (getf arg :type)))
-                                       (malabar--get-arguments spec)))
-                             :typemodifiers (mapcar #'symbol-name
-                                                    (malabar--get-modifiers spec))))
+  (malabar-get-class-info typename buffer))
 
 (provide 'malabar-reflection)
 
