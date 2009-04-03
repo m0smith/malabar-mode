@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
  */ 
-package org.grumblesmurf.malabar
+package org.grumblesmurf.malabar;
 
 import java.lang.reflect.*;
 
@@ -127,6 +127,33 @@ class SemanticReflector
                  m.typeParameters, m.genericExceptionTypes)
     }
 
+    def collectSupers(Class c, Closure collector) {
+        List l = []
+        if (c.superclass)
+            l += collector(c.superclass)
+        c.interfaces.each { l += collector(it) }
+        l
+    }
+
+    def collectFields(Class c) {
+        List l = (c.declaredFields as List).findAll{ !Modifier.isPrivate(it.modifiers) }
+        l + collectSupers(c, this.&collectFields);
+    }
+
+    def collectClasses(Class c) {
+        List l = (c.declaredClasses as List).findAll{ !Modifier.isPrivate(it.modifiers) }
+        l + collectSupers(c, this.&collectClasses);
+    }
+
+    def collectMethods(Class c) {
+        List l = (c.declaredMethods as List).findAll{ !Modifier.isPrivate(it.modifiers) }
+        l + collectSupers(c, this.&collectMethods);
+    }
+
+    def collectConstructors(Class c) {
+        (c.declaredConstructors as List).findAll{ !Modifier.isPrivate(it.modifiers) }
+    }
+
     def asSemanticTagList(Class c) {
         String tag = "class";
         if (c.isInterface()) {
@@ -136,12 +163,24 @@ class SemanticReflector
             tag = "enum";
         }
 
-        def classMembers = []
-        classMembers += c.declaredFields as List
-        classMembers += c.declaredClasses as List
-        classMembers += c.declaredConstructors as List
-        classMembers += c.declaredMethods as List
+        def fields = collectFields(c)
+        def classes = collectClasses(c)
+        def constructors = collectConstructors(c)
+        def methods = collectMethods(c)
         
+        def classMembers = []
+
+        fields.each { item ->
+            if (!classMembers.find { it.name == item.name })
+                classMembers << item
+        }
+        classMembers += classes
+        classMembers += constructors
+        methods.each { item ->
+            if (!classMembers.find { it.name == item.name && Arrays.equals(it.parameterTypes, item.parameterTypes) })
+                classMembers << item
+        }
+
         [ c.name, typeSym,
           modifierSpec(c.modifiers) +
           (c.superclass ? [ superclasses, typeString(c.genericSuperclass, true) ] : []) +

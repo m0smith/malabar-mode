@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
  */ 
-package org.grumblesmurf.malabar
+package org.grumblesmurf.malabar;
 
 import org.junit.Test;
 import org.junit.Before;
@@ -36,6 +36,36 @@ class SemanticReflectorTest
         sr = new SemanticReflector();
     }
 
+    @Test
+    void objectHasNoFields() {
+        assertThat(sr.collectFields(Object), is([]));
+    }
+    
+    @Test
+    void readerHasOneField() {
+        assertThat(sr.collectFields(Reader).size(), is(1));
+    }
+    
+    @Test
+    void filterReaderHasTwoFields() {
+        assertThat(sr.collectFields(FilterReader).size(), is(2));
+    }
+
+    @Test
+    void objectHasNoInnerClass() {
+        assertThat(sr.collectClasses(Object), is([]));
+    }
+    
+    @Test
+    void mapHasAnInnerClass() {
+        assertThat(sr.collectClasses(Map).size(), is(1));
+    }
+    
+    @Test
+    void sortecMapHasAnInnerClass() {
+        assertThat(sr.collectClasses(SortedMap).size(), is(1));
+    }
+    
     @Test
     void fieldGivesSemanticTag() throws Exception {
         Field f = FilterReader.getDeclaredField("in");
@@ -119,6 +149,6 @@ class SemanticReflectorTest
 
     @Test
     void subClassWithInterface() throws Exception {
-        assertThat(sr.asSemanticTag(AbstractSet), is('("java.util.AbstractSet" type (:typemodifiers ("public" "abstract") :superclasses "java.util.AbstractCollection<E>" :interfaces ("java.util.Set<E>") :template-specifier "<E>" :members (("AbstractSet" function (:constructor-flag t :typemodifiers ("protected") :arguments () :declaring-class "java.util.AbstractSet")) ("hashCode" function (:typemodifiers ("public") :arguments () :type "int" :declaring-class "java.util.AbstractSet")) ("equals" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean" :declaring-class "java.util.AbstractSet")) ("removeAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean" :declaring-class "java.util.AbstractSet"))) :type "class"))'));
+        assertThat(sr.asSemanticTag(AbstractSet), is('("java.util.AbstractSet" type (:typemodifiers ("public" "abstract") :superclasses "java.util.AbstractCollection<E>" :interfaces ("java.util.Set<E>") :template-specifier "<E>" :members (("AbstractSet" function (:constructor-flag t :typemodifiers ("protected") :arguments () :declaring-class "java.util.AbstractSet")) ("hashCode" function (:typemodifiers ("public") :arguments () :type "int" :declaring-class "java.util.AbstractSet")) ("equals" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean" :declaring-class "java.util.AbstractSet")) ("removeAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean" :declaring-class "java.util.AbstractSet")) ("add" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "E"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("clear" function (:typemodifiers ("public") :arguments () :type "void" :declaring-class "java.util.AbstractCollection")) ("toString" function (:typemodifiers ("public") :arguments () :type "java.lang.String" :declaring-class "java.util.AbstractCollection")) ("contains" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("isEmpty" function (:typemodifiers ("public") :arguments () :type "boolean" :declaring-class "java.util.AbstractCollection")) ("addAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<? extends E>"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("iterator" function (:typemodifiers ("public" "abstract") :arguments () :type "java.util.Iterator<E>" :declaring-class "java.util.AbstractCollection")) ("size" function (:typemodifiers ("public" "abstract") :arguments () :type "int" :declaring-class "java.util.AbstractCollection")) ("toArray" function (:typemodifiers ("public") :arguments () :type "java.lang.Object[]" :declaring-class "java.util.AbstractCollection")) ("toArray" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "T" :dereference 1))) :type "T[]" :template-specifier "<T>" :declaring-class "java.util.AbstractCollection")) ("remove" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.lang.Object"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("containsAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("retainAll" function (:typemodifiers ("public") :arguments (("arg0" variable (:type "java.util.Collection<?>"))) :type "boolean" :declaring-class "java.util.AbstractCollection")) ("finalize" function (:typemodifiers ("protected") :arguments () :type "void" :throws ("java.lang.Throwable") :declaring-class "java.lang.Object")) ("wait" function (:typemodifiers ("public" "final" "native") :arguments (("arg0" variable (:type "long"))) :type "void" :throws ("java.lang.InterruptedException") :declaring-class "java.lang.Object")) ("wait" function (:typemodifiers ("public" "final") :arguments (("arg0" variable (:type "long")) ("arg1" variable (:type "int"))) :type "void" :throws ("java.lang.InterruptedException") :declaring-class "java.lang.Object")) ("wait" function (:typemodifiers ("public" "final") :arguments () :type "void" :throws ("java.lang.InterruptedException") :declaring-class "java.lang.Object")) ("getClass" function (:typemodifiers ("public" "final" "native") :arguments () :type "java.lang.Class<?>" :declaring-class "java.lang.Object")) ("clone" function (:typemodifiers ("protected" "native") :arguments () :type "java.lang.Object" :throws ("java.lang.CloneNotSupportedException") :declaring-class "java.lang.Object")) ("notify" function (:typemodifiers ("public" "final" "native") :arguments () :type "void" :declaring-class "java.lang.Object")) ("notifyAll" function (:typemodifiers ("public" "final" "native") :arguments () :type "void" :declaring-class "java.lang.Object"))) :type "class"))'));
     }
 }
