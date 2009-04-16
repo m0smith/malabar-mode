@@ -79,8 +79,8 @@
 (defun malabar-classpath-of-buffer (&optional buffer)
   (let ((file (file-name-nondirectory (buffer-file-name buffer))))
     (if (malabar-project-locate-in-source-path file (malabar-find-project-file buffer))
-        "testClasspath"
-      "compileClasspath")))
+        "compileClasspath"
+      "testClasspath")))
 
 (defun malabar-find-project-file (&optional buffer)
   (let ((dir (locate-dominating-file (buffer-file-name (or buffer (current-buffer)))
