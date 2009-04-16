@@ -53,7 +53,9 @@ lookup."
 (defun malabar-abbrevs-setup ()
   (abbrev-table-put malabar-mode-abbrev-table :regexp malabar-abbrevs-abbrev-regexp)
   (mapc (lambda (abbr)
-          (define-abbrev malabar-mode-abbrev-table (first abbr) (second abbr) (third abbr)
+          (define-abbrev malabar-mode-abbrev-table (first abbr) (second abbr)
+            (unless (stringp (second abbr))
+              (second abbr))
             :case-fixed t :system 'force))
         malabar-case-fixed-abbrevs))
 
