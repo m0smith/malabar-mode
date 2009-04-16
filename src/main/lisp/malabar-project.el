@@ -97,8 +97,8 @@
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
-   (concat (format "MvnServer.INSTANCE.run('%s', "
-                   (malabar-find-project-file))
+   (concat (format "%s.run("
+                   (malabar-project-expression (malabar-find-project-file)))
            (mapconcat (lambda (s) (format "'%s'" s))
                       (if (atom goals)
                           (list goals)
