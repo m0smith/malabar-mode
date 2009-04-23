@@ -50,7 +50,8 @@ public class MalabarRunListener
     @Override
     public void testFinished(Description description) throws Exception {
         printAndUpdateCurrentClass(description);
-        report(".");
+        if (!reported)
+            report(".");
     }
 
     @Override
