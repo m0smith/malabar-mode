@@ -226,14 +226,13 @@ useful format.
 But where do I send patches?
 ============================
 
-To the issue tracker (see the next section).
+To the `issue tracker`_ (see the next section).
 
 ===============
  I found a bug!
 ===============
 
-Good for you.  I have an issue tracker over at Lighthouse_; create a
-ticket there and stuff will happen.
+Good for you.  Create a ticket in the `issue tracker`_ and stuff will happen.
 
 Hint #1:  Tell me what you did, what you expected to happen and what
 actually happened.  Include any error messages (Emacs backtraces,
@@ -248,7 +247,7 @@ section).
 ==============================================
 
 Yes, it probably would!  Either describe the feature that you want in
-the issue tracker, or (even better) fork, code, and ask me to pull.
+the `issue tracker`_, or (even better) fork, code, and ask me to pull.
 
 And of course, if I nix your feature request, you're free to maintain
 your own local patch branch if you wish (or, for that matter, a
@@ -287,6 +286,6 @@ For the full text of the GPL, see http://www.gnu.org/licenses/gpl2.txt.
 .. _CEDET: http://cedet.sourceforge.net/
 .. _Groovy: http://groovy.codehaus.org/
 .. _Junit: http://www.junit.org/
-.. _Lighthouse: http://espenhw.lighthouseapp.com/projects/26275-malabar-mode/
+.. _issue tracker: http://github.com/espenhw/malabar-mode/issues
 .. _Nikolaj Schumacher: http://nschum.de/src/emacs/
 .. _standard Semantic code completion: http://cedet.sourceforge.net/intellisense.shtml
