@@ -36,13 +36,15 @@
   (< (length class) 3))
 
 (defun malabar--primitive-type-p (class)
-  (assoc class malabar-java-primitive-types-with-defaults))
+  (or (assoc class malabar-java-primitive-types-with-defaults)
+      (equal class "void")))
 
 (defun malabar--parametrized-type-p (class)
   (position ?< class))
 
 (defun malabar--raw-type (class)
-  (substring class 0 (malabar--parametrized-type-p class)))
+  (malabar--array-element-type
+   (substring class 0 (malabar--parametrized-type-p class))))
 
 (defun malabar--array-type-p (class)
   (position ?\[ class))

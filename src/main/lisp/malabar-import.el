@@ -151,6 +151,41 @@ names in the current buffer."
     (when imports
       (malabar-import-insert-imports imports))))
 
+(defun malabar--type-at-point ()
+  (save-excursion
+    (skip-chars-forward "A-Za-z0-9._")
+    (mapconcat 'identity (semantic-ctxt-current-thing) ".")))
+
+(defun malabar-import-and-unqualify (qualified)
+  "Imports QUALIFIED if necessary, and unqualifies all
+occurrences of qualified in buffer, unless another class of the
+same name is already imported."
+  (interactive (list (read-from-minibuffer "Class: " (malabar--type-at-point))))
+  (let* ((unqualified (malabar-get-classname qualified))
+         (existing-import (malabar-find-imported-class unqualified)))
+    (cond ((equal existing-import qualified)
+           ;; Already imported, just unqualify
+           (message "Class %s does not need to be imported" qualified)
+           (malabar--conditional-replace (regexp-quote qualified) unqualified
+                                         (point-min) (point-max)
+                                         (lambda ()
+                                           (not (semantic-current-tag-of-class 'include)))))
+          ((null existing-import)
+           (malabar--conditional-replace (regexp-quote qualified) unqualified
+                                         (point-min) (point-max)
+                                         (lambda ()
+                                           (not (semantic-current-tag-of-class 'include))))
+           (malabar-import-insert-imports (list qualified)))
+          (t
+           (message "Import of %s would clash with %s"
+                    qualified existing-import)))))
+
+(defun malabar--import-handle-import-candidates (candidates)
+  (dolist (candidate candidates)
+    (unless (or (malabar--primitive-type-p candidate)
+                (malabar--type-variable-name-p candidate))
+      (malabar-import-and-unqualify candidate))))
+
 (defun malabar-import-one-class (unqualified)
   "Qualifies and adds an import statement for a single type name.
 If UNQUALIFIED is NIL, prompts in the minibuffer."

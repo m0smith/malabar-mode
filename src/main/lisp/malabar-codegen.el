@@ -56,10 +56,12 @@ for the method to override."
                             (mapcar 'malabar-make-choose-spec
                                     overridable-methods))))
     (when method-tag
-      (malabar--override-method method-tag overridable-methods nil nil))))
+      (let ((malabar--import-candidates nil))
+        (malabar--override-method method-tag overridable-methods nil nil)
+        (malabar--import-handle-import-candidates malabar--import-candidates)))))
 
 (defun malabar--override-method (method-tag overridable-methods
-                                             suppress-annotation no-indent-defun)
+                                            suppress-annotation no-indent-defun)
   (malabar-goto-end-of-class)
   (let ((call-super (not (malabar--abstract-p method-tag))))
     (insert "\n" (if suppress-annotation
@@ -109,10 +111,12 @@ for the method to override."
         (overridable-methods (malabar-overridable-methods)))
     (message nil)
     (working-status-forms "Overriding methods...%s" nil
-      (with-caches 
-       (dolist (method methods)
-         (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-         (malabar--override-method method overridable-methods suppress-annotation t)))
+      (let ((malabar--import-candidates nil))
+        (with-caches 
+         (dolist (method methods)
+           (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
+           (malabar--override-method method overridable-methods suppress-annotation t)))
+        (malabar--import-handle-import-candidates malabar--import-candidates))
       (working-status t "done"))
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
@@ -287,10 +291,18 @@ accessible constructors."
 (define-mode-local-override semantic-format-tag-prototype malabar-mode
   (tag &optional parent color)
   "As -default, but insert the template-specifier in the right place."
-  (let ((def (replace-regexp-in-string " (" "("
-                                       (semantic-format-tag-prototype-default
-                                        tag parent color)
-                                       nil t)))
+  (let ((def
+         (replace-regexp-in-string
+          "," ", "
+          (replace-regexp-in-string
+           " (" "("
+           (semantic-format-tag-prototype-default
+            tag parent color)
+           nil t)
+          nil t)))
+    (when (boundp 'malabar--import-candidates)
+      (pushnew (malabar--raw-type (semantic-tag-type tag)) malabar--import-candidates
+               :test #'equal))
     (if (and (malabar--get-type-parameters tag)
              (string-match (regexp-quote (semantic-tag-type tag)) def))
         (replace-match (concat (malabar--get-type-parameters tag) " "

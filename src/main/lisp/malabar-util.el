@@ -107,6 +107,12 @@ return the corresponding cdr."
         (substring classname 0 lastdot)
       "")))
 
+(defun malabar-get-classname (classname)
+  (let ((lastdot (position ?. classname :from-end t)))
+    (if lastdot
+        (substring classname (1+ lastdot))
+      classname)))
+
 (defun malabar-class-name-to-filename (class-name &optional suffix)
   (concat (replace-regexp-in-string "\\." "/" class-name)
           (or suffix ".java")))
@@ -132,6 +138,15 @@ return the corresponding cdr."
 (defun malabar-get-class-tag-at-point ()
   (or (semantic-current-tag-of-class 'type)
       (car (semantic-find-tags-by-class 'type (current-buffer)))))
+
+(defun malabar--conditional-replace (regexp replacement start end predicate)
+  "Replaces REGEXP with REPLACEMENT from START to END, but only
+when PREDICATE return non-NIL."
+  (save-excursion
+    (goto-char start)
+    (while (re-search-forward regexp end t)
+      (when (funcall predicate)
+        (replace-match replacement nil t)))))
 
 (provide 'malabar-util)
 ;; Local Variables:

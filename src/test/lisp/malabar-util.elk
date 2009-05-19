@@ -79,6 +79,12 @@
 (deftest "get-package-of with-package"
   (assert-equal "com.example" (malabar-get-package-of "com.example.Foo")))
 
+(deftest "get-classname-of with-package"
+  (assert-equal "Foo" (malabar-get-classname "com.example.Foo")))
+
+(deftest "get-classname-of nopackage"
+  (assert-equal "foo" (malabar-get-classname "foo")))
+
 (deftest "class-to-filename nopackage"
   (assert-equal "Foo.java" (malabar-class-name-to-filename "Foo")))
 
