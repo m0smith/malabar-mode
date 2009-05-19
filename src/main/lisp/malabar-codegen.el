@@ -287,7 +287,10 @@ accessible constructors."
 (define-mode-local-override semantic-format-tag-prototype malabar-mode
   (tag &optional parent color)
   "As -default, but insert the template-specifier in the right place."
-  (let ((def (semantic-format-tag-prototype-default tag parent color)))
+  (let ((def (replace-regexp-in-string " (" "("
+                                       (semantic-format-tag-prototype-default
+                                        tag parent color)
+                                       nil t)))
     (if (and (malabar--get-type-parameters tag)
              (string-match (regexp-quote (semantic-tag-type tag)) def))
         (replace-match (concat (malabar--get-type-parameters tag) " "
