@@ -106,8 +106,8 @@ class Project
             it.directory
         }
 
-        compileClasspath = new Classpath(mavenProject.compileClasspathElements);
-        testClasspath = new Classpath(mavenProject.testClasspathElements);
+        compileClasspath = new Classpath(mavenProject.compileClasspathElements + resources);
+        testClasspath = new Classpath(mavenProject.testClasspathElements + resources + testResources);
         runtimeClasspath = new Classpath(mavenProject.runtimeClasspathElements);
 
         def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin").configuration
