@@ -110,7 +110,7 @@ class Project
         testClasspath = new Classpath(mavenProject.testClasspathElements + resources + testResources);
         runtimeClasspath = new Classpath(mavenProject.runtimeClasspathElements);
 
-        def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin").configuration
+        def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin")?.configuration
         if (compilerConfig) {
             encoding = compilerConfig.getChild("encoding")?.value ?: encoding
             source = compilerConfig.getChild("source")?.value ?: source
