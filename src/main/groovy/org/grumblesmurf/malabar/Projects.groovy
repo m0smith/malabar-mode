@@ -25,10 +25,6 @@ class Projects
 {
     static def projects = [:];
 
-    static Project getAt(pom) {
-        return get(pom, [])
-    }
-
     static Project get(pom, profiles) {
         Project p = projects[pom]
         File pomFile = pom as File

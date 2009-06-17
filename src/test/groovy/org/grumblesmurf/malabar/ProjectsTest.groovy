@@ -29,13 +29,13 @@ class ProjectsTest
 {
     @Test
     void instantiateProject() {
-        Project p = Projects[System.getProperty("basedir") + "/pom.xml"];
+        Project p = Projects.get(System.getProperty("basedir") + "/pom.xml", []);
         assertThat(p.name, is("Malabar: A better Java mode for Emacs"));
     }
 
     @Test
     void runAGoal() {
-        Project p = Projects[System.getProperty("basedir") + "/pom.xml"];
+        Project p = Projects.get(System.getProperty("basedir") + "/pom.xml", []);
         assertThat(p.mvnServer, is(not(nullValue())));
         assertThat(p.run("validate"), is(true));
     }

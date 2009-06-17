@@ -70,8 +70,14 @@
 (defun malabar-project (buffer)
   (malabar-project-expression (malabar-find-project-file buffer)))
 
+(defvar malabar-project-active-profiles nil
+  "Alist of (project-file . active-profiles).")
+
 (defun malabar-project-expression (project-file)
-  (format "Projects['%s']" project-file))
+  (format "Projects.get('%s', %s)"
+          project-file
+          (malabar--make-groovy-list
+           (cdr (assoc project-file malabar-project-active-profiles)))))
 
 (defun malabar-project-classpath (buffer)
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
