@@ -37,6 +37,7 @@
       (define-key prefix-map [?\C-t] 'malabar-run-junit-test)
       (define-key prefix-map [?\M-t] 'malabar-run-all-tests)
       (define-key prefix-map [?\C-z] 'malabar-import-one-class)
+      (define-key prefix-map [?z] 'malabar-import-all)
       (define-key prefix-map [?\C-o] 'malabar-override-method)
       (define-key prefix-map [?\C-e] 'malabar-extend-class)
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
