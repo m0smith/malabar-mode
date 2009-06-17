@@ -93,16 +93,14 @@
   (interactive)
   (find-file-other-window (malabar-find-project-file)))
 
-(defun malabar-build-project (goals)
+(defun malabar-build-project (&rest goals)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
    (concat (format "%s.run("
                    (malabar-project-expression (malabar-find-project-file)))
            (mapconcat (lambda (s) (format "'%s'" s))
-                      (if (atom goals)
-                          (list goals)
-                        goals)
+                      goals
                       ",")
            ")")))
 
