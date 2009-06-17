@@ -55,8 +55,8 @@ class Project
         return run.run();
     }
 
-    def run(goal) {
-        def run = mvnServer.run(pomFile, false, goal);
+    def run(String... goals) {
+        def run = mvnServer.run(pomFile, false, goals);
         return run.run();
     }
 
