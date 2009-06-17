@@ -154,7 +154,8 @@ malabar-import-one-class : C-c C-v C-z
   classes and inner classes.
 
 malabar-install-project : C-c C-v C-b
-  Runs ``mvn install`` on your project.
+  Runs ``mvn install`` on your project.  With prefix argument (C-u),
+  cleans the project first (``mvn clean install``).
 
 malabar-override-method : C-c C-v C-o
   Prompts for an eligible method from the superclass of the class at
@@ -162,7 +163,8 @@ malabar-override-method : C-c C-v C-o
   method is one of ``Object.equals`` or ``Object.hashCode``, override both of them.
 
 malabar-run-all-tests : C-c C-v M-t
-  Runs ``mvn test`` on your project.
+  Runs ``mvn test`` on your project.  With prefix argument (C-u),
+  cleans the project first (``mvn clean test``).
   
 malabar-run-junit-test-no-maven : C-c C-v C-t
   Compiles the current file, performs

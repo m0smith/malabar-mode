@@ -93,7 +93,9 @@
   (interactive)
   (find-file-other-window (malabar-find-project-file)))
 
-(defun malabar-build-project (&rest goals)
+(defun malabar-build-project (clean-p &rest goals)
+  (when clean-p
+    (setq goals (cons 'clean goals)))
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
@@ -104,10 +106,11 @@
                       ",")
            ")")))
 
-(defun malabar-install-project ()
-  "Runs 'mvn install' on the current project."
-  (interactive)
-  (malabar-build-project 'install))
+(defun malabar-install-project (clean-p)
+  "Runs 'mvn install' on the current project.  With prefix
+argument, cleans the project first ('mvn clean install')."
+  (interactive "P")
+  (malabar-build-project clean-p 'install))
 
 (defun malabar-project-test-source-directories (project-file)
   (malabar-groovy-eval-and-lispeval

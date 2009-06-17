@@ -111,10 +111,11 @@ using 'mvn test -Dtestname'."
    (format "%s.runtest('%%s')"
            (malabar-project (current-buffer)))))
 
-(defun malabar-run-all-tests ()
-  "Runs all project tests ('mvn test')."
-  (interactive)
-  (malabar-build-project 'test))
+(defun malabar-run-all-tests (clean-p)
+  "Runs all project tests ('mvn test').  With prefix argument,
+cleans the project first ('mvn clean test')."
+  (interactive "P")
+  (malabar-build-project clean-p 'test))
 
 (add-to-list 'compilation-error-regexp-alist
              (list malabar-failed-maven-test-re          ;; RE
