@@ -26,9 +26,13 @@ class Projects
     static def projects = [:];
 
     static Project getAt(pom) {
+        return get(pom, [])
+    }
+
+    static Project get(pom, profiles) {
         Project p = projects[pom]
         File pomFile = pom as File
-        if (p && p.modStamp >= pomFile.lastModified()) {
+        if (p && p.activeProfiles == profiles && p.modStamp >= pomFile.lastModified()) {
             return p
         }
 
@@ -36,6 +40,10 @@ class Projects
         MavenEmbedder embedder = mvnServer.embedder
         MavenExecutionRequest req = mvnServer.newRequest()
         req.baseDirectory = pomFile.parentFile
+        profiles.each {
+            req.addActiveProfile(it)
+        }
+        
         MavenExecutionResult result = embedder.readProjectWithDependencies(req)
         if (result.hasExceptions()) {
             // handle exceptions

@@ -39,6 +39,9 @@ class Project
     def testSrcDirectories;
     def testClassesDirectory;
 
+    def activeProfiles;
+    def availableProfiles;
+
     def encoding = "UTF-8" as String;
     def source = "1.3" as String;
     def target = "1.1" as String;
@@ -95,6 +98,9 @@ class Project
         name = mavenProject.name
         description = mavenProject.description
 
+        activeProfiles = mavenProject.activeProfiles.collect { it.id }
+        availableProfiles = mavenProject.model.profiles.collect { it.id }
+        
         srcDirectories = mavenProject.compileSourceRoots
         classesDirectory = mavenProject.build.outputDirectory
         resources = mavenProject.resources.collect {
