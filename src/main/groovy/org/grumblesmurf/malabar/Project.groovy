@@ -50,13 +50,19 @@ class Project
     def mvnServer;
     
     def runtest(testname) {
-        def run = mvnServer.run(pomFile, false, "test");
-        run.addProperty("test", testname);
-        return run.run();
+        return run(["test"], [], [ test: testname ]);
     }
 
     def run(String... goals) {
-        def run = mvnServer.run(pomFile, false, goals);
+        return run(goals, [], [:]);
+    }
+
+    def run(goals, profiles, properties) {
+        def run = mvnServer.run(pomFile, false, goals as String[]);
+        run.setProfiles(profiles as String[]);
+        properties.each {
+            run.addProperty(it.key, it.value);
+        }
         return run.run();
     }
 

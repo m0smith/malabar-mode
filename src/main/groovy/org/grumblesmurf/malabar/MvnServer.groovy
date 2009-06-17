@@ -126,7 +126,9 @@ class RunDescriptor
     File pom;
     boolean recursive;
     String[] goals;
+    String[] profiles = new String[0];
     Properties properties = new Properties();
+    
     MvnServer mvnServer;
 
     RunDescriptor(mvnServer) {
@@ -142,17 +144,22 @@ class RunDescriptor
     public void setGoals(String[] goals) {
         this.goals = goals;
     }
+    public void setProfiles(String[] profiles) {
+        this.profiles = profiles;
+    }
     public RunDescriptor addProperty(String key, String value) {
         properties.put(key, value);
         return this;
     }
     public boolean run() {
-        MavenExecutionRequest request = new DefaultMavenExecutionRequest()
+        MavenExecutionRequest request = mvnServer.newRequest()
             .setBaseDirectory(pom.getParentFile())
             .setGoals(Arrays.asList(goals))
-            .setTransferListener(mvnServer.transferListener)
             .setRecursive(recursive)
             .setProperties(properties);
+        profiles.each {
+            request.addActiveProfile(it);
+        }
 
         PrintStream oldOut = System.out;
         PrintStream oldErr = System.err;

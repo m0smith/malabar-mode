@@ -96,21 +96,41 @@
 (defun malabar-build-project (clean-p &rest goals)
   (when clean-p
     (setq goals (cons 'clean goals)))
+  (malabar-execute-maven (malabar-find-project-file)
+                         goals
+                         nil
+                         nil))
+
+(defun malabar-execute-maven (project-file goals definitions profiles)
   (malabar-setup-compilation-buffer)
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
-   (concat (format "%s.run("
-                   (malabar-project-expression (malabar-find-project-file)))
-           (mapconcat (lambda (s) (format "'%s'" s))
-                      goals
-                      ",")
-           ")")))
+   (format "%s.run(%s, %s, %s)"
+           (malabar-project-expression project-file)
+           (malabar--make-groovy-list goals)
+           (malabar--make-groovy-list profiles)
+           (malabar--make-groovy-map definitions))))
 
 (defun malabar-install-project (clean-p)
   "Runs 'mvn install' on the current project.  With prefix
 argument, cleans the project first ('mvn clean install')."
   (interactive "P")
   (malabar-build-project clean-p 'install))
+
+(defvar malabar-maven-command-line-history nil
+  "Minibuffer history for `malabar-run-maven-command`.")
+
+(defun malabar-run-maven-command (command-line)
+  "Prompts for and executes an (almost) arbitrary Maven command line.
+Honors profile activation, property definitions and lifecycle
+phases/goals.  E.g.: ``-DskipTests=true -Pdev-mode install`` will
+run the install lifecycle with the dev-mode profile active,
+skipping tests."
+  (interactive (list (read-from-minibuffer "mvn command line: " nil nil nil
+                                           'malabar-maven-command-line-history)))
+  (let ((parsed-command (malabar-parse-maven-command-line command-line)))
+    (apply #'malabar-execute-maven (malabar-find-project-file)
+           parsed-command)))
 
 (defun malabar-project-test-source-directories (project-file)
   (malabar-groovy-eval-and-lispeval

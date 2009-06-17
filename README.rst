@@ -153,6 +153,13 @@ malabar-import-one-class : C-c C-v C-z
   default value excludes classes from ``java.lang``, JRE internal
   classes and inner classes.
 
+malabar-run-maven-command
+  Prompts for and executes an (almost) arbitrary Maven command line.
+  Honors profile activation, property definitions and lifecycle
+  phases/goals.  E.g.: ``-DskipTests=true -Pdev-mode install`` will
+  run the install lifecycle with the dev-mode profile active, skipping
+  tests.
+
 malabar-install-project : C-c C-v C-b
   Runs ``mvn install`` on your project.  With prefix argument (C-u),
   cleans the project first (``mvn clean install``).

@@ -90,3 +90,33 @@
 
 (deftest "class-to-filename with-package"
   (assert-equal "com/example/Foo.java" (malabar-class-name-to-filename "com.example.Foo")))
+
+(deftest "parse-maven-command-line simple"
+  (assert-equal '(("install") nil nil) (malabar-parse-maven-command-line "install")))
+
+(deftest "parse-maven-command-line two goals"
+  (assert-equal '(("clean" "install") nil nil) (malabar-parse-maven-command-line "clean install")))
+
+(deftest "parse-maven-command-line two goals one mojo"
+  (assert-equal '(("clean" "install" "help:effective-pom") nil nil) (malabar-parse-maven-command-line "clean install help:effective-pom")))
+
+(deftest "parse-maven-command-line single profile"
+  (assert-equal '(("test") nil ("runits")) (malabar-parse-maven-command-line "-Prunits test")))
+
+(deftest "parse-maven-command-line multiple profiles"
+  (assert-equal '(("test") nil ("runits" "dev-mode")) (malabar-parse-maven-command-line "-Prunits,dev-mode test")))
+
+(deftest "parse-maven-command-line simple definition"
+  (assert-equal '(("foo" . "bar"))
+                (second (malabar-parse-maven-command-line "-Dfoo=bar"))))
+
+(deftest "parse-maven-command-line multiple definitions"
+  (assert-equal '(("foo" . "bar")
+                  ("baz" . "zot"))
+                (second (malabar-parse-maven-command-line "-Dfoo=bar -Dbaz=zot"))))
+
+(deftest "parse-maven-command-line all together"
+  (let ((parsed-command (malabar-parse-maven-command-line "-Pintegration-test -Dmaven.skip.tests=true install")))
+    (assert-equal '("install") (first parsed-command))
+    (assert-equal '(("maven.skip.tests" . "true")) (second parsed-command))
+    (assert-equal '("integration-test") (third parsed-command))))

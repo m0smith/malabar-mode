@@ -148,6 +148,50 @@ when PREDICATE return non-NIL."
       (when (funcall predicate)
         (replace-match replacement nil t)))))
 
+(defun malabar-parse-maven-command-line (command-line)
+  "Returns a three-element list (goals definitions profiles)
+gleaned from COMMAND-LINE."
+  (let ((goals nil)
+        (definitions nil)
+        (profiles nil)
+        (tokens (split-string command-line)))
+    (dolist (token tokens)
+      (cond ((string-starts-with token "-D")
+             ;; define
+             (let ((definition-tokens (split-string (substring token 2) "=")))
+               (push (cons (first definition-tokens)
+                           (second definition-tokens))
+                     definitions)))
+            ((string-starts-with token "-P")
+             ;; profiles
+             (setq profiles (nconc (split-string (substring token 2) ",")
+                                   profiles)))
+            ((string-starts-with token "-")
+             ;; other option, ignore for now
+             )
+            (t
+             ;; goal
+             (push token goals))))
+    (list (nreverse goals)
+          (nreverse definitions)
+          profiles)))
+    
+(defun malabar--make-groovy-list (l)
+  (concat "["
+          (mapconcat (lambda (s) (format "'%s'" s))
+                     l
+                     ",")
+          "]"))
+
+(defun malabar--make-groovy-map (l)
+  (if (null l)
+      "[:]"
+    (concat "["
+            (mapconcat (lambda (c) (format "'%s': '%s'" (car c) (cdr c)))
+                       l
+                       ",")
+            "]")))
+
 (provide 'malabar-util)
 ;; Local Variables:
 ;; byte-compile-warnings:(not cl-functions)
