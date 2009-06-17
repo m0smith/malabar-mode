@@ -193,7 +193,7 @@ malabar-visit-corresponding-test
   If the current buffer looks like a test class, this command does nothing.
 
 malabar-visit-project-file : C-c C-v C-p
-  Visit the project file, that is the closed file named ``pom.xml``
+  Visit the project file, that is the closest file named ``pom.xml``
   searching upwards in the directory structure.
 
 In addition, `standard Semantic code completion`_ is available; trigger
