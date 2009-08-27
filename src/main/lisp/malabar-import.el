@@ -248,12 +248,14 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
   ;; This screws any inline comments on imports.  Watch me care.
   (destructuring-bind (start end import-tags)
       (malabar-import--imports-region)
-    (delete-region start end)
-    (insert (mapconcat 'semantic-format-tag-prototype
-                       (sort import-tags #'(lambda (a b)
-                                             (string< (semantic-tag-name a)
-                                                      (semantic-tag-name b))))
-                       "\n"))))
+    (save-excursion
+      (goto-char start)
+      (delete-region start end)
+      (insert (mapconcat 'semantic-format-tag-prototype
+                         (sort import-tags #'(lambda (a b)
+                                               (string< (semantic-tag-name a)
+                                                        (semantic-tag-name b))))
+                         "\n")))))
 
 (defcustom malabar-import-group-token-count 2
   "The number of tokens to consider when grouping imports.
