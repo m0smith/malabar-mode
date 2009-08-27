@@ -28,7 +28,7 @@ class Projects
     static Project get(pom, profiles) {
         Project p = projects[pom]
         File pomFile = pom as File
-        if (p && p.activeProfiles == profiles && p.modStamp >= pomFile.lastModified()) {
+        if (p && p.requestedProfiles == profiles && p.modStamp >= pomFile.lastModified()) {
             return p
         }
 
@@ -49,7 +49,7 @@ class Projects
             println '(error "Missing artifacts: %s" "' + result.artifactResolutionResult.missingArtifacts + '")'
             return null;
         } else {
-            Project me = new Project(pom, result, mvnServer);
+            Project me = new Project(pom, profiles, result, mvnServer);
             projects[pom] = me
             return me;
         }

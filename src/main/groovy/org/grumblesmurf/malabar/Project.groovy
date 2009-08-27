@@ -40,6 +40,7 @@ class Project
     def testClassesDirectory;
 
     def activeProfiles;
+    def requestedProfiles;
     def availableProfiles;
 
     def encoding = "UTF-8" as String;
@@ -90,9 +91,10 @@ class Project
         return result.wasSuccessful();
     }
     
-    private Project(pom, result, mvnServer) {
+    private Project(pom, profiles, result, mvnServer) {
         this.mvnServer = mvnServer
         pomFile = pom
+        requestedProfiles = profiles
         modStamp = (pom as File).lastModified()
         mavenProject = result.project
         name = mavenProject.name
