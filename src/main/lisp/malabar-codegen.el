@@ -288,27 +288,40 @@ accessible constructors."
                         (member getter-name member-names))
               (srecode-insert-getset class field))))))))
 
+(define-mode-local-override semantic-tag-static-p
+  malabar-mode (tag &optional parent)
+  "Return non-nil if TAG is static in PARENT class.
+Overrides `semantic-tag-static-p'."
+  (semantic-tag-get-attribute tag :static-flag))
+
 (define-mode-local-override semantic-format-tag-prototype malabar-mode
   (tag &optional parent color)
   "As -default, but insert the template-specifier in the right place."
-  (let ((def
-         (replace-regexp-in-string
-          "," ", "
-          (replace-regexp-in-string
-           " (" "("
-           (semantic-format-tag-prototype-default
-            tag parent color)
-           nil t)
-          nil t)))
-    (when (boundp 'malabar--import-candidates)
-      (pushnew (malabar--raw-type (semantic-tag-type tag)) malabar--import-candidates
-               :test #'equal))
-    (if (and (malabar--get-type-parameters tag)
-             (string-match (regexp-quote (semantic-tag-type tag)) def))
-        (replace-match (concat (malabar--get-type-parameters tag) " "
-                               (match-string 0 def))
-                       t t def)
-      def)))
+  (case (semantic-tag-class tag)
+    ((function variable type)
+     (let ((def
+            (replace-regexp-in-string
+             "," ", "
+             (replace-regexp-in-string
+              " (" "("
+              (semantic-format-tag-prototype-default
+               tag parent color)
+              nil t)
+             nil t)))
+       (when (boundp 'malabar--import-candidates)
+         (pushnew (malabar--raw-type (semantic-tag-type tag)) malabar--import-candidates
+                  :test #'equal))
+       (if (and (malabar--get-type-parameters tag)
+                (string-match (regexp-quote (semantic-tag-type tag)) def))
+           (replace-match (concat (malabar--get-type-parameters tag) " "
+                                  (match-string 0 def))
+                          t t def)
+         def)))
+    (include
+     (format "import %s%s;" (if (semantic-tag-static-p tag) "static " "") (semantic-tag-name tag)))))
+
+("no.telio.gnocchi.model.ServiceProperty" include nil (reparse-symbol import_declaration :filename "/home/espenw/work/sources/gnocchi/gnocchi-it/src/test/java/no/telio/gnocchi/ServiceConfigurationTest.java") #<overlay from 99 to 145 in ServiceConfigurationTest.java>)
+
 
 (provide 'malabar-codegen)
 
