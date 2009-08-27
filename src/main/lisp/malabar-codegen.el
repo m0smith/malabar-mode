@@ -320,9 +320,6 @@ Overrides `semantic-tag-static-p'."
     (include
      (format "import %s%s;" (if (semantic-tag-static-p tag) "static " "") (semantic-tag-name tag)))))
 
-("no.telio.gnocchi.model.ServiceProperty" include nil (reparse-symbol import_declaration :filename "/home/espenw/work/sources/gnocchi/gnocchi-it/src/test/java/no/telio/gnocchi/ServiceConfigurationTest.java") #<overlay from 99 to 145 in ServiceConfigurationTest.java>)
-
-
 (provide 'malabar-codegen)
 
 ;; Local Variables:
