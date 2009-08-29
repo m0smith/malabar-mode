@@ -314,14 +314,23 @@ pop to the Groovy console buffer."
     (mapc (lambda (n)
             (put-text-property (match-end n) (1+ (match-end n)) 'invisible t))
           '(4 5 6 7))
-    (pushnew (list* (or (match-string-no-properties 1)    ;
-                        (match-string-no-properties 2)    ; CLASS
-                        (match-string-no-properties 3))   ;
-                    (match-string-no-properties 4)        ; FILE
-                    (let ((positions (match-string-no-properties 7)))
-                      (car
-                       (read-from-string
-                        (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
+    (pushnew (list :class (cond ((match-beginning 1)
+                                 'error)
+                                ((match-beginning 2)
+                                 'warning)
+                                ((match-beginning 3)
+                                 'info))
+                   :file (match-string-no-properties 4)
+                   :message
+                   (buffer-substring-no-properties (match-end 0)
+                                                   (save-excursion
+                                                     (end-of-line)
+                                                     (point)))
+                   :position-info
+                   (let ((positions (match-string-no-properties 7)))
+                     (car
+                      (read-from-string
+                       (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
              malabar-groovy--compiler-notes
              :test #'equal)))
 
