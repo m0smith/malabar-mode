@@ -284,9 +284,13 @@ pop to the Groovy console buffer."
       (font-lock-add-keywords nil
                               (append
                                '((malabar-groovy-highlight-compilation-message
+                                  (1 '(face nil invisible t) nil t) ;
+                                  (2 '(face nil invisible t) nil t) ; hide the class
+                                  (3 '(face nil invisible t) nil t) ;
                                   (4 (compilation-face '(2 . 3)))
                                   (5 compilation-line-face nil t)
                                   (6 compilation-column-face nil t)
+                                  (7 '(face nil invisible t) nil t) ; hide the position info
                                   (0 (compilation-error-properties 4 5 nil 6 nil '(2 . 3) nil)
                                      append)))
                                compilation-mode-font-lock-keywords)
@@ -298,17 +302,28 @@ pop to the Groovy console buffer."
 (defun malabar-groovy-highlight-compilation-message (limit)
   ;; CLASS::FILE::LINE::COLUMN::START::END::POS::Message
   ;; CLASS is either ERROR, MANDATORY_WARNING, WARNING, NOTE or OTHER
-  (when (re-search-forward "^\\(ERROR\\)?\\(\\(?:MANDATORY_\\)?WARNING\\)?\\(NOTE\\|OTHER\\)?::\\(.*?\\)::\\(.*?\\)::\\(.*?\\)::\\(.*?::.*?::.*?\\)::" limit 'move)
-      (pushnew (list* (or (match-string-no-properties 1)  ;
-                          (match-string-no-properties 2)  ; CLASS
-                          (match-string-no-properties 3)) ;
-                      (match-string-no-properties 4) ; FILE
-                      (let ((positions (match-string-no-properties 7)))
-                        (car
-                         (read-from-string
-                          (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
-               malabar-groovy--compiler-notes
-               :test #'equal)))
+  (when (re-search-forward "^\\(ERROR::\\)?\\(\\(?:MANDATORY_\\)?WARNING::\\)?\\(NOTE::\\|OTHER::\\)?\\(.*?\\)::\\(.*?\\)::\\(.*?\\)\\(::.*?::.*?::.*?\\)::" limit 'move)
+    (when malabar-compilation-project-file
+      (let ((file-start (match-beginning 4)))
+        (put-text-property file-start
+                           (+ file-start
+                              (length (file-name-directory
+                                       malabar-compilation-project-file)))
+                           'invisible t)))
+    ;; Hide some colons
+    (mapc (lambda (n)
+            (put-text-property (match-end n) (1+ (match-end n)) 'invisible t))
+          '(4 5 6 7))
+    (pushnew (list* (or (match-string-no-properties 1)    ;
+                        (match-string-no-properties 2)    ; CLASS
+                        (match-string-no-properties 3))   ;
+                    (match-string-no-properties 4)        ; FILE
+                    (let ((positions (match-string-no-properties 7)))
+                      (car
+                       (read-from-string
+                        (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
+             malabar-groovy--compiler-notes
+             :test #'equal)))
 
 (defvar malabar-groovy--compilation-backlog nil)
 
