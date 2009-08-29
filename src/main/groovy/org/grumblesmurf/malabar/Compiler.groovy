@@ -42,13 +42,14 @@ class Compiler
         (output as File).mkdirs()
 
         if (file.endsWith(".java")) {
-            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            StandardJavaFileManager fileManager =
+            def compiler = ToolProvider.getSystemJavaCompiler();
+            def fileManager =
                 compiler.getStandardFileManager(null, null, Charset.forName("UTF-8"));
-            Iterable<? extends JavaFileObject> compilationUnits =
+            def compilationUnits =
                 fileManager.getJavaFileObjectsFromStrings([file]);
-            JavaCompiler.CompilationTask task =
-                compiler.getTask(Utils.getOut(), fileManager, null,
+            def diagnosticCollector = new DiagnosticCollector()
+            def task =
+                compiler.getTask(Utils.getOut(), fileManager, diagnosticCollector,
                                  ["-cp", classpath.asClassPath(),
                                   "-g", "-deprecation",
                                   "-d", output,
@@ -57,7 +58,14 @@ class Compiler
                                   "-encoding", project.encoding,
                                   "-Xlint:all", "-Xlint:-serial"],
                                  null, compilationUnits);
-            boolean success = task.call();
+            def success = task.call();
+            diagnosticCollector.diagnostics.each {
+                def start = [it.source as String, it.lineNumber].join(":")
+                def message = it.getMessage(null).replaceFirst(start + ":", "")
+                println([it.kind, it.source as String, it.lineNumber, it.columnNumber,
+                         it.startPosition, it.endPosition, it.position,
+                         message].join("::"))
+            }
             fileManager.close();
             return success;
         } else if (file.endsWith(".groovy")) {

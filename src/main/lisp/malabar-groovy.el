@@ -267,14 +267,48 @@ pop to the Groovy console buffer."
   "Pass STRING to groovysh for evaluation, and read the output for Lisp use."
   (car (read-from-string (car (malabar-groovy-eval string)))))
 
-(defun malabar-groovy-setup-compilation-buffer ()
+(defun malabar-groovy-setup-compilation-buffer (&optional non-maven)
   (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
     (setq buffer-read-only nil)
     (buffer-disable-undo (current-buffer))
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
-    (compilation-mode)
+    (if (not non-maven)
+        (compilation-mode)
+      ;; Non-maven compilation, do magic
+      (setq mode-name "Compilation")
+      (compilation-minor-mode t)
+      (setq malabar-groovy--compiler-notes nil)
+      ;; We do error message parsing slightly differently
+      (font-lock-remove-keywords nil (compilation-mode-font-lock-keywords))
+      (font-lock-add-keywords nil
+                              (append
+                               '((malabar-groovy-highlight-compilation-message
+                                  (4 (compilation-face '(2 . 3)))
+                                  (5 compilation-line-face nil t)
+                                  (6 compilation-column-face nil t)
+                                  (0 (compilation-error-properties 4 5 nil 6 nil '(2 . 3) nil)
+                                     append)))
+                               compilation-mode-font-lock-keywords)
+                              'set))
     (setq buffer-read-only nil)))
+
+(defvar malabar-groovy--compiler-notes nil)
+
+(defun malabar-groovy-highlight-compilation-message (limit)
+  ;; CLASS::FILE::LINE::COLUMN::START::END::POS::Message
+  ;; CLASS is either ERROR, MANDATORY_WARNING, WARNING, NOTE or OTHER
+  (when (re-search-forward "^\\(ERROR\\)?\\(\\(?:MANDATORY_\\)?WARNING\\)?\\(NOTE\\|OTHER\\)?::\\(.*?\\)::\\(.*?\\)::\\(.*?\\)::\\(.*?::.*?::.*?\\)::" limit 'move)
+      (pushnew (list* (or (match-string-no-properties 1)  ;
+                          (match-string-no-properties 2)  ; CLASS
+                          (match-string-no-properties 3)) ;
+                      (match-string-no-properties 4) ; FILE
+                      (let ((positions (match-string-no-properties 7)))
+                        (car
+                         (read-from-string
+                          (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
+               malabar-groovy--compiler-notes
+               :test #'equal)))
 
 (defvar malabar-groovy--compilation-backlog nil)
 

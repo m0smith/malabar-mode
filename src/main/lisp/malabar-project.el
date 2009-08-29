@@ -21,9 +21,9 @@
 (require 'malabar-groovy)
 (require 'malabar-util)
 
-(defun malabar-setup-compilation-buffer ()
+(defun malabar-setup-compilation-buffer (&optional non-maven)
   (setq malabar-compilation-project-file (malabar-find-project-file))
-  (malabar-groovy-setup-compilation-buffer))
+  (malabar-groovy-setup-compilation-buffer non-maven))
 
 (defun malabar--clean-compilation-messages (buffer &optional message)
   (when (equal buffer (get-buffer malabar-groovy-compilation-buffer-name))
