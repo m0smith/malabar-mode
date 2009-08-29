@@ -239,16 +239,23 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
          (first-import (car import-tags))
          (last-import (car (last import-tags))))
     (list (semantic-tag-start first-import)
-          (semantic-tag-end last-import))))
+          (semantic-tag-end last-import)
+          import-tags)))
 
 (defun malabar-import-sort-imports ()
   "Sort imports alphabetically, removing blank lines."
   (interactive)
   ;; This screws any inline comments on imports.  Watch me care.
-  (destructuring-bind (start end)
+  (destructuring-bind (start end import-tags)
       (malabar-import--imports-region)
-    (sort-lines nil start end)
-    (delete-matching-lines "^\\s-*$" start end)))
+    (save-excursion
+      (goto-char start)
+      (delete-region start end)
+      (insert (mapconcat 'semantic-format-tag-prototype
+                         (sort import-tags #'(lambda (a b)
+                                               (string< (semantic-tag-name a)
+                                                        (semantic-tag-name b))))
+                         "\n")))))
 
 (defcustom malabar-import-group-token-count 2
   "The number of tokens to consider when grouping imports.

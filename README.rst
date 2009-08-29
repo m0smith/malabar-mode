@@ -84,8 +84,7 @@ and more.
 ==============
 
 1. You probably already have Emacs.  However, you may want to consider
-   getting Emacs 23 (at the time of writing it is in pre-test), as
-   that's what I develop this beast for.
+   getting Emacs 23, as that's what I develop this beast for.
 
 2. Get CEDET_ and arrange for it to be on you Emacs load-path (I
    develop using CVS HEAD; older versions may or may not work),
