@@ -370,7 +370,7 @@ pop to the Groovy console buffer."
 
 (defvar malabar-groovy--compilation-backlog nil)
 
-(defun malabar-groovy-eval-as-compilation (string)
+(defun malabar-groovy-eval-as-compilation (string &optional silent)
   "Passes STRING to groovysh for evaluation in the compile server."
   (unless (malabar-groovy-live-p)
     (malabar-groovy-start t))
@@ -383,7 +383,7 @@ pop to the Groovy console buffer."
                             (cons groovy-process compilation-in-progress))
                       (comint-redirect-send-command-to-process
                        string malabar-groovy-compilation-buffer-name
-                       groovy-process nil)))))
+                       groovy-process nil silent)))))
       (if (memq groovy-process compilation-in-progress)
           (add-to-list 'malabar-groovy--compilation-backlog thunk t)
         (funcall thunk)))))

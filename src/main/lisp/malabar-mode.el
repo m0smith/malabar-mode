@@ -65,16 +65,23 @@
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
 
-(defun malabar-compile-file ()
+(defun malabar-compile-file-silently ()
+  "Compiles the current buffer without displaying the result."
+  (interactive)
+  (malabar-compile-file t))
+
+(defun malabar-compile-file (&optional silent)
   "Compiles the current buffer."
   (interactive)
   (save-some-buffers (not compilation-ask-about-save) nil)
   (malabar-setup-compilation-buffer (list (buffer-file-name (current-buffer))))
-  (display-buffer malabar-groovy-compilation-buffer-name t)
+  (unless silent
+    (display-buffer malabar-groovy-compilation-buffer-name t))
   (malabar-groovy-eval-as-compilation
    (concat (format "%s.compiler.compile('%s')"
                    (malabar-project (current-buffer))
-                   (buffer-file-name (current-buffer))))))
+                   (buffer-file-name (current-buffer))))
+   silent))
 
 (defun malabar-compute-package-name (&optional buffer)
   (let* ((dir (file-name-directory (buffer-file-name buffer)))
