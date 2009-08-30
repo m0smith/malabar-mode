@@ -273,12 +273,12 @@ pop to the Groovy console buffer."
     (buffer-disable-undo (current-buffer))
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
+    (setq malabar-groovy--compiler-notes nil)
     (if (not non-maven)
         (compilation-mode)
       ;; Non-maven compilation, do magic
       (setq mode-name "Compilation")
       (compilation-minor-mode t)
-      (setq malabar-groovy--compiler-notes nil)
       ;; We do error message parsing slightly differently
       (font-lock-remove-keywords nil (compilation-mode-font-lock-keywords))
       (font-lock-add-keywords nil
