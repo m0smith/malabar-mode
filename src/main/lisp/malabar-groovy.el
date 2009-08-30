@@ -377,7 +377,8 @@ pop to the Groovy console buffer."
   (when (malabar-groovy-live-p)
     (let* ((groovy-process (get-buffer-process malabar-groovy-compile-server-buffer-name))
            (thunk (lexical-let ((string string)
-                                (groovy-process groovy-process))
+                                (groovy-process groovy-process)
+                                (silent silent))
                     (lambda ()
                       (setq compilation-in-progress
                             (cons groovy-process compilation-in-progress))
