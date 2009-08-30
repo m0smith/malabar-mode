@@ -328,9 +328,12 @@ pop to the Groovy console buffer."
                                                      (point)))
                    :position-info
                    (let ((positions (match-string-no-properties 7)))
-                     (car
-                      (read-from-string
-                       (concat "(" (replace-regexp-in-string "::" " " positions) ")")))))
+                     (mapcar #'1+
+                             (car
+                              (read-from-string
+                               (concat "("
+                                       (replace-regexp-in-string "::" " " positions)
+                                       ")"))))))
              malabar-groovy--compiler-notes
              :test #'equal)))
 
