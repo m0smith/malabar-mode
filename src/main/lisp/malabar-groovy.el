@@ -23,6 +23,7 @@
 (require 'cl)
 
 (require 'malabar-util)
+(require 'fringe-helper)
 
 (defgroup malabar-groovy nil
   "Customization of malabar-mode's inferior Groovy."
@@ -324,6 +325,7 @@ pop to the Groovy console buffer."
               (when buf
                 (remove-overlays 
                 (with-current-buffer buf
+                  (mapc 'fringe-helper-remove malabar-groovy--fringe-overlays)
                   (remove-overlays (point-min) (point-max)
                                    'malabar-compiler-note t))))))
           files-to-process)))
@@ -422,22 +424,34 @@ pop to the Groovy console buffer."
 (defface malabar-info-face '((t (:underline "blue")))
   "Face used in code buffer for info annotations.") 
 
+(defvar malabar-groovy--fringe-overlays nil)
+(make-variable-buffer-local 'malabar-groovy--fringe-overlays)
+
 (defun malabar-groovy--add-compiler-annotation (compiler-note)
   (let ((file (getf compiler-note :file)))
     (when (file-exists-p file)
       (save-excursion
         (with-current-buffer (find-file-noselect file)
-          (let ((modified (buffer-modified-p))
-                (buffer-undo-list t))
-            (let ((overlay (make-overlay (first (getf compiler-note :position-info))
-                                         (second (getf compiler-note :position-info))
-                                         nil nil t)))
+          (let* ((modified (buffer-modified-p))
+                 (buffer-undo-list t)
+                 (position-info (getf compiler-note :position-info))
+                 (beg (first position-info))
+                 (end (second position-info))
+                 (class (getf compiler-note :class)))
+            (let ((overlay (make-overlay beg end nil nil t)))
               (overlay-put overlay 'malabar-compiler-note t)
-              (overlay-put overlay 'face (case (getf compiler-note :class)
+              (overlay-put overlay 'face (case class
                                            (error 'malabar-error-face)
                                            (warning 'malabar-warning-face)
                                            (info 'malabar-info-face)))
               (overlay-put overlay 'help-echo (getf compiler-note :message)))
+            (push (fringe-helper-insert-region
+                   beg end (fringe-lib-load (case class
+                                              (error fringe-lib-exclamation-mark)
+                                              (warning fringe-lib-question-mark)
+                                              (info fringe-lib-wave)))
+                   'left-fringe (when (eq class 'error) 'font-lock-warning-face))
+                  malabar-groovy--fringe-overlays)
             (set-buffer-modified-p modified)))))))
 
 (provide 'malabar-groovy)
