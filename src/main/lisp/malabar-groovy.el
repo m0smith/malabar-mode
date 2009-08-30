@@ -267,6 +267,21 @@ pop to the Groovy console buffer."
   "Pass STRING to groovysh for evaluation, and read the output for Lisp use."
   (car (read-from-string (car (malabar-groovy-eval string)))))
 
+(defcustom malabar-groovy-compilation-font-lock-keywords 
+  '((malabar-groovy-highlight-compilation-message
+     (1 '(face nil invisible t) nil t) ;
+     (2 '(face nil invisible t) nil t) ; hide the class
+     (3 '(face nil invisible t) nil t) ;
+     (4 (compilation-face '(2 . 3)))
+     (5 compilation-line-face nil t)
+     (6 compilation-column-face nil t)
+     (7 '(face nil invisible t) nil t) ; hide the position info
+     (0 (compilation-error-properties 4 5 nil 6 nil '(2 . 3) nil)
+        append)))
+  "Font lock keywords for Malabar compilation."
+  :group 'malabar-mode
+  :type '(alist))
+  
 (defun malabar-groovy-setup-compilation-buffer (&optional non-maven)
   (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
     (setq buffer-read-only nil)
@@ -284,16 +299,7 @@ pop to the Groovy console buffer."
       (font-lock-remove-keywords nil (compilation-mode-font-lock-keywords))
       (font-lock-add-keywords nil
                               (append
-                               '((malabar-groovy-highlight-compilation-message
-                                  (1 '(face nil invisible t) nil t) ;
-                                  (2 '(face nil invisible t) nil t) ; hide the class
-                                  (3 '(face nil invisible t) nil t) ;
-                                  (4 (compilation-face '(2 . 3)))
-                                  (5 compilation-line-face nil t)
-                                  (6 compilation-column-face nil t)
-                                  (7 '(face nil invisible t) nil t) ; hide the position info
-                                  (0 (compilation-error-properties 4 5 nil 6 nil '(2 . 3) nil)
-                                     append)))
+                               malabar-groovy-compilation-font-lock-keywords
                                compilation-mode-font-lock-keywords)
                               'set))
     (setq buffer-read-only nil)))
