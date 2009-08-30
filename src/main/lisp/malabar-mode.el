@@ -69,7 +69,7 @@
   "Compiles the current buffer."
   (interactive)
   (save-some-buffers (not compilation-ask-about-save) nil)
-  (malabar-setup-compilation-buffer t)
+  (malabar-setup-compilation-buffer (list (buffer-file-name (current-buffer))))
   (display-buffer malabar-groovy-compilation-buffer-name t)
   (malabar-groovy-eval-as-compilation
    (concat (format "%s.compiler.compile('%s')"

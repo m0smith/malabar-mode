@@ -282,17 +282,22 @@ pop to the Groovy console buffer."
   :group 'malabar-mode
   :type '(alist))
   
-(defun malabar-groovy-setup-compilation-buffer (&optional non-maven)
+(defun malabar-groovy-setup-compilation-buffer (&optional for-files)
   (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
     (setq buffer-read-only nil)
     (buffer-disable-undo (current-buffer))
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
-    (malabar-groovy-reset-compiler-notes)
-    (setq malabar-groovy--compiler-notes nil)
-    (if (not non-maven)
+    (malabar-groovy-reset-compiler-notes for-files)
+    (setq malabar-groovy--compiler-notes 
+          (remove-if (lambda (f)
+                       (member f for-files))
+                     malabar-groovy--compiler-notes
+                     :key (lambda (n)
+                            (getf n :file))))
+    (if (not for-files) ;; Running Maven, use normal compilation mode
         (compilation-mode)
-      ;; Non-maven compilation, do magic
+      ;; Compiling a single file (or set of files), do magic
       (setq mode-name "Compilation")
       (compilation-minor-mode t)
       ;; We do error message parsing slightly differently
