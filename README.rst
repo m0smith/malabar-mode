@@ -113,6 +113,14 @@ and more.
      (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
      (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
 
+8. (optional) If you want to mimic the IDEish compile-on-save
+   behaviour, add the following as well::
+
+     (add-hook 'malabar-mode-hook
+          (lambda () 
+            (add-hook 'after-save-hook 'malabar-compile-file-silently
+                      nil t))
+          
 =======
  Usage
 =======
