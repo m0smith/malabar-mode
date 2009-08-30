@@ -83,10 +83,16 @@ and more.
  Installation
 ==============
 
-1. You probably already have Emacs.  However, you may want to consider
-   getting Emacs 23, as that's what I develop this beast for.
+1. You probably already have Emacs (if not, go get it right now.  I'll
+   wait).  However, for this beast, you will need Emacs 23.
 
-2. Get CEDET_ and arrange for it to be on you Emacs load-path (I
+   Warning, warning, Ubuntu users: The Intrepid emacs-snapshot package
+   is too old (strangely enough, by about eight days).  The Jaunty
+   snapshot package should work, but you should consider getting the
+   release (23.1 at the time of writing).  Compiling your own Emacs
+   isn't hard.
+
+2. Get CEDET_ and arrange for it to be on your Emacs load-path (I
    develop using CVS HEAD; older versions may or may not work),
    e.g. by linking the CEDET directory into your site-lisp directory.
 
