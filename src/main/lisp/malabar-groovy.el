@@ -273,6 +273,7 @@ pop to the Groovy console buffer."
     (buffer-disable-undo (current-buffer))
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
+    (malabar-groovy-reset-compiler-notes)
     (setq malabar-groovy--compiler-notes nil)
     (if (not non-maven)
         (compilation-mode)
@@ -298,6 +299,23 @@ pop to the Groovy console buffer."
     (setq buffer-read-only nil)))
 
 (defvar malabar-groovy--compiler-notes nil)
+
+(defun malabar-groovy-reset-compiler-notes (&optional files)
+  "Remove all compiler notes from the given files, or all files if nil."
+  (interactive)
+  (let ((files-to-process (or files
+                              (delete-duplicates
+                               (mapcar (lambda (n)
+                                         (getf n :file))
+                                       malabar-groovy--compiler-notes)))))
+    (mapc (lambda (f)
+            (let ((buf (get-file-buffer f)))
+              (when buf
+                (remove-overlays 
+                (with-current-buffer buf
+                  (remove-overlays (point-min) (point-max)
+                                   'malabar-compiler-note t))))))
+          files-to-process)))
 
 (defun malabar-groovy-highlight-compilation-message (limit)
   ;; CLASS::FILE::LINE::COLUMN::START::END::POS::Message
@@ -380,6 +398,35 @@ pop to the Groovy console buffer."
       (apply #'compilation-handle-exit 'exit
              (if (equal result "true")
                  (list 0 "finished\n")
-               (list 1 "exited abnormally"))))))
+               (list 1 "exited abnormally"))))
+    (mapcar #'malabar-groovy--add-compiler-annotation
+            malabar-groovy--compiler-notes)))
+
+(defface malabar-error-face '((t (:underline "red")))
+  "Face used in code buffer for error annotations.") 
+
+(defface malabar-warning-face '((t (:underline "orange")))
+  "Face used in code buffer for warning annotations.") 
+
+(defface malabar-info-face '((t (:underline "blue")))
+  "Face used in code buffer for info annotations.") 
+
+(defun malabar-groovy--add-compiler-annotation (compiler-note)
+  (let ((file (getf compiler-note :file)))
+    (when (file-exists-p file)
+      (save-excursion
+        (with-current-buffer (find-file-noselect file)
+          (let ((modified (buffer-modified-p))
+                (buffer-undo-list t))
+            (let ((overlay (make-overlay (first (getf compiler-note :position-info))
+                                         (second (getf compiler-note :position-info))
+                                         nil nil t)))
+              (overlay-put overlay 'malabar-compiler-note t)
+              (overlay-put overlay 'face (case (getf compiler-note :class)
+                                           (error 'malabar-error-face)
+                                           (warning 'malabar-warning-face)
+                                           (info 'malabar-info-face)))
+              (overlay-put overlay 'help-echo (getf compiler-note :message)))
+            (set-buffer-modified-p modified)))))))
 
 (provide 'malabar-groovy)
