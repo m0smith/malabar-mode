@@ -39,8 +39,11 @@ class Compiler
             output = project.testClassesDirectory
             classpath = project.testClasspath
         }
+        return compile(file, classpath, output);
+    }
+    
+    def compile(file, classpath, output) {
         (output as File).mkdirs()
-
         if (file.endsWith(".java")) {
             def compiler = ToolProvider.getSystemJavaCompiler();
             def fileManager =
