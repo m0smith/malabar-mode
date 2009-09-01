@@ -19,7 +19,13 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.embedder.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.*;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
 
 class Projects
 {
@@ -39,19 +45,18 @@ class Projects
         profiles.each {
             req.addActiveProfile(it)
         }
+        embedder.plexusContainer.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
+
+        ProjectBuildingRequest config = new DefaultProjectBuildingRequest()
+            .setLocalRepository(req.getLocalRepository())
+            .setRemoteRepositories(req.getRemoteRepositories())
+            .setPluginArtifactRepositories(req.getPluginArtifactRepositories());
         
-        MavenExecutionResult result = embedder.readProjectWithDependencies(req)
-        if (result.hasExceptions()) {
-            // handle exceptions
-            println '(error "%s" "' + result.exceptions + '")'
-            return null;
-        } else if (result.artifactResolutionResult.missingArtifacts) {
-            println '(error "Missing artifacts: %s" "' + result.artifactResolutionResult.missingArtifacts + '")'
-            return null;
-        } else {
-            Project me = new Project(pom, profiles, result, mvnServer);
-            projects[pom] = me
-            return me;
-        }
+        ProjectBuildingResult result =
+            embedder.plexusContainer.lookup(ProjectBuilder.class).build(pomFile, config)
+        // TODO: Error handling!
+        Project me = new Project(pom, profiles, result.getProject(), mvnServer);
+        projects[pom] = me
+        return me;
     }
 }

@@ -91,12 +91,12 @@ class Project
         return result.wasSuccessful();
     }
     
-    private Project(pom, profiles, result, mvnServer) {
+    private Project(pom, profiles, mavenProject, mvnServer) {
         this.mvnServer = mvnServer
         pomFile = pom
         requestedProfiles = profiles
         modStamp = (pom as File).lastModified()
-        mavenProject = result.project
+        this.mavenProject = mavenProject
         name = mavenProject.name
         description = mavenProject.description
 
