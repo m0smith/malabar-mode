@@ -97,7 +97,7 @@ if it gives you trouble.")
   ((table semanticdb-table-malabar) prefix &optional tags) 
   (semanticdb-find-tags-for-completion-method table prefix tags))
 
-(define-mode-local-override semanticdb-find-translate-path java-mode (path brutish)
+(define-mode-local-override semanticdb-find-translate-path malabar-mode (path brutish)
   (message "semanticdb-find-translate-path java-mode %s " path)
   (semanticdb-find-translate-path-default path t))
 
