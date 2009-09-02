@@ -200,6 +200,16 @@
       </releases>
       <url>http://repository.sonatype.org/content/repositories/maven.snapshots/</url>
     </repository>
+    <repository>
+      <id>sonatype.plexus.snapshots</id>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <url>http://repository.sonatype.org/content/repositories/plexus-oss-snapshots/</url>
+    </repository>
   </repositories>
   
   <distributionManagement>
