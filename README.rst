@@ -216,6 +216,13 @@ malabar-visit-project-file : C-c C-v C-p
   Visit the project file, that is the closest file named ``pom.xml``
   searching upwards in the directory structure.
 
+malabar-jump-to-thing : C-c C-v C-y
+  Jumps to the definition of the 'thing' at point. More technically,
+  uses ``semantic-analyze-current-context`` output to identify an origin
+  for the code at point, taking type membership into account.  This
+  function is much like ``semantic-ia-fast-jump``, only a little
+  smarter.
+
 In addition, `standard Semantic code completion`_ is available; trigger
 this however you wish.  By default, ``semantic-ia-complete-symbol`` is
 bound to ``C-c C-v C-.`` and ``semantic-ia-complete-symbol-menu`` is
