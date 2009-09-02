@@ -50,7 +50,10 @@ class Projects
         ProjectBuildingRequest config = new DefaultProjectBuildingRequest()
             .setLocalRepository(req.getLocalRepository())
             .setRemoteRepositories(req.getRemoteRepositories())
-            .setPluginArtifactRepositories(req.getPluginArtifactRepositories());
+            .setPluginArtifactRepositories(req.getPluginArtifactRepositories())
+            .setProcessPlugins(true)
+            .setProcessPluginConfiguration(true)
+            .setResolveDependencies(true);
         
         ProjectBuildingResult result =
             embedder.plexusContainer.lookup(ProjectBuilder.class).build(pomFile, config)
