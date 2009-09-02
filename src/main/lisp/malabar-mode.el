@@ -188,4 +188,39 @@ present."
           result)
     (apply 'append result)))
 
+(defun malabar-jump-to-thing (point)
+  "Jumps to the definition of the 'thing' at point.
+More technically, uses `semantic-analyze-current-context' output
+to identify an origin for the code at point, taking type
+membership into account.  This function is much like
+`semantic-ia-fast-jump', only a little smarter."
+  (interactive "d")
+  (let* ((ctxt (semantic-analyze-current-context point))
+         (prefix (and ctxt (reverse (oref ctxt prefix))))
+         (first (first prefix))
+         (second (second prefix)))
+    (cond ((semantic-tag-p first)
+           (semantic-ia--fast-jump-helper first))
+          ((semantic-tag-p second)
+           ;; so, we have a tag and a string
+           ;; let's see if the string is a subtag of the type of the tag
+           (let* ((type (car (reverse (oref ctxt prefixtypes))))
+                  ;; TODO: prompt with completion if more than one match
+                  (first-tag
+                   (car (semantic-find-tags-by-name first
+                                                    (semantic-tag-type-members type)))))
+             (cond ((semantic-tag-with-position-p first-tag)
+                    (semantic-ia--fast-jump-helper first-tag))
+                   ((and (semantic-tag-with-position-p type)
+                         (y-or-n-p (format "Could not find `%s'. Jump to %s? "
+                                           first (semantic-tag-name type))))
+                    (semantic-ia--fast-jump-helper type))
+                   ((y-or-n-p (format "Could not find `%s'. Jump to %s? "
+                                      first (semantic-tag-name second)))
+                    (semantic-ia--fast-jump-helper second)))))
+          ((semantic-tag-of-class-p (semantic-current-tag) 'include)
+           (semantic-decoration-include-visit))
+          (t
+           (error "Could not find suitable jump point for %s" first)))))
+
 (provide 'malabar-mode)
