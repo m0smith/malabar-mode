@@ -137,7 +137,7 @@ class Classpath
         artifacts.each {
             currentArtifact = it
             if (it.file)
-            classcollector("file:" + it.file.path)
+                classcollector("file:" + it.file.path)
         }
     }
 

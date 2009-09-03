@@ -166,7 +166,7 @@ membership into account.  This function is much like
          (first (first prefix))
          (second (second prefix)))
     (cond ((semantic-tag-p first)
-           (semantic-ia--fast-jump-helper first))
+           (malabar--jump-to-thing-helper first))
           ((semantic-tag-p second)
            ;; so, we have a tag and a string
            ;; let's see if the string is a subtag of the type of the tag
@@ -176,17 +176,39 @@ membership into account.  This function is much like
                    (car (semantic-find-tags-by-name first
                                                     (semantic-tag-type-members type)))))
              (cond ((semantic-tag-with-position-p first-tag)
-                    (semantic-ia--fast-jump-helper first-tag))
+                    (malabar--jump-to-thing-helper first-tag))
                    ((and (semantic-tag-with-position-p type)
                          (y-or-n-p (format "Could not find `%s'. Jump to %s? "
                                            first (semantic-tag-name type))))
-                    (semantic-ia--fast-jump-helper type))
+                    (malabar--jump-to-thing-helper type))
                    ((y-or-n-p (format "Could not find `%s'. Jump to %s? "
                                       first (semantic-tag-name second)))
-                    (semantic-ia--fast-jump-helper second)))))
+                    (malabar--jump-to-thing-helper second)))))
           ((semantic-tag-of-class-p (semantic-current-tag) 'include)
            (semantic-decoration-include-visit))
           (t
            (error "Could not find suitable jump point for %s" first)))))
+
+(defun malabar--jump-to-thing-helper (destination)
+  (when (not (or (semantic-tag-with-position-p destination)
+                 (semantic-tag-file-name destination)))
+    (error "Tag %s has no suitable position defined"
+           (semantic-format-tag-name destination)))
+  ;; Lifted from semantic-ia--fast-jump-helper
+  ;; Once we have the tag, we can jump to it.  Here
+  ;; are the key bits to the jump:
+
+  ;; 1) Push the mark, so you can pop global mark back, or
+  ;;    use semantic-mru-bookmark mode to do so.
+  (push-mark)
+  (when (fboundp 'push-tag-mark)
+    (push-tag-mark))
+  ;; 2) Visits the tag.
+  (semantic-go-to-tag destination)
+  ;; 3) go-to-tag doesn't switch the buffer in the current window,
+  ;;    so it is like find-file-noselect.  Bring it forward.
+  (switch-to-buffer (current-buffer))
+  ;; 4) Fancy pulsing.
+  (pulse-momentary-highlight-one-line (point)))
 
 (provide 'malabar-mode)

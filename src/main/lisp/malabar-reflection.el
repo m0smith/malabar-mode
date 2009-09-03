@@ -73,9 +73,48 @@
                  (concat (or package "") "." class)))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
+  (setq buffer (or buffer (current-buffer)))
+  (unless (consp classname)
+    (or (malabar--get-class-info-from-source classname buffer)
+        (malabar-groovy-eval-and-lispeval
+         (format "%s.getClassInfo('%s')"
+                 (malabar-project-classpath buffer)
+                 classname)))))
+
+(defun malabar--get-class-info-from-source (classname buffer)
+  ;; First, try resolving in local project
+  (let ((file (malabar-project-locate (malabar-class-name-to-filename classname)
+                                      (malabar-find-project-file buffer))))
+    (if file
+        ;; Defined in this project
+        (let ((existing-buffer (find-buffer-visiting file)))
+          (if existing-buffer
+              (malabar--get-class-info-from-buffer existing-buffer)
+            (let ((buf (find-file-noselect file)))
+              (let ((class-tag (malabar--get-class-info-from-buffer buf)))
+                (kill-buffer buf)
+                (semantic-tag-deep-copy-one-tag
+                 class-tag
+                 (lambda (tag)
+                   (let ((new-tag (semantic-tag-copy tag nil t)))
+                     (apply 'semantic-tag-set-bounds new-tag (semantic-tag-bounds tag)))))))))
+      ;; Not defined here
+      (let ((source-jar (malabar--get-source-jar classname buffer)))
+        (if (null source-jar)
+            ;; Not defined in an accessible source artifact
+            ;; TODO:  Try jdk-source?
+            nil
+          ;; TODO:  Load source from artifact
+          )))))
+
+(defun malabar--get-class-info-from-buffer (buffer)
+  (with-current-buffer buffer
+    (malabar-get-class-tag-at-point)))
+
+(define-cached-function malabar--get-source-jar (classname buffer)
   (malabar-groovy-eval-and-lispeval
-   (format "%s.getClassInfo('%s')"
-           (malabar-project-classpath (or buffer (current-buffer)))
+   (format "%s.sourceJarForClass('%s')"
+           (malabar-project buffer)
            classname)))
 
 (defun malabar--get-name (tag)
