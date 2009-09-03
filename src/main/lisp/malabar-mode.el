@@ -21,6 +21,7 @@
 (require 'semantic-ctxt)
 (require 'semantic-find)
 (require 'semantic-wisent)
+(require 'semantic-ia)
 
 ;; HACK: we don't want to load the old Java parser, so trick Emacs
 ;; into thinking it's already loaded
