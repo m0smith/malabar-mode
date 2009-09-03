@@ -27,6 +27,7 @@ import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.AbstractMavenEmbedderLogger;
 import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.embedder.MavenEmbedderLogger;
+import org.apache.maven.embedder.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
@@ -43,6 +44,8 @@ public class MvnServer
     private MavenEmbedderLogger logger;
     private MavenTransferListener transferListener;
 
+    def plexus
+
     private MvnServer() {
         configuration = buildEmbedderConfiguration();
         logger = new MvnServerLogger();
@@ -55,6 +58,7 @@ public class MvnServer
                 
                 mavenEmbedder = new MavenEmbedder(configuration);
                 mavenEmbedder.setLogger(logger);
+                plexus = mavenEmbedder.plexusContainer
             } catch (MavenEmbedderException e) {
                 CLIReportingUtils.showError(logger, "Unable to start the embedder: ", e, false);
                 throw new RuntimeException("Unabled to start the embedder", e);
@@ -66,9 +70,14 @@ public class MvnServer
         return mavenEmbedder;
     }
 
-    public MavenExecutionRequest newRequest() {
+    public MavenExecutionRequest newRequest(basedir, profiles) {
         MavenExecutionRequest req = new DefaultMavenExecutionRequest();
-        req.setTransferListener(transferListener);
+        req.baseDirectory = basedir
+        req.transferListener = transferListener;
+        profiles.each {
+            req.addActiveProfile(it);
+        }
+        plexus.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
         return req;
     }
 
@@ -142,14 +151,11 @@ class RunDescriptor
         return this;
     }
     public boolean run() {
-        MavenExecutionRequest request = mvnServer.newRequest()
-            .setBaseDirectory(pom.getParentFile())
-            .setGoals(Arrays.asList(goals))
+        MavenExecutionRequest request =
+            mvnServer.newRequest(pom.parentFile, profiles)
+        request.setGoals(Arrays.asList(goals))
             .setRecursive(recursive)
             .setUserProperties(properties);
-        profiles.each {
-            request.addActiveProfile(it);
-        }
 
         PrintStream oldOut = System.out;
         PrintStream oldErr = System.err;

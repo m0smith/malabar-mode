@@ -19,7 +19,6 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.embedder.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.*;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
@@ -40,12 +39,7 @@ class Projects
 
         MvnServer mvnServer = GroovyServer.mvnServer;
         MavenEmbedder embedder = mvnServer.embedder
-        MavenExecutionRequest req = mvnServer.newRequest()
-        req.baseDirectory = pomFile.parentFile
-        profiles.each {
-            req.addActiveProfile(it)
-        }
-        embedder.plexusContainer.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
+        MavenExecutionRequest req = mvnServer.newRequest(pomFile.parentFile, profiles)
 
         ProjectBuildingRequest config = new DefaultProjectBuildingRequest()
             .setLocalRepository(req.getLocalRepository())
@@ -58,7 +52,7 @@ class Projects
         ProjectBuildingResult result =
             embedder.plexusContainer.lookup(ProjectBuilder.class).build(pomFile, config)
         // TODO: Error handling!
-        Project me = new Project(pom, profiles, result.getProject(), mvnServer);
+        Project me = new Project(pom, profiles, req, result.getProject(), mvnServer);
         projects[pom] = me
         return me;
     }

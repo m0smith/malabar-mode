@@ -18,6 +18,9 @@
  */ 
 package org.grumblesmurf.malabar
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.resolver.filter.CumulativeScopeArtifactFilter;
+
 class Project
 {
     def compileClasspath;
@@ -48,6 +51,7 @@ class Project
     def target = "1.1" as String;
 
     def mavenProject;
+    def request;
 
     def compiler;
 
@@ -90,9 +94,36 @@ class Project
         def result = junitcore.run(testclass);
         return result.wasSuccessful();
     }
-    
-    private Project(pom, profiles, mavenProject, mvnServer) {
+
+    def sourceJarForClass(String name) {
+        def artifact = testClasspath.artifactForClass(name);
+        if (artifact == null) {
+            println "nil";
+            return
+        }
+        
+        def af = GroovyServer.mvnServer.plexus.lookup(org.apache.maven.artifact.factory.ArtifactFactory);
+        def sourceArtifact =
+            af.createArtifactWithClassifier(artifact.groupId,
+                                            artifact.artifactId,
+                                            artifact.version,
+                                            artifact.type,
+                                            "sources");
+        def ar = mvnServer.plexus.lookup(org.apache.maven.artifact.resolver.ArtifactResolver);
+        try {
+            def localRepo = request.localRepository
+            ar.resolve(sourceArtifact, request.remoteRepositories, localRepo);
+            def f = new File(localRepo.basedir, localRepo.pathOf(sourceArtifact))
+            println "\"${f}\""
+        } catch (Exception e) {
+            // TODO log
+            println "nil"
+        } 
+    }
+
+    private Project(pom, profiles, request, mavenProject, mvnServer) {
         this.mvnServer = mvnServer
+        this.request = request
         pomFile = pom
         requestedProfiles = profiles
         modStamp = (pom as File).lastModified()
@@ -120,9 +151,23 @@ class Project
             it.directory
         }
 
+        def filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_COMPILE])
         compileClasspath = new Classpath(mavenProject.compileClasspathElements + resources);
+        compileClasspath.artifacts = mavenProject.artifacts.findAll {
+            it.artifactHandler.addedToClasspath && filter.include(it)
+        }
+
+        filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_TEST])
         testClasspath = new Classpath(mavenProject.testClasspathElements + resources + testResources);
+        testClasspath.artifacts = mavenProject.artifacts.findAll { 
+            it.artifactHandler.addedToClasspath && filter.include(it)
+        }
+
+        filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_RUNTIME])
         runtimeClasspath = new Classpath(mavenProject.runtimeClasspathElements);
+        runtimeClasspath.artifacts = mavenProject.artifacts.findAll {
+            it.artifactHandler.addedToClasspath && filter.include(it)
+        }
 
         def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin")?.configuration
         if (compilerConfig) {
