@@ -41,10 +41,7 @@ class Projects
         MavenEmbedder embedder = mvnServer.embedder
         MavenExecutionRequest req = mvnServer.newRequest(pomFile.parentFile, profiles)
 
-        ProjectBuildingRequest config = new DefaultProjectBuildingRequest()
-            .setLocalRepository(req.getLocalRepository())
-            .setRemoteRepositories(req.getRemoteRepositories())
-            .setPluginArtifactRepositories(req.getPluginArtifactRepositories())
+        ProjectBuildingRequest config = req.getProjectBuildingRequest()
             .setProcessPlugins(true)
             .setProcessPluginConfiguration(true)
             .setResolveDependencies(true);

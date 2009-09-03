@@ -74,6 +74,7 @@ public class MvnServer
         MavenExecutionRequest req = new DefaultMavenExecutionRequest();
         req.baseDirectory = basedir
         req.transferListener = transferListener;
+        req.userSettingsFile = configuration.userSettingsFile
         profiles.each {
             req.addActiveProfile(it);
         }
