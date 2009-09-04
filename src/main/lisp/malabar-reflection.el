@@ -97,7 +97,8 @@
                  class-tag
                  (lambda (tag)
                    (let ((new-tag (semantic-tag-copy tag nil t)))
-                     (apply 'semantic-tag-set-bounds new-tag (semantic-tag-bounds tag)))))))))
+                     (when (semantic-tag-bounds tag)
+                       (apply 'semantic-tag-set-bounds new-tag (semantic-tag-bounds tag))))))))))
       ;; Not defined here
       (let ((source-jar (malabar--get-source-jar classname buffer)))
         (if (null source-jar)
