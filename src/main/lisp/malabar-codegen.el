@@ -188,12 +188,12 @@ accessible constructors."
           (error "You cannot extends %s, it is an interface"
                  qualified-class))
         (let* ((members (malabar--get-members class-info))
+               (all-constructors (remove-if-not #'malabar--constructor-p members))
                (accessible-constructors
-                (remove-if-not (lambda (s)
-                                 (and (malabar--constructor-p s)
-                                      (malabar-overridable-method-p s)))
-                               members)))
-          (unless accessible-constructors
+                (remove-if-not #'malabar-overridable-method-p 
+                               all-constructors)))
+          (unless (or accessible-constructors
+                      (null all-constructors))
             (error "You cannot extends %s, it has no accessible constructors"
                    qualified-class))
           (let ((type-params (malabar--get-type-parameters class-info)))
