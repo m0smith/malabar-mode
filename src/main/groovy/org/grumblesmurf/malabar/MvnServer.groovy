@@ -18,39 +18,42 @@
  */ 
 package org.grumblesmurf.malabar;
 
-import org.apache.maven.MavenTransferListener;
-import org.apache.maven.cli.CLIReportingUtils;
-import org.apache.maven.embedder.Configuration;
-import org.apache.maven.embedder.ConfigurationValidationResult;
-import org.apache.maven.embedder.DefaultConfiguration;
-import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.embedder.AbstractMavenEmbedderLogger;
-import org.apache.maven.embedder.MavenEmbedderException;
-import org.apache.maven.embedder.MavenEmbedderLogger;
-import org.apache.maven.errors.CoreErrorReporter;
-import org.apache.maven.errors.DefaultCoreErrorReporter;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionResult;
+import java.io.File;
 
 import java.util.Arrays;
 import java.util.Properties;
 
-import java.io.File;
+import org.apache.maven.MavenTransferListener;
+import org.apache.maven.cli.CLIReportingUtils;
+import org.apache.maven.cli.ExecutionEventLogger;
+import org.apache.maven.embedder.AbstractMavenEmbedderLogger;
+import org.apache.maven.embedder.Configuration;
+import org.apache.maven.embedder.ConfigurationValidationResult;
+import org.apache.maven.embedder.DefaultConfiguration;
+import org.apache.maven.embedder.MavenEmbedder;
+import org.apache.maven.embedder.MavenEmbedderException;
+import org.apache.maven.embedder.MavenEmbedderLogger;
+import org.apache.maven.embedder.execution.MavenExecutionRequestPopulator;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.ExecutionListener;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionResult;
 
 public class MvnServer
 {
     private Configuration configuration;
     private MavenEmbedder mavenEmbedder;
-    private CoreErrorReporter errorReporter;
     private MavenEmbedderLogger logger;
     private MavenTransferListener transferListener;
+    private ExecutionListener executionListener;
+
+    def plexus
 
     private MvnServer() {
         configuration = buildEmbedderConfiguration();
-        errorReporter = new DefaultCoreErrorReporter();
         logger = new MvnServerLogger();
         transferListener = new MvnServerTransferListener();
+        executionListener = new ExecutionEventLogger(logger);
         
         if (validateConfiguration()) {
             try {
@@ -59,8 +62,9 @@ public class MvnServer
                 
                 mavenEmbedder = new MavenEmbedder(configuration);
                 mavenEmbedder.setLogger(logger);
+                plexus = mavenEmbedder.plexusContainer
             } catch (MavenEmbedderException e) {
-                CLIReportingUtils.showError("Unable to start the embedder: ", e, false, errorReporter, logger);
+                CLIReportingUtils.showError(logger, "Unable to start the embedder: ", e, false);
                 throw new RuntimeException("Unabled to start the embedder", e);
             }
         }
@@ -70,16 +74,21 @@ public class MvnServer
         return mavenEmbedder;
     }
 
-    public MavenExecutionRequest newRequest() {
+    public MavenExecutionRequest newRequest(basedir, profiles) {
         MavenExecutionRequest req = new DefaultMavenExecutionRequest();
-        req.setErrorReporter(errorReporter);
-        req.setTransferListener(transferListener);
+        req.baseDirectory = basedir
+        req.transferListener = transferListener;
+        req.userSettingsFile = configuration.userSettingsFile
+        req.executionListener = executionListener
+        profiles.each {
+            req.addActiveProfile(it);
+        }
+        plexus.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
         return req;
     }
 
     private Configuration buildEmbedderConfiguration() {
         Configuration configuration = new DefaultConfiguration()
-            .setErrorReporter(errorReporter)
             .setUserSettingsFile(MavenEmbedder.DEFAULT_USER_SETTINGS_FILE)
             .setMavenEmbedderLogger(logger);
         return configuration;
@@ -90,18 +99,14 @@ public class MvnServer
             MavenEmbedder.validateConfiguration(configuration);
         if (!cvr.isValid()) {
             if (cvr.getUserSettingsException() != null) { 
-                CLIReportingUtils.showError("Error reading user settings: ",
+                CLIReportingUtils.showError(logger, "Error reading user settings: ",
                                             cvr.getUserSettingsException(),
-                                            false,
-                                            errorReporter,
-                                            logger);
+                                            false);
             }
             if (cvr.getGlobalSettingsException() != null) { 
-                CLIReportingUtils.showError("Error reading global settings: ",
+                CLIReportingUtils.showError(logger, "Error reading global settings: ",
                                             cvr.getGlobalSettingsException(),
-                                            false,
-                                            errorReporter,
-                                            logger);
+                                            false);
             }
             return false;
         }
@@ -152,14 +157,11 @@ class RunDescriptor
         return this;
     }
     public boolean run() {
-        MavenExecutionRequest request = mvnServer.newRequest()
-            .setBaseDirectory(pom.getParentFile())
-            .setGoals(Arrays.asList(goals))
+        MavenExecutionRequest request =
+            mvnServer.newRequest(pom.parentFile, profiles)
+        request.setGoals(Arrays.asList(goals))
             .setRecursive(recursive)
-            .setProperties(properties);
-        profiles.each {
-            request.addActiveProfile(it);
-        }
+            .setUserProperties(properties);
 
         PrintStream oldOut = System.out;
         PrintStream oldErr = System.err;
@@ -170,7 +172,6 @@ class RunDescriptor
             }
                     
             MavenExecutionResult result = mvnServer.mavenEmbedder.execute(request);
-            CLIReportingUtils.logResult(request, result, mvnServer.logger);
             return !result.hasExceptions();
         } finally {
             System.setOut(oldOut);

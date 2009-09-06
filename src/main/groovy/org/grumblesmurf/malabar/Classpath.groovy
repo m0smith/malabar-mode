@@ -23,6 +23,8 @@ import java.util.jar.*;
 
 class Classpath 
 {
+    def artifacts = [];
+    
     def bootUrls = [];
 
     def extUrls = [];
@@ -61,7 +63,52 @@ class Classpath
     private classloader;
 
     def classMap = [:]
-    
+    def classToArtifact = [:]
+
+    // TODO: This is not good
+    def currentArtifact
+        
+    def classnamecollector = { fileName, path ->
+        def classbinaryname = fileName[0..-7];
+        def simplename = classbinaryname[classbinaryname.lastIndexOf('$') + 1..-1]
+        def pkgname = path.replace('/', '.')
+                        
+        if (!classMap.containsKey(simplename)) {
+            classMap[simplename] = []
+        }
+        classMap[simplename] << pkgname + "." + classbinaryname
+        if (currentArtifact)
+            classToArtifact[pkgname + "." + classbinaryname] = currentArtifact
+    }
+            
+    def classcollector = { 
+        URI uri = new URI(it);
+        File file = new File(uri);
+        String absolutePath = file.absolutePath
+        if (file.exists()) {
+            if (file.isFile()) {
+                new JarFile(file).entries().each{ entry ->
+                    if (entry.name.endsWith(".class")) {
+                        def entryname = entry.name
+                        def filename = entryname[entryname.lastIndexOf('/') + 1..-1]
+                        def path = ""
+                        if (entryname.lastIndexOf('/') > -1) {
+                            path = entryname.substring(0, entryname.lastIndexOf('/'))
+                        }
+                        classnamecollector(filename, path)
+                    }
+                }
+            } else {
+                file.eachFileRecurse{ classFile ->
+                    if (classFile.name.endsWith(".class")) {
+                        classnamecollector(classFile.name,
+                                           classFile.parent[absolutePath.length() + 1 .. -1])
+                    }
+                }
+            }
+        }
+    }
+            
     def getClasses(String name) {
         if (name.contains(".")) {
             try {
@@ -74,58 +121,33 @@ class Classpath
         }
         
         if (classMap.isEmpty()) {
-            def classnamecollector = { fileName, path ->
-                def classbinaryname = fileName[0..-7];
-                def simplename = classbinaryname[classbinaryname.lastIndexOf('$') + 1..-1]
-                def pkgname = path.replace('/', '.')
-                                
-                if (!classMap.containsKey(simplename)) {
-                    classMap[simplename] = []
-                }
-                classMap[simplename] << pkgname + "." + classbinaryname
-            }
-            
-            def classcollector = { 
-                URI uri = new URI(it);
-                File file = new File(uri);
-                String absolutePath = file.absolutePath
-                if (file.exists()) {
-                    if (file.isFile()) {
-                        new JarFile(file).entries().each{ entry ->
-                            if (entry.name.endsWith(".class")) {
-                                def entryname = entry.name
-                                def filename = entryname[entryname.lastIndexOf('/') + 1..-1]
-                                def path = ""
-                                if (entryname.lastIndexOf('/') > -1) {
-                                    path = entryname.substring(0, entryname.lastIndexOf('/'))
-                                }
-                                classnamecollector(filename, path)
-                            }
-                        }
-                    } else {
-                        file.eachFileRecurse{ classFile ->
-                            if (classFile.name.endsWith(".class")) {
-                                classnamecollector(classFile.name,
-                                                   classFile.parent[absolutePath.length() + 1 .. -1])
-                            }
-                        }
-                    }
-                }
-            }
-            
-            bootUrls.each{
-                classcollector(it)
-            }
-            extUrls.each{
-                classcollector(it)
-            }
-            urls.each {
-                classcollector(it)
-            }
+            populateClassMap();
         }
+        
         Utils.printAsLispList classMap[name];
     }
 
+    def populateClassMap() {
+        bootUrls.each{
+            classcollector(it)
+        }
+        extUrls.each{
+            classcollector(it)
+        }
+        artifacts.each {
+            currentArtifact = it
+            if (it.file)
+                classcollector("file:" + it.file.path)
+        }
+    }
+
+    def artifactForClass(String name) {
+        if (classMap.isEmpty()) {
+            populateClassMap()
+        }
+        return classToArtifact[name];
+    }
+    
     def newClassLoader() {
         def realUrls = urls.collect { new URL(it) }
         return new RootLoader(realUrls as URL[],

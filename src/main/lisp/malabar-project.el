@@ -50,7 +50,13 @@
 
 (add-hook 'compilation-finish-functions 'malabar--clean-compilation-messages)
 
+(defun malabar-project-locate (file project-file)
+  (locate-file file 
+               (append (malabar-project-source-directories project-file)
+                       (malabar-project-test-source-directories project-file))))
+
 (defun malabar-project-locate-source-file (filename project-file)
+  "Locate filename (a basename, i.e. without path) in the project sources."
   (or (malabar-project-locate-in-source-path filename project-file)
       (malabar-project-locate-in-test-source-path filename project-file)))
 
