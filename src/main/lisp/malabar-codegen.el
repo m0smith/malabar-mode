@@ -56,9 +56,24 @@ for the method to override."
                             (mapcar 'malabar-make-choose-spec
                                     overridable-methods))))
     (when method-tag
+      (malabar--override-methods (list method-tag) nil overridable-methods))))
+
+(defun malabar--override-methods (methods suppress-annotation &optional overridable-methods)
+  (let ((method-count (length methods))
+        (counter 0)
+        (overridable-methods (or overridable-methods
+                                 (malabar-overridable-methods))))
+    (message nil)
+    (working-status-forms "Overriding methods...%s" nil
       (let ((malabar--import-candidates nil))
-        (malabar--override-method method-tag overridable-methods nil nil)
-        (malabar--import-handle-import-candidates malabar--import-candidates)))))
+        (with-caches 
+         (dolist (method methods)
+           (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
+           (malabar--override-method method overridable-methods suppress-annotation t)))
+        (malabar--import-handle-import-candidates malabar--import-candidates))
+      (working-status t "done"))
+    (let ((class-tag (malabar-get-class-tag-at-point)))
+      (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
 (defun malabar--override-method (method-tag overridable-methods
                                             suppress-annotation no-indent-defun)
@@ -105,22 +120,6 @@ for the method to override."
                   equals-tag)
              (malabar-override-method equals-tag))))))
 
-(defun malabar--override-all (methods suppress-annotation)
-  (let ((method-count (length methods))
-        (counter 0)
-        (overridable-methods (malabar-overridable-methods)))
-    (message nil)
-    (working-status-forms "Overriding methods...%s" nil
-      (let ((malabar--import-candidates nil))
-        (with-caches 
-         (dolist (method methods)
-           (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-           (malabar--override-method method overridable-methods suppress-annotation t)))
-        (malabar--import-handle-import-candidates malabar--import-candidates))
-      (working-status t "done"))
-    (let ((class-tag (malabar-get-class-tag-at-point)))
-      (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
-
 (defun malabar-implement-interface (&optional interface implement-keyword)
   "Adds INTERFACE to the current class's implements clause and
 adds stub implementations of all the interface's methods."
@@ -149,7 +148,7 @@ adds stub implementations of all the interface's methods."
       (insert (malabar--get-type-parameters interface-info)))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-all (malabar--get-abstract-methods interface-info) t)))
+    (malabar--override-methods (malabar--get-abstract-methods interface-info) t)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
   (malabar-goto-start-of-class)
@@ -221,7 +220,7 @@ accessible constructors."
                       (c-indent-defun)
                       (forward-line 2))
                     accessible-constructors)
-              (malabar--override-all (malabar--get-abstract-methods class-info) nil))))))))
+              (malabar--override-methods (malabar--get-abstract-methods class-info) nil))))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))
