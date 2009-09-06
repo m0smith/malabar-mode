@@ -168,6 +168,7 @@ accessible constructors."
   (let* ((class-tag (malabar-get-class-tag-at-point))
          (this-kind (semantic-tag-type class-tag)))
     (if (equal this-kind "interface")
+        ;; FIXME:  This doesn't make any sense...
         (malabar-implement-interface class "extend")
       (unless (equal this-kind "class")
         (error "Only classes and interfaces can extend other types; this is an %s"
