@@ -197,33 +197,31 @@ accessible constructors."
                       (null all-constructors))
             (error "You cannot extends %s, it has no accessible constructors"
                    qualified-class))
-          (let ((type-params (malabar--get-type-parameters class-info)))
-            (unless (malabar-find-imported-class qualified-class)
-              (malabar-import-insert-imports (list qualified-class)))
-            (let ((class-start (semantic-tag-start class-tag)))
-              (goto-char class-start)
-              (skip-chars-forward "^{")
-              (search-backward "implements" class-start t)
-              (insert "extends " qualified-class
-                      (if type-params
-                          type-params
-                        ""))
-              (indent-according-to-mode)
-              (newline-and-indent)
-              (semantic-clear-toplevel-cache)
-              (malabar--extend-class-move-to-constructor-insertion-point)
-              (mapc (lambda (constructor)
-                      (insert (malabar-create-constructor-signature constructor) " {\n"
-                              "// TODO: Stub\n"
-                              "super" (malabar--stringify-arguments
-                                       (malabar--get-arguments constructor)) ";\n"
-                              "}\n\n")
-                      (forward-line -2)
-                      (c-indent-defun)
-                      (forward-line 2))
-                    accessible-constructors)
-              (malabar--override-methods (malabar--get-abstract-methods class-info) nil)
-              (malabar-import-and-unqualify qualified-class))))))))
+          (let ((type-params (malabar--get-type-parameters class-info))
+                (class-start (semantic-tag-start class-tag)))
+            (goto-char class-start)
+            (skip-chars-forward "^{")
+            (search-backward "implements" class-start t)
+            (insert "extends " qualified-class
+                    (if type-params
+                        type-params
+                      ""))
+            (indent-according-to-mode)
+            (newline-and-indent)
+            (semantic-clear-toplevel-cache)
+            (malabar--extend-class-move-to-constructor-insertion-point)
+            (mapc (lambda (constructor)
+                    (insert (malabar-create-constructor-signature constructor) " {\n"
+                            "// TODO: Stub\n"
+                            "super" (malabar--stringify-arguments
+                                     (malabar--get-arguments constructor)) ";\n"
+                            "}\n\n")
+                    (forward-line -2)
+                    (c-indent-defun)
+                    (forward-line 2))
+                  accessible-constructors)
+            (malabar--override-methods (malabar--get-abstract-methods class-info) nil)
+            (malabar-import-and-unqualify qualified-class)))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))
