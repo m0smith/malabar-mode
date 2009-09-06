@@ -25,7 +25,6 @@ import java.util.Properties;
 
 import org.apache.maven.MavenTransferListener;
 import org.apache.maven.cli.CLIReportingUtils;
-import org.apache.maven.cli.ExecutionEventLogger;
 import org.apache.maven.embedder.AbstractMavenEmbedderLogger;
 import org.apache.maven.embedder.Configuration;
 import org.apache.maven.embedder.ConfigurationValidationResult;
