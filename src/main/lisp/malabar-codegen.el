@@ -144,12 +144,13 @@ adds stub implementations of all the interface's methods."
         (newline))
       (insert implement-keyword "s ")
       (indent-according-to-mode))
-    (insert interface)
+    (insert qualified-interface)
     (when (malabar--get-type-parameters interface-info)
       (insert (malabar--get-type-parameters interface-info)))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-methods (malabar--get-abstract-methods interface-info) t)))
+    (malabar--override-methods (malabar--get-abstract-methods interface-info) t)
+    (malabar-import-and-unqualify qualified-interface)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
   (malabar-goto-start-of-class)
@@ -203,7 +204,7 @@ accessible constructors."
               (goto-char class-start)
               (skip-chars-forward "^{")
               (search-backward "implements" class-start t)
-              (insert "extends " class
+              (insert "extends " qualified-class
                       (if type-params
                           type-params
                         ""))
@@ -221,7 +222,8 @@ accessible constructors."
                       (c-indent-defun)
                       (forward-line 2))
                     accessible-constructors)
-              (malabar--override-methods (malabar--get-abstract-methods class-info) nil))))))))
+              (malabar--override-methods (malabar--get-abstract-methods class-info) nil)
+              (malabar-import-and-unqualify qualified-class))))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
   (let ((class-tag (malabar-get-class-tag-at-point)))
