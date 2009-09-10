@@ -22,6 +22,8 @@
 (require 'malabar-groovy)
 (require 'malabar-util)
 
+(require 'arc-mode)
+
 (defvar malabar-java-primitive-types-with-defaults
   '(("byte" . "0")
     ("short" . "0")
@@ -105,8 +107,43 @@
             ;; Not defined in an accessible source artifact
             ;; TODO:  Try jdk-source?
             nil
-          ;; TODO:  Load source from artifact
-          )))))
+          (let ((buffer-name
+                 (malabar--archived-source-buffer-name classname source-jar)))
+            (if (get-buffer buffer-name)
+                (malabar--get-class-info-from-buffer (get-buffer buffer-name))
+              (let ((buffer (malabar--load-source-from-zip classname
+                                                           source-jar
+                                                           buffer-name)))
+                (when (buffer-live-p buffer)
+                  (malabar--get-class-info-from-buffer buffer))))))))))
+
+(defun malabar--archived-source-buffer-name (classname archive)
+  (concat (file-name-nondirectory (malabar-class-name-to-filename classname))
+          " (" (file-name-nondirectory archive) ")"))
+  
+(defun malabar--load-source-from-zip (classname archive buffer-name)
+  ;; TODO:  This won't work for inner classes
+  (let ((file-name (malabar-class-name-to-filename classname))
+        (buffer (get-buffer buffer-name)))
+    (or buffer
+        (save-excursion
+          (setq buffer (get-buffer-create buffer-name))
+          (set-buffer buffer)
+          (setq buffer-file-name (expand-file-name (concat archive ":" file-name)))
+          (setq buffer-file-truename (file-name-nondirectory file-name))
+          (let ((exit-code
+                 (archive-extract-by-stdout archive file-name
+                                            archive-zip-extract)))
+            (if (and (numberp exit-code) (zerop exit-code))
+                (progn (malabar-mode)
+                       (goto-char (point-min))
+                       (setq buffer-undo-list nil
+                             buffer-saved-size (buffer-size)
+                             buffer-read-only t)
+                       (set-buffer-modified-p nil)
+                       buffer)
+              (set-buffer-modified-p nil)
+              (kill-buffer buffer)))))))
 
 (defun malabar--get-class-info-from-buffer (buffer)
   (with-current-buffer buffer
