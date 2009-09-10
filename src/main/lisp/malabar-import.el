@@ -108,9 +108,8 @@ in the list."
      :test #'equal)))
 
 (defun malabar-import-current-package-p (qualified-class)
-  (let ((package (malabar-get-package-name)))
-    (when package
-      (string-match-p (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class))))
+  (when-let (package (malabar-get-package-name))
+    (string-match-p (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class)))
 
 (defun malabar-import-exclude (qualified-class)
   (or (some (lambda (re)
@@ -128,28 +127,26 @@ in the list."
                (null b-package-successors))))))
 
 (defun malabar-import-find-import (unqualified)
-  (let* ((possible-classes
-          (sort (remove-if #'malabar-import-exclude
-                           (malabar-qualify-class-name unqualified))
-                #'malabar-import-sort-by-precedence)))
-    (when possible-classes
-      (if (= 1 (length possible-classes))
-          (car possible-classes)
-        (malabar-choose (format "%d classes named '%s', pick one: "
-                                (length possible-classes)
-                                unqualified)
-                        possible-classes
-                        (car possible-classes))))))
+  (when-let (possible-classes
+             (sort (remove-if #'malabar-import-exclude
+                              (malabar-qualify-class-name unqualified))
+                   #'malabar-import-sort-by-precedence))
+    (if (= 1 (length possible-classes))
+        (car possible-classes)
+      (malabar-choose (format "%d classes named '%s', pick one: "
+                              (length possible-classes)
+                              unqualified)
+                      possible-classes
+                      (car possible-classes)))))
 
 (defun malabar-import-all ()
   "Attempts to add import statements for all unqualified type
 names in the current buffer."
   (interactive)
-  (let ((imports (remove nil
-                         (mapcar #'malabar-import-find-import
-                                 (malabar-import-candidates)))))
-    (when imports
-      (malabar-import-insert-imports imports))))
+  (when-let (imports (remove nil
+                             (mapcar #'malabar-import-find-import
+                                     (malabar-import-candidates))))
+    (malabar-import-insert-imports imports)))
 
 (defun malabar--type-at-point ()
   (save-excursion

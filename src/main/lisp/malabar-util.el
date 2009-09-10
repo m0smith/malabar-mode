@@ -20,6 +20,15 @@
 (require 'cl)
 (require 'semantic)
 
+(defmacro* when-let ((var value) &body body)
+  "Evaluate VALUE, and if the result is non-nil bind it to VAR and
+evaluate BODY.
+
+\(fn (VAR VALUE) &rest BODY)"
+  `(let ((,var ,value))
+     (when ,var ,@body)))
+(put 'when-let 'lisp-indent-function 1)
+
 (defun string-starts-with (string start)
   (string= (substring string 0 (min (length string) (length start))) start))
 
@@ -131,9 +140,8 @@ return the corresponding cdr."
                                                  (current-buffer)))))
 
 (defun malabar-get-package-name (&optional buffer)
-  (let ((package-tag (malabar-get-package-tag)))
-    (when package-tag
-      (semantic-tag-name package-tag))))
+  (when-let (package-tag (malabar-get-package-tag))
+    (semantic-tag-name package-tag)))
 
 (defun malabar-get-class-tag-at-point ()
   (or (semantic-current-tag-of-class 'type)

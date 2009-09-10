@@ -84,32 +84,29 @@
                  classname)))))
 
 (defun malabar--get-class-info-from-source (classname buffer)
-  (let ((source-buffer (or (malabar--load-local-source classname buffer)
-                           (malabar--load-archived-source classname buffer))))
-    (when source-buffer
-      (malabar--get-class-info-from-buffer source-buffer))))
+  (when-let (source-buffer (or (malabar--load-local-source classname buffer)
+                               (malabar--load-archived-source classname buffer)))
+    (malabar--get-class-info-from-buffer source-buffer)))
 
 (defun malabar--load-local-source (classname buffer)
   ;; First, try resolving in local project
-  (let ((file (malabar-project-locate (malabar-class-name-to-filename classname)
-                                      (malabar-find-project-file buffer))))
-    (when file
-      ;; Defined in this project
-      (or (find-buffer-visiting file)            
-          (find-file-noselect file)))))
+  (when-let (file (malabar-project-locate (malabar-class-name-to-filename classname)
+                                          (malabar-find-project-file buffer)))
+    ;; Defined in this project
+    (or (find-buffer-visiting file)            
+        (find-file-noselect file))))
 
 (defun malabar--load-archived-source (classname buffer)
   ;; Not defined here
-  (let ((source-jar (malabar--get-source-jar classname buffer)))
-    (when source-jar
-      (let ((buffer-name
-             (malabar--archived-source-buffer-name classname source-jar)))
-        (or (get-buffer buffer-name)
-            (let ((source-buffer (malabar--load-source-from-zip classname
-                                                                source-jar
-                                                                buffer-name)))
-              (and (buffer-live-p source-buffer)
-                   source-buffer)))))))
+  (when-let (source-jar (malabar--get-source-jar classname buffer))
+    (let ((buffer-name
+           (malabar--archived-source-buffer-name classname source-jar)))
+      (or (get-buffer buffer-name)
+          (let ((source-buffer (malabar--load-source-from-zip classname
+                                                              source-jar
+                                                              buffer-name)))
+            (and (buffer-live-p source-buffer)
+                 source-buffer))))))
 
 (defun malabar--archived-source-buffer-name (classname archive)
   (concat (file-name-nondirectory (malabar-class-name-to-filename classname))

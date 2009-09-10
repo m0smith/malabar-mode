@@ -321,13 +321,12 @@ pop to the Groovy console buffer."
                                          (getf n :file))
                                        malabar-groovy--compiler-notes)))))
     (mapc (lambda (f)
-            (let ((buf (get-file-buffer f)))
-              (when buf
-                (remove-overlays 
-                (with-current-buffer buf
-                  (mapc 'fringe-helper-remove malabar-groovy--fringe-overlays)
-                  (remove-overlays (point-min) (point-max)
-                                   'malabar-compiler-note t))))))
+            (when-let (buf (get-file-buffer f))
+              (remove-overlays 
+               (with-current-buffer buf
+                 (mapc 'fringe-helper-remove malabar-groovy--fringe-overlays)
+                 (remove-overlays (point-min) (point-max)
+                                  'malabar-compiler-note t)))))
           files-to-process)))
 
 (defun malabar-groovy-highlight-compilation-message (limit)
