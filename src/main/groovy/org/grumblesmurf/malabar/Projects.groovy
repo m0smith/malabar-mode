@@ -43,7 +43,6 @@ class Projects
 
         ProjectBuildingRequest config = req.getProjectBuildingRequest()
             .setProcessPlugins(true)
-            .setProcessPluginConfiguration(true)
             .setResolveDependencies(true);
         
         ProjectBuildingResult result =
