@@ -85,4 +85,15 @@ specified case."
          (add-to-list 'srecode-map-load-path value)
          (srecode-map-update-map t)))
 
+(defcustom malabar-hide-non-local-source-buffers t
+  "Whether to hide source buffers loaded from outside the current
+project from the buffer list (by prefixing the buffer name with a
+space).
+
+A value of t means always hide.
+A value of nil means never hide."
+  :group 'malabar-mode
+  :type '(choice (const :tag "Hide" t)
+                 (const :tag "Don't hide" nil)))
+
 (provide 'malabar-variables)

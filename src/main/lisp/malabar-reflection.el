@@ -109,7 +109,8 @@
                  source-buffer))))))
 
 (defun malabar--archived-source-buffer-name (classname archive)
-  (concat (file-name-nondirectory (malabar-class-name-to-filename classname))
+  (concat (if malabar-hide-non-local-source-buffers " " "")
+          (file-name-nondirectory (malabar-class-name-to-filename classname))
           " (" (file-name-nondirectory archive) ")"))
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
