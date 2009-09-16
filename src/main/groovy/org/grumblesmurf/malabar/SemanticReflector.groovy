@@ -177,7 +177,7 @@ class SemanticReflector
         classMembers += classes
         classMembers += constructors
         methods.each { item ->
-            if (!classMembers.find { it.name == item.name && Arrays.equals(it.parameterTypes, item.parameterTypes) })
+            if (!classMembers.find { it instanceof Method && it.name == item.name && Arrays.equals(it.parameterTypes, item.parameterTypes) })
                 classMembers << item
         }
 
