@@ -75,7 +75,8 @@ in the list."
     (let ((import-tag (find classname tags
                             :key #'semantic-tag-name
                             :test (lambda (classname tag)
-                                    (string-ends-with tag (concat "." classname))))))
+                                    (and (stringp classname)
+                                         (string-ends-with tag (concat "." classname)))))))
       (or (when (> (count ?. classname) 1)
             classname)
           (when import-tag
