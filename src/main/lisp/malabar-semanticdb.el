@@ -59,10 +59,11 @@ if it gives you trouble.")
   "Mandatory docstring."
   (let ((default-answer (semanticdb-typecache-find-default type path find-file-match)))
     (or default-answer
-        (gethash type malabar--java-typecache)
-        (puthash type 
-                 (malabar--get-type-tag (malabar-qualify-class-name-in-buffer type))
-                 malabar--java-typecache))))
+        (and (stringp type)
+             (gethash type malabar--java-typecache)
+             (puthash type 
+                      (malabar--get-type-tag (malabar-qualify-class-name-in-buffer type))
+                      malabar--java-typecache)))))
 
 (defmethod semanticdb-get-database-tables ((obj semanticdb-project-database-malabar))
   (when (not (slot-boundp obj 'tables))
