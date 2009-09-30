@@ -102,7 +102,8 @@ if it gives you trouble.")
   (semanticdb-find-translate-path-default path t))
 
 (defun malabar-semanticdb-root (dir)
-  (expand-file-name (locate-dominating-file dir "pom.xml")))
+  (when-let (project-dir (locate-dominating-file dir "pom.xml"))
+    (expand-file-name project-dir)))
 (pushnew 'malabar-semanticdb-root semanticdb-project-root-functions)
 
 (provide 'malabar-semanticdb)
