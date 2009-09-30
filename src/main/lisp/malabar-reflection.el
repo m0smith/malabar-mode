@@ -84,9 +84,10 @@
                  classname)))))
 
 (defun malabar--get-class-info-from-source (classname buffer)
-  (when-let (source-buffer (or (malabar--load-local-source classname buffer)
-                               (malabar--load-archived-source classname buffer)))
-    (malabar--get-class-info-from-buffer source-buffer)))
+  (let ((use-dialog-box nil))
+    (when-let (source-buffer (or (malabar--load-local-source classname buffer)
+                                 (malabar--load-archived-source classname buffer)))
+      (malabar--get-class-info-from-buffer source-buffer))))
 
 (defun malabar--load-local-source (classname buffer)
   ;; First, try resolving in local project
