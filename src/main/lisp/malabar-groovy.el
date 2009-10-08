@@ -240,11 +240,22 @@ pop to the Groovy console buffer."
                  (point-max))
                 ""))))
 
+(defconst malabar-groovy--eval-log-output-marker-re
+  (concat "^" (regexp-opt (mapcar (lambda (level)
+                                    (concat "[" (symbol-name level) "]"))
+                                  '(DEBUG INFO WARN ERROR FATAL)))))
+
 (defun malabar-groovy--eval-fix-output (cell)
   (let* ((string (car cell))
-         (output (substring string
-                            (1+ (position ?\n string))
-                            (1+ (position ?\n string :from-end t))))
+         (output (mapconcat
+                  'identity
+                  (cdr      ;; Lose first...
+                   (butlast ;; ...and last lines
+                    (remove-if (lambda (s)
+                                 (string-match-p malabar-groovy--eval-log-output-marker-re
+                                                 s))
+                               (split-string (car cell) "\n"))))
+                  "\n"))
          (start-of-return (string-match "\n?===> " output)))
     (cons (substring output 0 start-of-return)
           (when start-of-return
