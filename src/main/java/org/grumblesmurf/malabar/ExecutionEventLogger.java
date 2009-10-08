@@ -31,7 +31,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.apache.maven.embedder.MavenEmbedderLogger;
 import org.apache.maven.execution.BuildFailure;
 import org.apache.maven.execution.BuildSuccess;
 import org.apache.maven.execution.BuildSummary;
@@ -41,6 +40,8 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
+
+import org.codehaus.plexus.logging.Logger;
 
 /**
  * Logs execution events to a user-supplied logger.
@@ -53,9 +54,9 @@ public class ExecutionEventLogger
     private static final String SEPARATOR =
         "------------------------------------------------------------------------";
     
-    private final MavenEmbedderLogger logger;
+    private final Logger logger;
 
-    public ExecutionEventLogger(MavenEmbedderLogger logger) {
+    public ExecutionEventLogger(Logger logger) {
         this.logger = logger;
     }
 

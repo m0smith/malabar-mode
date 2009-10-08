@@ -18,13 +18,14 @@
  */ 
 package org.grumblesmurf.malabar;
 
-import org.codehaus.plexus.logging.AbstractLogEnabled;
-import org.apache.maven.MavenTransferListener;
+import org.apache.maven.repository.ArtifactTransferListener;
 import org.apache.maven.wagon.events.TransferEvent;
+
+import org.codehaus.plexus.logging.AbstractLogEnabled;
 
 public class MvnServerTransferListener
     extends AbstractLogEnabled
-    implements MavenTransferListener
+    implements ArtifactTransferListener
 {
     public void transferInitiated(TransferEvent transferEvent) {
     }

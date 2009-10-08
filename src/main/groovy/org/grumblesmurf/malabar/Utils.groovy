@@ -24,8 +24,8 @@ class Utils
 {
     static ThreadLocal<IO> _io = new ThreadLocal<IO>();
 
-    static getOut() {
-        return _io.get()?.out ?: System.out
+    static PrintWriter getOut() {
+        return _io.get()?.out ?: new PrintWriter(System.out)
     }
 
     static setIO(IO io) {
