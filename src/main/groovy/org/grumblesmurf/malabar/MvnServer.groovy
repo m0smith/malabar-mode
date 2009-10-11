@@ -77,6 +77,7 @@ public class MvnServer
         MavenExecutionRequest req = new DefaultMavenExecutionRequest();
         req.userSettingsFile = configuration.userSettingsFile
         req.globalSettingsFile = configuration.globalSettingsFile
+        req.baseDirectory = basedir
 
         def settings = withComponent(MavenSettingsBuilder.class) {
             it.buildSettings(req);
@@ -87,8 +88,6 @@ public class MvnServer
             it.populateFromSettings(req, settings);
         }
 
-        req.baseDirectory = basedir
-        req.pom = new File(basedir, Maven.POMv4)
         req.transferListener = transferListener;
         req.executionListener = executionListener
         profiles.each {
