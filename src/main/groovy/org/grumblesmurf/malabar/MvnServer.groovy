@@ -18,55 +18,53 @@
  */ 
 package org.grumblesmurf.malabar;
 
-import java.io.File;
-import java.io.PrintStream;
-
-import java.util.Arrays;
-import java.util.Properties;
-
 import org.apache.maven.Maven;
-import org.apache.maven.cli.CLIReportingUtils;
+
 import org.apache.maven.cli.Configuration;
-import org.apache.maven.cli.ConfigurationValidationResult;
 import org.apache.maven.cli.DefaultConfiguration;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.MavenLoggerManager;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
+
 import org.apache.maven.execution.ExecutionListener;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequestPopulationException;
 import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.MavenExecutionResult;
+
 import org.apache.maven.repository.ArtifactTransferListener;
+
 import org.apache.maven.settings.MavenSettingsBuilder;
 
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
+
 import org.codehaus.plexus.classworlds.ClassWorld;
+
 import org.codehaus.plexus.logging.Logger;
 
 public class MvnServer
 {
-    private Configuration configuration;
-    private Logger logger;
-    private ArtifactTransferListener transferListener;
-    private ExecutionListener executionListener;
-    private Maven maven;
+    final Configuration configuration;
+    final Logger logger;
+    final ArtifactTransferListener transferListener;
+    final ExecutionListener executionListener;
+    final Maven maven;
 
-    def plexus
+    final def plexus
 
-    private MvnServer() {
+    MvnServer() {
         ClassWorld classWorld = new ClassWorld("plexus.core",
                                                Thread.currentThread().getContextClassLoader());
-        ContainerConfiguration cc = new DefaultContainerConfiguration()
-            .setClassWorld(classWorld)
-            .setName("embedder");
+        ContainerConfiguration cc =
+            new DefaultContainerConfiguration(classWorld:classWorld, name:"embedder");
+
         plexus = new DefaultPlexusContainer(cc);
         logger = new MvnServerLogger();
-        plexus.setLoggerManager(new MavenLoggerManager(logger));
+        plexus.loggerManager = new MavenLoggerManager(logger);
 
-        maven = plexus.lookup( Maven.class );
+        maven = plexus.lookup(Maven.class);
         
         configuration = buildEmbedderConfiguration();
         transferListener = new MvnServerTransferListener();
@@ -74,27 +72,26 @@ public class MvnServer
     }
     
     public MavenExecutionRequest newRequest(basedir, profiles) {
-        MavenExecutionRequest req = new DefaultMavenExecutionRequest();
-        req.userSettingsFile = configuration.userSettingsFile
-        req.globalSettingsFile = configuration.globalSettingsFile
-        req.baseDirectory = basedir
-
-        def settings = withComponent(MavenSettingsBuilder.class) {
-            it.buildSettings(req);
+        return new DefaultMavenExecutionRequest(
+            userSettingsFile:configuration.userSettingsFile,
+            globalSettingsFile:configuration.globalSettingsFile,
+            baseDirectory:basedir,
+            transferListener:transferListener,
+            executionListener:executionListener).with { req ->
+            def settings = withComponent(MavenSettingsBuilder.class) {
+                it.buildSettings(req);
+            }
+            
+            withComponent(MavenExecutionRequestPopulator.class) {
+                it.populateDefaults(req);
+                it.populateFromSettings(req, settings);
+            }
+            
+            profiles.each {
+                req.addActiveProfile(it);
+            }
+            req
         }
-        
-        withComponent(MavenExecutionRequestPopulator.class) {
-            it.populateDefaults(req);
-            it.populateFromSettings(req, settings);
-        }
-
-        req.transferListener = transferListener;
-        req.executionListener = executionListener
-        profiles.each {
-            req.addActiveProfile(it);
-        }
-
-        return req;
     }
 
     def withComponent(c, clos) {
@@ -106,11 +103,10 @@ public class MvnServer
         }
     }
 
-    private Configuration buildEmbedderConfiguration() {
-        Configuration configuration = new DefaultConfiguration()
-            .setUserSettingsFile(MavenCli.DEFAULT_USER_SETTINGS_FILE)
-            .setGlobalSettingsFile(MavenCli.DEFAULT_GLOBAL_SETTINGS_FILE)
-        return configuration;
+    Configuration buildEmbedderConfiguration() {
+        return new DefaultConfiguration(
+            userSettingsFile:MavenCli.DEFAULT_USER_SETTINGS_FILE,
+            globalSettingsFile:MavenCli.DEFAULT_GLOBAL_SETTINGS_FILE)
     }
 
     public boolean run(String pomFileName, String... goals) {
@@ -118,11 +114,11 @@ public class MvnServer
     }
 
     public RunDescriptor run(String pomFileName, boolean recursive, String... goals) {
-        RunDescriptor run = new RunDescriptor(this);
-        run.setPom(new File(pomFileName));
-        run.setRecursive(recursive);
-        run.setGoals(goals);
-        return run;
+        return new RunDescriptor(
+            mvnServer:this,
+            pom:pomFileName as File,
+            recursive:recursive,
+            goals:goals);
     }
 }
 
@@ -136,33 +132,12 @@ class RunDescriptor
     
     MvnServer mvnServer;
 
-    RunDescriptor(mvnServer) {
-        this.mvnServer = mvnServer;
-    }
-        
-    public void setPom(File pom) {
-        this.pom = pom;
-    }
-    public void setRecursive(boolean recursive) {
-        this.recursive = recursive;
-    }
-    public void setGoals(String[] goals) {
-        this.goals = goals;
-    }
-    public void setProfiles(String[] profiles) {
-        this.profiles = profiles;
-    }
     public RunDescriptor addProperty(String key, String value) {
         properties.put(key, value);
         return this;
     }
+    
     public boolean run() {
-        MavenExecutionRequest request =
-            mvnServer.newRequest(pom.parentFile, profiles)
-        request.setGoals(Arrays.asList(goals))
-            .setRecursive(recursive)
-            .setUserProperties(properties);
-
         PrintStream oldOut = System.out;
         PrintStream oldErr = System.err;
         try {
@@ -171,8 +146,15 @@ class RunDescriptor
                 System.setErr(new PrintStream(Utils._io.get().errorStream));
             }
                     
-            MavenExecutionResult result = mvnServer.maven.execute(request);
-            return !result.hasExceptions();
+            mvnServer.newRequest(pom.parentFile, profiles).with {
+                goals = Arrays.asList(owner.goals)
+                recursive = owner.recursive
+                userProperties = owner.properties
+                
+                mvnServer.maven.execute(delegate).with {
+                    !hasExceptions();
+                }
+            }
         } finally {
             System.setOut(oldOut);
             System.setErr(oldErr);
