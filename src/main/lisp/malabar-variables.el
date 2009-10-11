@@ -104,4 +104,12 @@ layout."
   :type '(choice (const :tag "Load from siblings" t)
                  (const :tag "Don't load from siblings" nil)))
 
+(defcustom malabar-extra-source-locations nil
+  "List of extra source locations.
+Each location may be a directory or a JAR/ZIP file.  Malabar-mode
+will look for the source code of a Java class in these locations
+if the class is not otherwise resolvable."
+  :group 'malabar-mode
+  :type '(repeat (file :tag "Path")))
+
 (provide 'malabar-variables)

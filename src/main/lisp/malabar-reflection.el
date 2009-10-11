@@ -88,7 +88,8 @@
     (when-let (source-buffer (or (malabar--load-local-source classname buffer)
                                  (and malabar-load-source-from-sibling-projects
                                       (malabar--load-sibling-source classname buffer))
-                                 (malabar--load-archived-source classname buffer)))
+                                 (malabar--load-archived-source classname buffer)
+                                 (malabar--load-extra-source classname)))
       (malabar--get-class-info-from-buffer source-buffer))))
 
 (defun malabar--load-local-source (classname buffer)
@@ -123,6 +124,23 @@
   (concat (if malabar-hide-non-local-source-buffers " " "")
           (file-name-nondirectory (malabar-class-name-to-filename classname))
           " (" (file-name-nondirectory archive) ")"))
+
+(defun malabar--load-extra-source (classname)
+  (let ((class-file-name (malabar-class-name-to-filename classname)))
+    (some (lambda (path)
+            (cond ((file-directory-p path)
+                   (let ((file (expand-file-name class-file-name path)))
+                     (when (file-readable-p file)
+                       (or (find-buffer-visiting file)            
+                           (find-file-noselect file)))))
+                  ((let ((case-fold-search t))
+                     (string-match-p "\\.\\(zip\\|jar\\)$" path))
+                   (malabar--load-source-from-zip
+                    classname path
+                    (malabar--archived-source-buffer-name classname path)))))
+          (mapcar (lambda (p)
+                    (expand-file-name (substitute-in-file-name p)))
+                  malabar-extra-source-locations))))
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
   ;; TODO:  This won't work for inner classes
@@ -146,7 +164,8 @@
                        (set-buffer-modified-p nil)
                        buffer)
               (set-buffer-modified-p nil)
-              (kill-buffer buffer)))))))
+              (kill-buffer buffer)
+              nil))))))
 
 (defun malabar--get-class-info-from-buffer (buffer)
   (with-current-buffer buffer
