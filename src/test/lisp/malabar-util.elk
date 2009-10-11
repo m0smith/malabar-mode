@@ -26,7 +26,7 @@
   (assert-nil (string-starts-with "" "foo")))
 
 (deftest "start-with match"
-  (assert-t (string-starts-with "foobar" "foo")))
+  (assert-nonnil (string-starts-with "foobar" "foo")))
 
 (deftest "start-with no match"
   (assert-nil (string-starts-with "barfoo" "foo")))
@@ -35,7 +35,7 @@
   (assert-nil (string-ends-with "" "foo")))
 
 (deftest "end-with match"
-  (assert-t (string-ends-with "foobar" "bar")))
+  (assert-nonnil (string-ends-with "foobar" "bar")))
 
 (deftest "end-with no match"
   (assert-nil (string-ends-with "barfoo" "bar")))

@@ -30,20 +30,21 @@ evaluate BODY.
 (put 'when-let 'lisp-indent-function 1)
 
 (defun string-starts-with (string start)
-  (string= (substring string 0 (min (length string) (length start))) start))
+  (string-match-p (concat "^" (regexp-quote start)) string))
 
 (defun string-ends-with (string end)
-  (string= (substring string (max 0 (- (length string) (length end)))) end))
+  (string-match-p (concat (regexp-quote end) "$") string))
 
 (defun string-trim (string)
-  (when (string-match "\\`[\r\n\t ]+" string)
-    (setq string (replace-match "" t t string)))
-  (when (string-match "[\r\n\t ]+\\'" string)
-    (setq string (replace-match "" t t string)))
-  string)
+  (save-match-data 
+    (when (string-match "\\`[\r\n\t ]+" string)
+      (setq string (replace-match "" t t string)))
+    (when (string-match "[\r\n\t ]+\\'" string)
+      (setq string (replace-match "" t t string)))
+    string))
 
 (defun string-delete-whitespace (string) 
-  (replace-regexp-in-string "[\r\n\t ]+" "" string t t))
+  (save-match-data (replace-regexp-in-string "[\r\n\t ]+" "" string t t)))
     
 (defun string-with-newline (string)
   (if (string-ends-with string "\n")
