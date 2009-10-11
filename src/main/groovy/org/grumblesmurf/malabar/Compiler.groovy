@@ -72,14 +72,14 @@ class Compiler
             fileManager.close();
             return success;
         } else if (file.endsWith(".groovy")) {
-            CompilerConfiguration cc = new CompilerConfiguration()
-            cc.classpath  = classpath.asClassPath()
-            cc.output = Utils.getOut()
-            cc.sourceEncoding = project.encoding
-            cc.targetDirectory = output as File
-            cc.tolerance = 0
-            cc.verbose = true
-            cc.warningLevel = WarningMessage.PARANOIA
+            CompilerConfiguration cc = new CompilerConfiguration(
+                classpath:classpath.asClassPath(),
+                output:Utils.getOut(),
+                sourceEncoding:project.encoding,
+                targetDirectory:output as File,
+                tolerance:0,
+                verbose:true,
+                warningLevel:WarningMessage.PARANOIA)
             
             org.codehaus.groovy.tools.Compiler compiler = new org.codehaus.groovy.tools.Compiler(cc);
             try {
