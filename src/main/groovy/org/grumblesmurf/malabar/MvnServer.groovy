@@ -81,15 +81,16 @@ public class MvnServer
             def settings = withComponent(MavenSettingsBuilder.class) {
                 it.buildSettings(req);
             }
-            
-            withComponent(MavenExecutionRequestPopulator.class) {
-                it.populateDefaults(req);
-                it.populateFromSettings(req, settings);
-            }
-            
+
             profiles.each {
                 req.addActiveProfile(it);
             }
+            
+            withComponent(MavenExecutionRequestPopulator.class) {
+                it.populateFromSettings(req, settings);
+                it.populateDefaults(req);
+            }
+            
             req
         }
     }
