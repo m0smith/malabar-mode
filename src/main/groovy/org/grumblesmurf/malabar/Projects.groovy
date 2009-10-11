@@ -20,7 +20,6 @@ package org.grumblesmurf.malabar;
 
 import org.apache.maven.execution.*;
 import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
@@ -43,13 +42,13 @@ class Projects
         ProjectBuildingRequest config = req.getProjectBuildingRequest()
             .setProcessPlugins(true)
             .setResolveDependencies(true);
-        
-        ProjectBuildingResult result = mvnServer.withComponent(ProjectBuilder.class) {
-            it.build(pomFile, config)
+
+        MavenProject mavenProject = mvnServer.withComponent(ProjectBuilder.class) {
+            it.build(pomFile, config).project
         }
         
         // TODO: Error handling!
-        Project me = new Project(pom, profiles, req, result.getProject(), mvnServer);
+        Project me = new Project(pom, profiles, req, mavenProject, mvnServer);
         projects[pom] = me
         return me;
     }
