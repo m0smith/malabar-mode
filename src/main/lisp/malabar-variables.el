@@ -96,4 +96,12 @@ A value of nil means never hide."
   :type '(choice (const :tag "Hide" t)
                  (const :tag "Don't hide" nil)))
 
+(defcustom malabar-load-source-from-sibling-projects t
+  "Whether to load source from sibling projects.
+Note that this will not work reliably with a 'flat' project
+layout."
+  :group 'malabar-mode
+  :type '(choice (const :tag "Load from siblings" t)
+                 (const :tag "Don't load from siblings" nil)))
+
 (provide 'malabar-variables)

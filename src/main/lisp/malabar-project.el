@@ -97,7 +97,21 @@
 (defun malabar-find-project-file (&optional buffer)
   (when-let (dir (locate-dominating-file (buffer-file-name (or buffer (current-buffer)))
                                          "pom.xml"))
-    (expand-file-name "pom.xml" dir)))
+    (malabar--project-file dir)))
+
+(defun malabar--project-file (dir)
+  (let ((file (expand-file-name "pom.xml" dir)))
+    (and (file-readable-p file)
+         file)))
+
+(defun malabar--sibling-projects (project-file)
+  (let ((parent (file-name-directory
+                 (directory-file-name (file-name-directory project-file)))))
+    (when (malabar--project-file parent)
+      (remove nil
+              (mapcar 'malabar--project-file
+                      (remove-if-not 'file-accessible-directory-p
+                                     (directory-files parent 'full "^[^\\.]")))))))
 
 (defun malabar-visit-project-file ()
   "Visits the project file."

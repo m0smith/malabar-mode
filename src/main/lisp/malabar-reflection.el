@@ -86,16 +86,26 @@
 (defun malabar--get-class-info-from-source (classname buffer)
   (let ((use-dialog-box nil))
     (when-let (source-buffer (or (malabar--load-local-source classname buffer)
+                                 (and malabar-load-source-from-sibling-projects
+                                      (malabar--load-sibling-source classname buffer))
                                  (malabar--load-archived-source classname buffer)))
       (malabar--get-class-info-from-buffer source-buffer))))
 
 (defun malabar--load-local-source (classname buffer)
   ;; First, try resolving in local project
+  (malabar--load-project-source classname (malabar-find-project-file buffer)))
+
+(defun malabar--load-project-source (classname project-file)
   (when-let (file (malabar-project-locate (malabar-class-name-to-filename classname)
-                                          (malabar-find-project-file buffer)))
+                                          project-file))
     ;; Defined in this project
     (or (find-buffer-visiting file)            
         (find-file-noselect file))))
+
+(defun malabar--load-sibling-source (classname buffer)
+  (some (lambda (project)
+          (malabar--load-project-source classname project))
+        (malabar--sibling-projects (malabar-find-project-file buffer))))
 
 (defun malabar--load-archived-source (classname buffer)
   ;; Not defined here
