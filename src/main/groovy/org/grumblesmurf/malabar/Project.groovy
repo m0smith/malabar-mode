@@ -152,22 +152,25 @@ class Project
         }
 
         def filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_COMPILE])
-        compileClasspath = new Classpath(mavenProject.compileClasspathElements + resources);
-        compileClasspath.artifacts = mavenProject.artifacts.findAll {
-            it.artifactHandler.addedToClasspath && filter.include(it)
-        }
+        compileClasspath =
+            new Classpath([classesDirectory] + resources,
+                          mavenProject.artifacts.findAll {
+                              it.artifactHandler.addedToClasspath && filter.include(it)
+                          })
 
         filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_TEST])
-        testClasspath = new Classpath(mavenProject.testClasspathElements + resources + testResources);
-        testClasspath.artifacts = mavenProject.artifacts.findAll { 
-            it.artifactHandler.addedToClasspath && filter.include(it)
-        }
+        testClasspath =
+            new Classpath([testClassesDirectory] + resources + testResources,
+                          mavenProject.artifacts.findAll {
+                              it.artifactHandler.addedToClasspath && filter.include(it)
+                          })
 
         filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_RUNTIME])
-        runtimeClasspath = new Classpath(mavenProject.runtimeClasspathElements);
-        runtimeClasspath.artifacts = mavenProject.artifacts.findAll {
-            it.artifactHandler.addedToClasspath && filter.include(it)
-        }
+        runtimeClasspath =
+            new Classpath([classesDirectory, testClassesDirectory] + resources + testResources,
+                          mavenProject.artifacts.findAll {
+                              it.artifactHandler.addedToClasspath && filter.include(it)
+                          })
 
         def compilerConfig = mavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin")?.configuration
         if (compilerConfig) {

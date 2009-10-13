@@ -25,6 +25,8 @@ class Classpath
 {
     def artifacts = [];
     
+    def extraEntries = [];
+    
     def bootUrls = [];
 
     def extUrls = [];
@@ -47,12 +49,20 @@ class Classpath
         }
     }
 
-    Classpath(entries) {
+    Classpath(extraEntries, artifacts) {
         this()
-        entries.each{
+        this.artifacts = artifacts;
+        
+        this.extraEntries = extraEntries.collect {
             if ((it as File).isDirectory() && !it.endsWith("/"))
               it = it + "/"
             this.urls << "file:" + it
+            "file:" + it
+        }
+        
+        artifacts.each {
+            if (it.file)
+                this.urls << "file:" + it.file.path
         }
     }
 
@@ -63,25 +73,26 @@ class Classpath
     private classloader;
 
     def classMap = [:]
+    def extraClassMap = [:]
     def classToArtifact = [:]
 
     // TODO: This is not good
     def currentArtifact
         
-    def classnamecollector = { fileName, path ->
+    def classnamecollector = { fileName, path, map ->
         def classbinaryname = fileName[0..-7];
         def simplename = classbinaryname[classbinaryname.lastIndexOf('$') + 1..-1]
         def pkgname = path.replace('/', '.')
                         
-        if (!classMap.containsKey(simplename)) {
-            classMap[simplename] = []
+        if (!map.containsKey(simplename)) {
+            map[simplename] = []
         }
-        classMap[simplename] << pkgname + "." + classbinaryname
+        map[simplename] << pkgname + "." + classbinaryname
         if (currentArtifact)
             classToArtifact[pkgname + "." + classbinaryname] = currentArtifact
     }
             
-    def classcollector = { 
+    def classcollector = { it, map ->
         URI uri = new URI(it);
         File file = new File(uri);
         String absolutePath = file.absolutePath
@@ -95,14 +106,15 @@ class Classpath
                         if (entryname.lastIndexOf('/') > -1) {
                             path = entryname.substring(0, entryname.lastIndexOf('/'))
                         }
-                        classnamecollector(filename, path)
+                        classnamecollector(filename, path, map)
                     }
                 }
             } else {
                 file.eachFileRecurse{ classFile ->
                     if (classFile.name.endsWith(".class")) {
                         classnamecollector(classFile.name,
-                                           classFile.parent[absolutePath.length() + 1 .. -1])
+                                           classFile.parent[absolutePath.length() + 1 .. -1],
+                                           map)
                     }
                 }
             }
@@ -123,21 +135,37 @@ class Classpath
         if (classMap.isEmpty()) {
             populateClassMap();
         }
-        
-        Utils.printAsLispList classMap[name];
+        if (extraClassMap.isEmpty()) {
+            populateExtraClassMap();
+        }
+
+        Utils.printAsLispList classMapEntry(name);
+    }
+
+    def classMapEntry(name) {
+        if (extraClassMap.containsKey(name))
+            extraClassMap[name];
+        else
+            classMap[name];
+    }
+
+    def populateExtraClassMap() {
+        extraEntries.each {
+            classcollector(it, extraClassMap)
+        }
     }
 
     def populateClassMap() {
         bootUrls.each{
-            classcollector(it)
+            classcollector(it, classMap)
         }
         extUrls.each{
-            classcollector(it)
+            classcollector(it, classMap)
         }
         artifacts.each {
             currentArtifact = it
             if (it.file)
-                classcollector("file:" + it.file.path)
+                classcollector("file:" + it.file.path, classMap)
         }
     }
 
