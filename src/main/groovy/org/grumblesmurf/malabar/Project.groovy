@@ -121,6 +121,12 @@ class Project
         } 
     }
 
+    def successfulCompilation() {
+        [ compileClasspath, testClasspath, runtimeClasspath ].each {
+            it.extraClassMap.clear()
+        }
+    }
+
     private Project(pom, profiles, request, mavenProject, mvnServer) {
         this.mvnServer = mvnServer
         this.request = request

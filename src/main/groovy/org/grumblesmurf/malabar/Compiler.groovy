@@ -70,6 +70,8 @@ class Compiler
                          message].join("::"))
             }
             fileManager.close();
+            if (success)
+               project.successfulCompilation();
             return success;
         } else if (file.endsWith(".groovy")) {
             CompilerConfiguration cc = new CompilerConfiguration(
@@ -87,6 +89,7 @@ class Compiler
             } catch (CompilationFailedException e) {
                 return false;
             }
+            project.successfulCompilation();
             return true;
         }
         return false;
