@@ -19,29 +19,25 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.Maven;
-
 import org.apache.maven.cli.Configuration;
 import org.apache.maven.cli.DefaultConfiguration;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.MavenLoggerManager;
-
-import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequestPopulationException;
 import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.MavenExecutionResult;
-
+import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.repository.ArtifactTransferListener;
-
-import org.apache.maven.settings.MavenSettingsBuilder;
+import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuilder;
 
 import org.codehaus.plexus.ContainerConfiguration;
 import org.codehaus.plexus.DefaultContainerConfiguration;
 import org.codehaus.plexus.DefaultPlexusContainer;
-
 import org.codehaus.plexus.classworlds.ClassWorld;
-
 import org.codehaus.plexus.logging.Logger;
 
 public class MvnServer
@@ -51,6 +47,7 @@ public class MvnServer
     final ArtifactTransferListener transferListener;
     final ExecutionListener executionListener;
     final Maven maven;
+    final ModelProcessor modelProcessor;
 
     final def plexus
 
@@ -65,6 +62,7 @@ public class MvnServer
         plexus.loggerManager = new MavenLoggerManager(logger);
 
         maven = plexus.lookup(Maven.class);
+        modelProcessor = plexus.lookup(ModelProcessor.class);
         
         configuration = buildEmbedderConfiguration();
         transferListener = new MvnServerTransferListener();
@@ -76,10 +74,13 @@ public class MvnServer
             userSettingsFile:configuration.userSettingsFile,
             globalSettingsFile:configuration.globalSettingsFile,
             baseDirectory:basedir,
+            pom:modelProcessor.locatePom(basedir),
             transferListener:transferListener,
             executionListener:executionListener).with { req ->
-            def settings = withComponent(MavenSettingsBuilder.class) {
-                it.buildSettings(req);
+            def settings = withComponent(SettingsBuilder.class) {
+                def sbr = new DefaultSettingsBuildingRequest(globalSettingsFile:req.globalSettingsFile,
+                                                             userSettingsFile:req.userSettingsFile);
+                it.build(sbr).effectiveSettings;
             }
 
             profiles.each {
