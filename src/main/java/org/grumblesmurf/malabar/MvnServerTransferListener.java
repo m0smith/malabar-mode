@@ -19,7 +19,7 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.repository.ArtifactTransferListener;
-import org.apache.maven.wagon.events.TransferEvent;
+import org.apache.maven.repository.ArtifactTransferEvent;
 
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 
@@ -27,19 +27,19 @@ public class MvnServerTransferListener
     extends AbstractLogEnabled
     implements ArtifactTransferListener
 {
-    public void transferInitiated(TransferEvent transferEvent) {
+    public void transferInitiated(ArtifactTransferEvent transferEvent) {
     }
 
-    public void transferStarted(TransferEvent transferEvent) {
+    public void transferStarted(ArtifactTransferEvent transferEvent) {
     }
 
-    public void transferProgress(TransferEvent transferEvent, byte[] buffer, int length) {
+    public void transferProgress(ArtifactTransferEvent transferEvent, byte[] buffer, int length) {
     }
 
-    public void transferCompleted(TransferEvent transferEvent) {
+    public void transferCompleted(ArtifactTransferEvent transferEvent) {
     }
 
-    public void transferError(TransferEvent event) {
+    public void transferError(ArtifactTransferEvent event) {
         Utils.println(event.getException().getMessage());
     }
 
