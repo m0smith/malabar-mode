@@ -166,14 +166,14 @@ class Project
 
         filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_TEST])
         testClasspath =
-            new Classpath([testClassesDirectory] + resources + testResources,
+            new Classpath([testClassesDirectory, classesDirectory] + resources + testResources,
                           mavenProject.artifacts.findAll {
                               it.artifactHandler.addedToClasspath && filter.include(it)
                           })
 
         filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_RUNTIME])
         runtimeClasspath =
-            new Classpath([classesDirectory, testClassesDirectory] + resources + testResources,
+            new Classpath([classesDirectory] + resources,
                           mavenProject.artifacts.findAll {
                               it.artifactHandler.addedToClasspath && filter.include(it)
                           })
