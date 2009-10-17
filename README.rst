@@ -100,7 +100,19 @@ and more.
    
 4. Build with ``mvn package``.  If load-test.el fails, it is most
    likely because CEDET is not on your load-path.
-   
+
+   Note that since malabar-mode HEAD tracks Maven 3.0-SNAPSHOT
+   directly, it may fail to work (or even compile) due to upstream
+   changes.  I usually fix such breakage reasonably quickly, so don't
+   despair (or even better, if you notice breakage you can fix it
+   yourself and send me a patch...)
+
+   If you really really need a working version Right Now[TM] you can
+   always use the ``malabar-1.1`` tag.
+
+   When a Maven (pre)release is made, I will tag a version of
+   malabar-mode that locks to that version.
+
 5. Unpack the resulting ``malabar-<version>-dist.zip`` somewhere
    
 6. Add ``malabar-<version>/lisp`` to your Emacs load-path
