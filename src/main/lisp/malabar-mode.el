@@ -66,6 +66,31 @@
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
 
+(defun malabar-electric-colon (arg)
+  "Acts as `c-electric-colon'.
+
+In addition, if `malabar-electric-elvis' is non-nil, the colon is
+not inside a literal and a prefix ARG hasn't been supplied, the
+command performs the following transform:
+
+'foo ?:' => 'foo != null ? foo :'."
+  (interactive "*P")
+  (let ((looking-at-elvis-p (char-equal (char-before (point)) ??)))
+    (c-electric-colon arg)
+    (when (and malabar-electric-elvis-p
+               looking-at-elvis-p
+               c-electric-flag
+               (not (c-save-buffer-state () (c-in-literal)))
+               (not arg))
+      (let ((end (point)))
+        (forward-sexp -1)
+        (while (not (eql (char-syntax (char-before (point))) ?\s))
+          (forward-sexp -1))
+        (let ((value (string-trim (buffer-substring-no-properties (point) (- end 2)))))
+          (forward-char (length value))
+          (delete-char (- end (point)))
+          (insert " != null ? " value " :"))))))
+
 (defun malabar-compile-file-silently ()
   "Compiles the current buffer without displaying the result."
   (interactive)

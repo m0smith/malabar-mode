@@ -255,6 +255,15 @@ Note the presence of the ``#Test`` abbrev; this expands to::
 
 With point left at the position marked with ``|``.
 
+Electric expansions
+===================
+
+In addition to the electric insertion offered by CC-mode, malabar-mode
+offers an expansion that simulates the `Elvis operator`_, although the
+generated code is not as efficient as a language-provided Elvis
+operator would be.  This expansion is controlled by the variable
+``malabar-electric-elvis-p``.
+
 ============================
 This is cool, I want to help
 ============================
@@ -330,3 +339,4 @@ For the full text of the GPL, see http://www.gnu.org/licenses/gpl2.txt.
 .. _issue tracker: http://github.com/espenhw/malabar-mode/issues
 .. _Nikolaj Schumacher: http://nschum.de/src/emacs/
 .. _standard Semantic code completion: http://cedet.sourceforge.net/intellisense.shtml
+.. _Elvis operator: http://groovy.codehaus.org/Operators#Operators-ElvisOperator%28%3F%3A%29

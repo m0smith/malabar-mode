@@ -46,6 +46,7 @@
       (define-key prefix-map [?\C-p] 'malabar-visit-project-file) 
       (define-key prefix-map [?\C-y] 'malabar-jump-to-thing)
       (define-key map malabar-mode-key-prefix prefix-map))
+    (define-key map ":" 'malabar-electric-colon)
     map)
   "Keymap for Malabar mode.")
 
@@ -111,5 +112,13 @@ will look for the source code of a Java class in these locations
 if the class is not otherwise resolvable."
   :group 'malabar-mode
   :type '(repeat (file :tag "Path")))
+
+(defcustom malabar-electric-elvis-p t
+  "Whether inserting a colon should electrically expand the Elvis
+operator ('?:').
+
+See `malabar-electric-colon'."
+  :group 'malabar-mode
+  :type '(boolean))
 
 (provide 'malabar-variables)
