@@ -33,7 +33,7 @@ public class MvnServerTransferListener
     public void transferStarted(ArtifactTransferEvent transferEvent) {
     }
 
-    public void transferProgress(ArtifactTransferEvent transferEvent, byte[] buffer, int length) {
+    public void transferProgress(ArtifactTransferEvent transferEvent) {
     }
 
     public void transferCompleted(ArtifactTransferEvent transferEvent) {
