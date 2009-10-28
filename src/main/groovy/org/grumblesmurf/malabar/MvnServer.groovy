@@ -19,8 +19,6 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.Maven;
-import org.apache.maven.cli.Configuration;
-import org.apache.maven.cli.DefaultConfiguration;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.MavenLoggerManager;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
@@ -42,7 +40,6 @@ import org.codehaus.plexus.logging.Logger;
 
 public class MvnServer
 {
-    final Configuration configuration;
     final Logger logger;
     final ArtifactTransferListener transferListener;
     final ExecutionListener executionListener;
@@ -64,15 +61,14 @@ public class MvnServer
         maven = plexus.lookup(Maven.class);
         modelProcessor = plexus.lookup(ModelProcessor.class);
         
-        configuration = buildEmbedderConfiguration();
         transferListener = new MvnServerTransferListener();
         executionListener = new ExecutionEventLogger(logger);
     }
     
     public MavenExecutionRequest newRequest(basedir, profiles) {
         return new DefaultMavenExecutionRequest(
-            userSettingsFile:configuration.userSettingsFile,
-            globalSettingsFile:configuration.globalSettingsFile,
+            userSettingsFile:MavenCli.DEFAULT_USER_SETTINGS_FILE,
+            globalSettingsFile:MavenCli.DEFAULT_GLOBAL_SETTINGS_FILE,
             baseDirectory:basedir,
             pom:modelProcessor.locatePom(basedir),
             transferListener:transferListener,
@@ -103,12 +99,6 @@ public class MvnServer
         } finally {
             plexus.release(comp);
         }
-    }
-
-    Configuration buildEmbedderConfiguration() {
-        return new DefaultConfiguration(
-            userSettingsFile:MavenCli.DEFAULT_USER_SETTINGS_FILE,
-            globalSettingsFile:MavenCli.DEFAULT_GLOBAL_SETTINGS_FILE)
     }
 
     public boolean run(String pomFileName, String... goals) {
