@@ -47,6 +47,7 @@
 (require 'malabar-test)
 (require 'malabar-util)
 (require 'malabar-semanticdb)
+(require 'malabar-refactor)
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."

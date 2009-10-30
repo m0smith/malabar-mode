@@ -27,6 +27,12 @@
   :group 'malabar-mode
   :type 'sexp)
 
+(defvar malabar-refactor-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [?\C-c] 'malabar-refactor-extract-constant)
+    map)
+  "Keymap for Malabar's refactorings.")
+
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
     (let ((prefix-map (make-sparse-keymap)))
@@ -45,6 +51,7 @@
       (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
       (define-key prefix-map [?\C-p] 'malabar-visit-project-file) 
       (define-key prefix-map [?\C-y] 'malabar-jump-to-thing)
+      (define-key prefix-map [?\C-r] malabar-refactor-map)
       (define-key map malabar-mode-key-prefix prefix-map))
     (define-key map ":" 'malabar-electric-colon)
     map)

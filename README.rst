@@ -77,6 +77,8 @@ But there is more:
 
 - Extend class / implement interface / override method helpers
 
+- Simplistic refactorings
+
 and more.
 
 ==============
@@ -234,6 +236,12 @@ malabar-jump-to-thing : C-c C-v C-y
   for the code at point, taking type membership into account.  This
   function is much like ``semantic-ia-fast-jump``, only a little
   smarter.
+
+malabar-refactor-extract-constant : C-c C-v C-r C-c
+  Extracts the thing at point as a named constant.  The scope of the
+  constant will default to
+  ``malabar-refactor-extract-constant-default-scope``, but with a
+  prefix arg will prompt for the scope.
 
 In addition, `standard Semantic code completion`_ is available; trigger
 this however you wish.  By default, ``semantic-ia-complete-symbol`` is
