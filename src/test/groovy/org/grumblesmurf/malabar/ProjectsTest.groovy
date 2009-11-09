@@ -27,15 +27,20 @@ import static org.hamcrest.CoreMatchers.*;
 
 class ProjectsTest 
 {
-    @Test
+    Project p;
+    
+    @Before
     void instantiateProject() {
-        Project p = Projects.get(System.getProperty("basedir") + "/pom.xml", []);
+        p = Projects.get(System.getProperty("basedir") + "/pom.xml", []);
+    }
+    
+    @Test
+    void projectPopulated() {
         assertThat(p.name, is("Malabar: A better Java mode for Emacs"));
     }
 
     @Test
     void runAGoal() {
-        Project p = Projects.get(System.getProperty("basedir") + "/pom.xml", []);
         assertThat(p.mvnServer, is(not(nullValue())));
         assertThat(p.run("validate"), is(true));
     }
