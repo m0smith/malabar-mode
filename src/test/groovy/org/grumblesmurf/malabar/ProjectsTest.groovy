@@ -40,6 +40,18 @@ class ProjectsTest
     }
 
     @Test
+    void transitiveCompileClasspath() {
+        def cp = p.compileClasspath
+        assertThat(cp.asClassPath(), containsString("log4j"))
+    }
+
+    @Test
+    void transitiveTestClasspath() {
+        def cp = p.testClasspath
+        assertThat(cp.asClassPath(), containsString("slf4j"))
+    }
+
+    @Test
     void runAGoal() {
         assertThat(p.mvnServer, is(not(nullValue())));
         assertThat(p.run("validate"), is(true));
