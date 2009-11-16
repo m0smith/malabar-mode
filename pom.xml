@@ -39,7 +39,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.version>3.0-alpha-3</maven.version>
+    <maven.version>3.0-SNAPSHOT</maven.version>
   </properties>
   
   <dependencies>
