@@ -57,6 +57,107 @@ in the list."
                 (function-item malabar-import-group-imports)
                 function))
 
+(defvar malabar-import-java-lang-classes
+  (mapcar (lambda (c)
+            (let ((n (symbol-name c)))
+              (cons n (concat "java.lang." n))))
+          '(;;Interfaces 
+            Appendable
+            CharSequence
+            Cloneable
+            Comparable
+            Iterable
+            Readable
+            Runnable
+            ;;Classes 
+            Boolean
+            Byte
+            Character
+            Class
+            ClassLoader
+            Compiler
+            Double
+            Enum
+            Float
+            InheritableThreadLocal
+            Integer
+            Long
+            Math
+            Number
+            Object
+            Package
+            Process
+            ProcessBuilder
+            Runtime
+            RuntimePermission
+            SecurityManager
+            Short
+            StackTraceElement
+            StrictMath
+            String
+            StringBuffer
+            StringBuilder
+            System
+            Thread
+            ThreadGroup
+            ThreadLocal
+            Throwable
+            Void
+            ;;Exceptions 
+            ArithmeticException
+            ArrayIndexOutOfBoundsException
+            ArrayStoreException
+            ClassCastException
+            ClassNotFoundException
+            CloneNotSupportedException
+            EnumConstantNotPresentException
+            Exception
+            IllegalAccessException
+            IllegalArgumentException
+            IllegalMonitorStateException
+            IllegalStateException
+            IllegalThreadStateException
+            IndexOutOfBoundsException
+            InstantiationException
+            InterruptedException
+            NegativeArraySizeException
+            NoSuchFieldException
+            NoSuchMethodException
+            NullPointerException
+            NumberFormatException
+            RuntimeException
+            SecurityException
+            StringIndexOutOfBoundsException
+            TypeNotPresentException
+            UnsupportedOperationException
+            ;;Errors 
+            AbstractMethodError
+            AssertionError
+            ClassCircularityError
+            ClassFormatError
+            Error
+            ExceptionInInitializerError
+            IllegalAccessError
+            IncompatibleClassChangeError
+            InstantiationError
+            InternalError
+            LinkageError
+            NoClassDefFoundError
+            NoSuchFieldError
+            NoSuchMethodError
+            OutOfMemoryError
+            StackOverflowError
+            ThreadDeath
+            UnknownError
+            UnsatisfiedLinkError
+            UnsupportedClassVersionError
+            VerifyError
+            VirtualMachineError
+            Annotation Types 
+            Deprecated
+            Override
+            SuppressWarnings)))
+
 (defun malabar-type-token-candidates ()
   (remove nil (mapcar (lambda (token)
                         (when (eq (car token) 'IDENTIFIER)
@@ -81,10 +182,14 @@ in the list."
             classname)
           (when import-tag
             (semantic-tag-name import-tag))
-          (malabar-find-imported-class-from-wildcard-imports classname buffer)
-          (find (concat "java.lang." classname)
-                (malabar-qualify-class-name classname buffer)
-                :test #'equal)))))
+          (if (malabar-find-project-file buffer)
+              (or (malabar-find-imported-class-from-wildcard-imports classname buffer)
+                  (find (concat "java.lang." classname)
+                        (malabar-qualify-class-name classname buffer)
+                        :test #'equal))
+            ;; Punt
+            (or (cdr (assoc classname malabar-import-java-lang-classes))
+                (concat (malabar-get-package-name buffer) "." classname)))))))
 
 (defun malabar-find-imported-class-from-wildcard-imports (class &optional buffer)
   (let ((tags

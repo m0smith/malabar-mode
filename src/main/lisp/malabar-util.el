@@ -141,7 +141,7 @@ return the corresponding cdr."
                                                  (current-buffer)))))
 
 (defun malabar-get-package-name (&optional buffer)
-  (when-let (package-tag (malabar-get-package-tag))
+  (when-let (package-tag (malabar-get-package-tag buffer))
     (semantic-tag-name package-tag)))
 
 (defun malabar-get-class-tag-at-point ()

@@ -60,9 +60,9 @@
         ((malabar--primitive-type-p class)
          class)
         ((malabar--array-type-p class)
-         (malabar-qualify-class-name-in-buffer (malabar--array-element-type class)))
+         (malabar-qualify-class-name-in-buffer (malabar--array-element-type class) buffer))
         ((malabar--parametrized-type-p class)
-         (malabar-qualify-class-name-in-buffer (malabar--raw-type class)))
+         (malabar-qualify-class-name-in-buffer (malabar--raw-type class) buffer))
         (t
          (let* ((buffer (or buffer (current-buffer)))
                 (package (malabar-get-package-name buffer))
@@ -286,14 +286,40 @@ e.g. `malabar-choose'."
                      ", ")
           ")"))
 
+(defun malabar--method-signature-modifiers (tag)
+  (mapconcat #'identity
+             (or (remove-if (lambda (m)
+                              (or (equal m "abstract")
+                                  (equal m "native")
+                                  (string-starts-with m "@")))
+                            (malabar--get-modifiers tag))
+                 '("public"))
+             " "))
+
+(defun malabar--add-to-import-list (type)
+  (when (boundp 'malabar--import-candidates)
+    (pushnew (malabar--raw-type type) malabar--import-candidates
+             :test #'equal)))
+
+(defun malabar--method-signature-type (tag)
+  (let ((type (semantic-tag-type tag)))
+    (malabar--add-to-import-list
+     (malabar-qualify-class-name-in-buffer type (or (semantic-tag-buffer tag)
+                                                    (current-buffer))))
+    type))
+
+(defun malabar--method-signature-parameter (tag)
+  (concat (malabar--method-signature-type tag) " " (semantic-tag-name tag)))
+
 (defun malabar-create-method-signature (tag)
   "Creates a method signature for insertion in a class file."
-  (let ((tag (semantic-tag-copy tag)))
-    (semantic-tag-put-attribute tag :typemodifiers
-                                (remove "abstract"
-                                        (remove "native"
-                                                (malabar--get-modifiers tag))))
-    (semantic-format-tag-prototype tag)))
+  (concat (malabar--method-signature-modifiers tag) " "
+          (malabar--method-signature-type tag) " "
+          (semantic-tag-name tag) "("
+          (mapconcat #'malabar--method-signature-parameter
+                     (semantic-tag-function-arguments tag)
+                     ", ")
+          ")"))
 
 (defun malabar-create-constructor-signature (tag)
   "Creates a constructor signature for insertion in a class file."

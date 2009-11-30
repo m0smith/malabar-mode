@@ -56,9 +56,9 @@ for the method to override."
                             (mapcar 'malabar-make-choose-spec
                                     overridable-methods))))
     (when method-tag
-      (malabar--override-methods (list method-tag) nil overridable-methods))))
+      (malabar--override-methods (list method-tag) t overridable-methods))))
 
-(defun malabar--override-methods (methods suppress-annotation &optional overridable-methods)
+(defun malabar--override-methods (methods call-super &optional overridable-methods)
   (let ((method-count (length methods))
         (counter 0)
         (overridable-methods (or overridable-methods
@@ -69,36 +69,37 @@ for the method to override."
         (with-caches 
          (dolist (method methods)
            (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-           (malabar--override-method method overridable-methods suppress-annotation t)))
+           (malabar--override-method method overridable-methods call-super t)))
         (malabar--import-handle-import-candidates malabar--import-candidates))
       (working-status t "done"))
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
 (defun malabar--override-method (method-tag overridable-methods
-                                            suppress-annotation no-indent-defun)
+                                            is-extension no-indent-defun)
   (malabar-goto-end-of-class)
-  (let ((call-super (not (malabar--abstract-p method-tag))))
-    (insert "\n" (if suppress-annotation
-                     ""
-                   "@Override\n")
-            (malabar-create-method-signature method-tag) " {\n"
-            "// TODO: Stub\n"
-            (let ((super-call
-                   (concat "super." (malabar--get-name method-tag)
-                           (malabar--stringify-arguments
-                            (malabar--get-arguments method-tag)))))
-              (if (equal (malabar--get-return-type method-tag) "void")
-                  (if call-super
-                      (concat super-call ";\n")
-                    "")
-                (concat "return "
-                        (if call-super
-                            super-call
-                          (malabar-default-return-value
-                           (malabar--get-return-type method-tag)))
-                        ";\n")))
-            "}\n")
+  (insert "\n" (if is-extension
+                   "@Override\n"
+                 "")
+          (malabar-create-method-signature method-tag) " {\n"
+          "// TODO: Stub\n"
+          (let ((call-super (and is-extension
+                                 (not (malabar--abstract-p method-tag))))
+                (super-call
+                 (concat "super." (malabar--get-name method-tag)
+                         (malabar--stringify-arguments
+                          (malabar--get-arguments method-tag)))))
+            (if (equal (malabar--get-return-type method-tag) "void")
+                (if call-super
+                    (concat super-call ";\n")
+                  "")
+              (concat "return "
+                      (if call-super
+                          super-call
+                        (malabar-default-return-value
+                         (malabar--get-return-type method-tag)))
+                      ";\n")))
+          "}\n")
     (forward-line -2)
     (unless no-indent-defun
       (c-indent-defun))
@@ -119,7 +120,7 @@ for the method to override."
                (malabar-override-method hashcode-tag))
               ((and (equal method-tag hashcode-tag)
                     equals-tag)
-               (malabar-override-method equals-tag)))))))
+               (malabar-override-method equals-tag))))))
 
 (defun malabar-implement-interface (&optional interface implement-keyword)
   "Adds INTERFACE to the current class's implements clause and
@@ -149,7 +150,7 @@ adds stub implementations of all the interface's methods."
       (insert (malabar--get-type-parameters interface-info)))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-methods (malabar--get-methods interface-info) t)
+    (malabar--override-methods (malabar--get-methods interface-info) nil)
     (malabar-import-and-unqualify qualified-interface)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
@@ -221,7 +222,7 @@ accessible constructors."
                     (c-indent-defun)
                     (forward-line 2))
                   accessible-constructors)
-            (malabar--override-methods (malabar--get-abstract-methods class-info) nil)
+            (malabar--override-methods (malabar--get-abstract-methods class-info) t)
             (malabar-import-and-unqualify qualified-class)))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
@@ -309,9 +310,6 @@ Overrides `semantic-tag-static-p'."
                tag parent color)
               nil t)
              nil t)))
-       (when (boundp 'malabar--import-candidates)
-         (pushnew (malabar--raw-type (semantic-tag-type tag)) malabar--import-candidates
-                  :test #'equal))
        (if (and (malabar--get-type-parameters tag)
                 (string-match (regexp-quote (semantic-tag-type tag)) def))
            (replace-match (concat (malabar--get-type-parameters tag) " "
