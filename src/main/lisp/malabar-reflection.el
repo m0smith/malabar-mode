@@ -220,8 +220,10 @@
   public
   private
   protected
-  final
-  interface)
+  final)
+
+(defun malabar--interface-p (tag)
+  (equal (semantic-tag-type tag) "interface"))
 
 (defun malabar--package-private-p (tag)
   (not (or (malabar--public-p tag)
