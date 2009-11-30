@@ -162,7 +162,8 @@ same name is already imported."
   (interactive (list (read-from-minibuffer "Class: " (malabar--type-at-point))))
   (let* ((unqualified (malabar-get-classname qualified))
          (existing-import (malabar-find-imported-class unqualified)))
-    (cond ((equal existing-import qualified)
+    (cond ((or (equal existing-import qualified)
+               (malabar-import-exclude qualified))
            ;; Already imported, just unqualify
            (message "Class %s does not need to be imported" qualified)
            (malabar--conditional-replace (regexp-quote qualified) unqualified
