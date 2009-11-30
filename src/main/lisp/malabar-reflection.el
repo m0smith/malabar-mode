@@ -252,6 +252,9 @@
 (defun malabar-get-abstract-methods (classname &optional buffer)
   (malabar--get-abstract-methods (malabar-get-class-info classname buffer)))
 
+(defun malabar--get-methods (tag)
+  (remove-if-not #'malabar--method-p (malabar--get-members tag)))
+
 (defun malabar--get-abstract-methods (class-info)
   (remove-if-not (lambda (m)
                    (and (malabar--method-p m)

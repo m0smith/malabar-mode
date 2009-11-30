@@ -149,7 +149,7 @@ adds stub implementations of all the interface's methods."
       (insert (malabar--get-type-parameters interface-info)))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-methods (malabar--get-abstract-methods interface-info) t)
+    (malabar--override-methods (malabar--get-methods interface-info) t)
     (malabar-import-and-unqualify qualified-interface)))
 
 (defun malabar--implement-interface-move-to-insertion-point ()
