@@ -264,7 +264,7 @@
 (defun malabar--arg-name-maker ()
   (lexical-let ((counter -1))
     (lambda (arg)
-      (or (getf arg :name)
+      (or (semantic-tag-name arg)
           (format "arg%s"
                   (incf counter))))))
 
