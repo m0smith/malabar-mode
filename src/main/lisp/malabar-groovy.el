@@ -191,10 +191,12 @@ pop to the Groovy console buffer."
     (pop-to-buffer malabar-groovy-buffer-name)))
 
 (defun malabar-groovy-eval-in-process (process string)
-  (let ((string (string-with-newline string)))
+  (let ((string (string-with-newline string))
+        (current-message (current-message)))
     (unless working-message
       (message "Invoking Groovy, please wait..."))
-    (comint-send-string process string)))
+    (comint-send-string process string)
+    (message current-message)))
 
 (defun malabar-groovy-live-p ()
   (comint-check-proc malabar-groovy-buffer-name))
