@@ -63,41 +63,60 @@
         class))))
 
 (defun malabar-visit-corresponding-test (&optional buffer silent)
+  "Returns (TEST-BUF . EXISTED) where TEST-BUF is a buffer
+visiting the test class corresponding to BUFFER and EXISTED is T
+if the file already existed."
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (if (malabar-test-class-buffer-p buffer)
-        buffer
+        (cons buffer t)
       (let ((class-file (malabar-class-name-to-filename
                          (malabar-corresponding-test-class-name buffer)
                          (file-name-extension (buffer-file-name buffer) t)))
             (test-source-directories (malabar-project-test-source-directories
                                       (malabar-find-project-file buffer))))
-        (funcall
-         (if silent #'find-file-noselect #'find-file)
-         (or (locate-file class-file test-source-directories)
-             (expand-file-name class-file (car test-source-directories))))))))
+        (let ((filename (or (locate-file class-file test-source-directories)
+                            (expand-file-name class-file (car test-source-directories)))))
+          (cons (if silent
+                    (find-file-noselect filename t)
+                  (find-file filename))
+                (file-exists-p filename)))))))
 
 (defun malabar-run-test-internal (test-starter &optional requires-qualification)
-  (with-current-buffer (malabar-visit-corresponding-test (current-buffer) t)
-    (malabar-setup-compilation-buffer)
-    (setq malabar-compilation-project-test-source-directories
-          (malabar-project-test-source-directories malabar-compilation-project-file))
-    (display-buffer malabar-groovy-compilation-buffer-name t)
-    (malabar-groovy-eval-as-compilation
-     (format test-starter
-             (if requires-qualification
-                 (malabar-qualified-class-name-of-buffer (current-buffer))
-               (malabar-unqualified-class-name-of-buffer (current-buffer)))))))
+  (malabar-setup-compilation-buffer '()) ;; HACK
+  (setq malabar-compilation-project-test-source-directories
+        (malabar-project-test-source-directories malabar-compilation-project-file))
+  (display-buffer malabar-groovy-compilation-buffer-name t)
+  (malabar-groovy-eval-as-compilation
+   (format test-starter
+           (if requires-qualification
+               (malabar-qualified-class-name-of-buffer (current-buffer))
+             (malabar-unqualified-class-name-of-buffer (current-buffer)))))))
+
+(put 'with-existing-corresponding-test-buffer 'lisp-indent-function 1)
+(defmacro* with-existing-corresponding-test-buffer ((buffer silent) &body body)
+  (let ((res (gensym))
+        (buf (gensym))
+        (exist-p (gensym)))
+    `(let* ((,res (malabar-visit-corresponding-test ,buffer ,silent))
+            (,buf (car ,res))
+            (,exist-p (cdr ,res)))
+       (if ,exist-p
+           (with-current-buffer ,buf
+             ,@body)
+         ;; the visit-function created a buffer, kill it
+         (kill-buffer ,buf)))))
 
 (defun malabar-run-junit-test ()
   "Runs the current buffer (or its corresponding test) as a
-standalone JUnit test."
+standalone JUnit test.  NOP if there is no corresponding test."
   (interactive)
-  (let ((cur-buf (current-buffer)))
-    (malabar-compile-file)
-    (with-current-buffer (malabar-visit-corresponding-test cur-buf t)
+  (let* ((cur-buf (current-buffer))
+         (files-to-compile (list (buffer-file-name cur-buf))))
+    (with-existing-corresponding-test-buffer (cur-buf t)
       (unless (eq cur-buf (current-buffer))
-        (malabar-compile-file))
+        (push (buffer-file-name (current-buffer)) files-to-compile))
+      (malabar-compile-files (nreverse files-to-compile) nil)
       (malabar-run-test-internal 
        (format "%s.runJunit('%%s')"
                (malabar-project cur-buf))
@@ -107,9 +126,10 @@ standalone JUnit test."
   "Runs the current buffer (or its corresponding test) as a test,
 using 'mvn test -Dtestname'."
   (interactive)
-  (malabar-run-test-internal
-   (format "%s.runtest('%%s')"
-           (malabar-project (current-buffer)))))
+  (with-existing-corresponding-test-buffer ((current-buffer) nil)
+    (malabar-run-test-internal
+     (format "%s.runtest('%%s')"
+             (malabar-project (current-buffer))))))
 
 (defun malabar-run-all-tests (clean-p)
   "Runs all project tests ('mvn test').  With prefix argument,

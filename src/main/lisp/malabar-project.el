@@ -22,7 +22,10 @@
 (require 'malabar-util)
 
 (defun malabar-setup-compilation-buffer (&optional for-files)
-  (setq malabar-compilation-project-file (malabar-find-project-file))
+  (malabar-setup-compilation-buffer-1 for-files (malabar-find-project-file)))
+
+(defun malabar-setup-compilation-buffer-1 (for-files project-file)
+  (setq malabar-compilation-project-file project-file)
   (malabar-groovy-setup-compilation-buffer for-files))
 
 (defun malabar--clean-compilation-messages (buffer &optional message)
@@ -95,8 +98,10 @@
       "testClasspath")))
 
 (defun malabar-find-project-file (&optional buffer)
-  (when-let (dir (locate-dominating-file (buffer-file-name (or buffer (current-buffer)))
-                                         "pom.xml"))
+  (malabar--project-for-file (buffer-file-name (or buffer (current-buffer)))))
+
+(defun malabar--project-for-file (file)
+  (when-let (dir (locate-dominating-file file "pom.xml"))
     (malabar--project-file dir)))
 
 (defun malabar--project-file (dir)

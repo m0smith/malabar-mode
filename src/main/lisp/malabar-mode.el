@@ -100,15 +100,24 @@ command performs the following transform:
 (defun malabar-compile-file (&optional silent)
   "Compiles the current buffer."
   (interactive)
-  (save-some-buffers (not compilation-ask-about-save) nil)
-  (malabar-setup-compilation-buffer (list (buffer-file-name (current-buffer))))
-  (unless silent
-    (display-buffer malabar-groovy-compilation-buffer-name t))
-  (malabar-groovy-eval-as-compilation
-   (concat (format "%s.compiler.compile('%s')"
-                   (malabar-project (current-buffer))
-                   (buffer-file-name (current-buffer))))
-   silent))
+  (malabar-compile-files (list (buffer-file-name (current-buffer))) silent))
+
+(defun malabar-compile-files (files-to-compile silent)
+  (let ((project-files (delete-dups (mapcar 'malabar--project-for-file files-to-compile))))
+    (when (cdr project-files)
+      (error "You cannot compile files from multiple projects in one operation"))
+    (save-some-buffers (not compilation-ask-about-save) nil)
+    (malabar-setup-compilation-buffer-1 files-to-compile (car project-files))
+    (unless silent
+      (display-buffer malabar-groovy-compilation-buffer-name t))
+    (malabar-groovy-eval-as-compilation
+     (mapconcat (lambda (f)
+                  (concat (format "%s.compiler.compile('%s')"
+                                  (malabar-project-expression (car project-files))
+                                  f)))
+                files-to-compile
+                "; ")
+     silent)))
 
 (defun malabar-compute-package-name (&optional buffer)
   (let* ((dir (file-name-directory (buffer-file-name buffer)))
