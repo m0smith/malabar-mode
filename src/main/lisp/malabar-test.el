@@ -91,7 +91,7 @@ if the file already existed."
    (format test-starter
            (if requires-qualification
                (malabar-qualified-class-name-of-buffer (current-buffer))
-             (malabar-unqualified-class-name-of-buffer (current-buffer)))))))
+             (malabar-unqualified-class-name-of-buffer (current-buffer))))))
 
 (put 'with-existing-corresponding-test-buffer 'lisp-indent-function 1)
 (defmacro* with-existing-corresponding-test-buffer ((buffer silent) &body body)
