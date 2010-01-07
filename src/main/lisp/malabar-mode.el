@@ -161,6 +161,68 @@ present."
   (unless (bolp)
     (forward-line 1)))
 
+(define-mode-local-override semantic-documentation-for-tag
+  malabar-mode (&optional tag nosnarf)
+  "Massage some Javadoc syntax stuff."
+  (let ((old-at-syntax (string (char-syntax ?@))))
+    (unwind-protect
+        (progn (modify-syntax-entry ?@ "w")
+               (let ((docstring (semantic-documentation-for-tag-java-mode tag nosnarf)))
+                 (with-temp-buffer
+                   (insert docstring)
+                   (goto-char 0)
+                   ;; Fontify code markup
+                   (while (re-search-forward "{@code \\([^}]+\\)}" nil t)
+                     (put-text-property (match-beginning 0) (match-beginning 1)
+                                        'invisible t)
+                     (put-text-property (match-beginning 1) (match-end 1)
+                                        'face '(:slant oblique))
+                     (put-text-property (match-end 1) (match-end 0)
+                                        'invisible t))
+                   ;; Make parameter documentation stand out
+                   (let ((param-re "^\\(@param\\)\\s-*\\(\\w+\\)"))
+                     (goto-char 0)
+                     (when (re-search-forward param-re nil t)
+                       (goto-char (match-beginning 0))
+                       (insert "\nParameters: \n"))
+                     (while (re-search-forward param-re nil t)
+                       (put-text-property (match-beginning 1) (match-end 1)
+                                          'invisible t)
+                       (put-text-property (match-beginning 2) (match-end 2)
+                                          'face '(:slant oblique))
+                       (goto-char (match-beginning 0))
+                       (insert "\n")
+                       (goto-char (match-end 0))))
+                   (goto-char 0)
+                   (when (re-search-forward "^@return" nil t)
+                     (replace-match "\nReturns:\n\n"))
+                   (fill-region 0 (point-max))
+                   (goto-char 0)
+                   (while (re-search-forward (concat "\\(" paragraph-start "\\){2,}") nil t)
+                     (replace-match "\n\n"))
+                   (buffer-string))))
+      (modify-syntax-entry ?@ old-at-syntax))))
+
+(defun malabar-show-javadoc (point)
+  (interactive "d")
+  (let* ((context (semantic-analyze-current-context point))
+         (prefix (reverse (oref context prefix))))
+    (cond ((stringp (car prefix))
+           (message "Incomplete symbol name."))
+          ((semantic-tag-p (car prefix))
+           (let ((doc (semantic-documentation-for-tag (car prefix))))
+             (with-output-to-temp-buffer "*TAG DOCUMENTATION*"
+               (princ "Tag: ")
+               (princ (semantic-format-tag-prototype (car prefix)))
+               (princ "\n")
+               (princ "\n")
+               (if doc
+                   (with-current-buffer standard-output
+                     (insert doc))
+                 (princ "  Documentation unavailable.")))))
+          (t
+           (message "Unknown tag.")))))
+
 (define-mode-local-override semantic-get-local-variables
   malabar-mode ()
   "Get local variable declarations from the current context."
