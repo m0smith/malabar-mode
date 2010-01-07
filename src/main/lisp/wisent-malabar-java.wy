@@ -1294,6 +1294,8 @@ labeled_statement_no_short_if
 expression_statement
   : statement_expression SEMICOLON
     ()
+  | error
+    (SKIP-TOKEN)
   ;
 
 statement_expression
