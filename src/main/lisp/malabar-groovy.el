@@ -196,7 +196,9 @@ pop to the Groovy console buffer."
     (unless working-message
       (message "Invoking Groovy, please wait..."))
     (comint-send-string process string)
-    (message current-message)))
+    (if current-message
+      (message "%s" current-message)
+      (message nil))))
 
 (defun malabar-groovy-live-p ()
   (comint-check-proc malabar-groovy-buffer-name))
