@@ -75,11 +75,11 @@ class SemanticReflector
                 variable("arg${counter}", it)
             } ]
     }
-    
+
     def throwSpec(exceptions) {
         exceptions ? [ this.throwsSym, exceptions.collect {
                 typeString(it, true)
-            } ] : []
+            }.sort() ] : []
     }
 
     def declaringSpec(declarer) {
@@ -131,27 +131,28 @@ class SemanticReflector
         List l = []
         if (c.superclass)
             l += collector(c.superclass)
-        c.interfaces.each { l += collector(it) }
+        c.interfaces.sort { it.name }.each { l += collector(it) }
         l
     }
 
     def collectFields(Class c) {
         List l = (c.declaredFields as List).findAll{ !Modifier.isPrivate(it.modifiers) }
-        l + collectSupers(c, this.&collectFields);
+        l.sort{ it.name } + collectSupers(c, this.&collectFields);
     }
 
     def collectClasses(Class c) {
         List l = (c.declaredClasses as List).findAll{ !Modifier.isPrivate(it.modifiers) }
-        l + collectSupers(c, this.&collectClasses);
+        l.sort{ it.name } + collectSupers(c, this.&collectClasses);
     }
 
     def collectMethods(Class c) {
         List l = (c.declaredMethods as List).findAll{ !Modifier.isPrivate(it.modifiers) }
-        l + collectSupers(c, this.&collectMethods);
+        l.sort{ a, b -> def i = a.name <=> b.name; i == 0 ? a.parameterTypes.length <=> b.parameterTypes.length : i } + collectSupers(c, this.&collectMethods);
     }
 
     def collectConstructors(Class c) {
         (c.declaredConstructors as List).findAll{ !Modifier.isPrivate(it.modifiers) }
+        .sort{ it.name }
     }
 
     def asSemanticTagList(Class c) {
