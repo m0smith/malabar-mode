@@ -145,7 +145,7 @@ return the corresponding cdr."
     (semantic-tag-name package-tag)))
 
 (defun malabar-get-class-tag-at-point ()
-  (semantic-fetch-tags)
+  (malabar-semantic-fetch-tags)
   (or (semantic-current-tag-of-class 'type)
       (car (semantic-find-tags-by-class 'type (current-buffer)))))
 

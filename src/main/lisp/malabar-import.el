@@ -309,7 +309,7 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
 
 (defun malabar-import-insert-imports (qualified-classes)
   (when qualified-classes
-    (let* ((tags (semantic-fetch-tags))
+    (let* ((tags (malabar-semantic-fetch-tags))
            (last-import-tag (car (last (semantic-brute-find-tag-by-class 'include tags))))
            (package-tag (car (semantic-brute-find-tag-by-class 'package tags)))
            (class-tag (car (semantic-brute-find-tag-by-class 'type tags)))
@@ -344,7 +344,7 @@ If UNQUALIFIED is NIL, prompts in the minibuffer."
 
 (defun malabar-import--imports-region ()
   (semantic-parse-tree-set-needs-rebuild)
-  (let* ((tags (semantic-fetch-tags))
+  (let* ((tags (malabar-semantic-fetch-tags))
          (import-tags (semantic-brute-find-tag-by-class 'include tags))
          (first-import (car import-tags))
          (last-import (car (last import-tags))))

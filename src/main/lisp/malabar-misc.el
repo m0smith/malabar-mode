@@ -72,4 +72,18 @@
                  tag))
           (semantic-tag-type-members class-tag))))
 
+(defun malabar-semantic-fetch-tags ()
+  (let ((tags (semantic-fetch-tags)))
+    (mapc (lambda (tag)
+            (when (semantic-tag-of-class-p tag 'type)
+              (when-let (buffer (semantic-tag-buffer tag))
+                (semantic-tag-put-attribute
+                 tag :superclasses
+                 (mapcar (lambda (c)
+                           (malabar-qualify-class-name-in-buffer (malabar--raw-type c)
+                                                                 buffer))
+                         (semantic-tag-type-superclasses tag))))))
+          tags)
+    tags))
+
 (provide 'malabar-misc)

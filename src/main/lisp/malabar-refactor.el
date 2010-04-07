@@ -148,7 +148,7 @@ String."
       (let ((first-member-tag
              (car (semantic-tag-type-members
                    (car (semantic-find-nonterminal-by-token
-                         'type (semantic-fetch-tags)))))))
+                         'type (malabar-semantic-fetch-tags)))))))
         (goto-char (semantic-tag-start first-member-tag))
         (forward-line 0)
         (insert constant-spec)

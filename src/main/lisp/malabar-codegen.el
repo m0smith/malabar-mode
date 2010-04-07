@@ -275,7 +275,7 @@ accessible constructors."
 (defun malabar-insert-getset (all)
   (interactive "P")
   ;; We need the latest and greatest parse
-  (semantic-fetch-tags)
+  (malabar-semantic-fetch-tags)
   (if (not all)
       (srecode-insert-getset)
     (let* ((class (srecode-auto-choose-class (point)))
