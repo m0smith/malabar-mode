@@ -172,24 +172,29 @@ in the list."
                java-font-lock-extra-types))))
 
 (defun malabar-find-imported-class (classname &optional buffer)
-  (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer)))))
-    (let ((import-tag (find classname tags
-                            :key #'semantic-tag-name
-                            :test (lambda (classname tag)
-                                    (and (stringp classname)
-                                         (string-ends-with tag (concat "." classname)))))))
-      (or (when (> (count ?. classname) 1)
-            classname)
-          (when import-tag
-            (semantic-tag-name import-tag))
-          (if (malabar-find-project-file buffer)
-              (or (malabar-find-imported-class-from-wildcard-imports classname buffer)
-                  (find (concat "java.lang." classname)
-                        (malabar-qualify-class-name classname buffer)
-                        :test #'equal))
-            ;; Punt
-            (or (cdr (assoc classname malabar-import-java-lang-classes))
-                (concat (malabar-get-package-name buffer) "." classname)))))))
+  ;; Shortcut - this will be wrong in some cases, but if you get
+  ;; bitten by this you deserve all the pain in the world.
+  (if (or (equal "Object" classname)
+          (equal "java.lang.Object" classname))
+      "java.lang.Object"
+    (let ((tags (semantic-find-tags-by-class 'include (or buffer (current-buffer)))))
+      (let ((import-tag (find classname tags
+                              :key #'semantic-tag-name
+                              :test (lambda (classname tag)
+                                      (and (stringp classname)
+                                           (string-ends-with tag (concat "." classname)))))))
+        (or (when (> (count ?. classname) 1)
+              classname)
+            (when import-tag
+              (semantic-tag-name import-tag))
+            (if (malabar-find-project-file buffer)
+                (or (malabar-find-imported-class-from-wildcard-imports classname buffer)
+                    (find (concat "java.lang." classname)
+                          (malabar-qualify-class-name classname buffer)
+                          :test #'equal))
+              ;; Punt
+              (or (cdr (assoc classname malabar-import-java-lang-classes))
+                  (concat (malabar-get-package-name buffer) "." classname))))))))
 
 (defun malabar-find-imported-class-from-wildcard-imports (class &optional buffer)
   (let ((tags
