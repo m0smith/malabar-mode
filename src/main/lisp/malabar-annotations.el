@@ -59,6 +59,7 @@ This function should be called after any calls to `c-set-style'."
   (c-prepend-offset 'topmost-intro-cont 'c-no-indent-after-java-annotations)
   (c-prepend-offset 'arglist-close 'c-no-indent-after-java-annotations)
   (c-prepend-offset 'statement-cont 'c-no-indent-after-java-annotations)
+  (c-prepend-offset 'statement-cont 'malabar-no-indent-after-enum-constant)
   (c-prepend-offset 'func-decl-cont 'c-no-indent-after-java-annotations))
 
 (defun c-only-java-annotations-p (langelem)
@@ -141,6 +142,17 @@ instead of
 Argument LANGELEM The language element being indented."
   (if (c-only-java-annotations-p langelem)
       c-basic-offset))
+
+(defun malabar-no-indent-after-enum-constant (langelem)
+  (save-excursion
+    (condition-case err
+        (progn (forward-to-indentation 0)
+               (when (and (looking-at "[A-Z]+")
+                          (let ((tag (malabar-get-class-tag-at-point)))
+                            (or (semantic-tag-get-attribute tag :enum-constant-flag)
+                                (equal "enum"
+                                       (semantic-tag-type (malabar-get-class-tag-at-point))))))
+                 0)))))
 
 (provide 'malabar-annotations)
 
