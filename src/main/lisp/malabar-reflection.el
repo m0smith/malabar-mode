@@ -309,7 +309,8 @@ e.g. `malabar-choose'."
     type))
 
 (defun malabar--method-signature-parameter (tag)
-  (concat (malabar--method-signature-type tag) " " (semantic-tag-name tag)))
+  (malabar--add-to-import-list (semantic-tag-type tag))
+  (semantic-format-tag-prototype tag))
 
 (defun malabar-create-method-signature (tag)
   "Creates a method signature for insertion in a class file."

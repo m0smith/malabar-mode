@@ -300,7 +300,27 @@ Overrides `semantic-tag-static-p'."
   (tag &optional parent color)
   "As -default, but insert the template-specifier in the right place."
   (case (semantic-tag-class tag)
-    ((function variable type)
+    ((variable)
+     (let* ((type (semantic-format-tag-type tag color))
+            (const (semantic-tag-get-attribute tag :constant-flag))
+            (tm (semantic-tag-get-attribute tag :typemodifiers))
+            (mods (append
+                   (if const '("const") nil)
+                   (cond ((stringp tm) (list tm))
+                         ((consp tm) tm)
+                         (t nil))))
+            (array (let ((deref
+                          (semantic-tag-get-attribute
+                           tag :dereference))
+                         (r ""))
+                     (while (and deref (/= deref 0))
+                       (setq r (concat r "[]")
+                             deref (1- deref)))
+                     r)))
+       (when mods
+         (setq mods (concat (mapconcat 'identity mods " ") " ")))
+       (concat (or mods "") type (or array "") " " (semantic-tag-name tag))))
+    ((function type)
      (let ((def
             (replace-regexp-in-string
              "," ", "
