@@ -76,6 +76,14 @@
   (let ((tags (semantic-fetch-tags)))
     (mapc (lambda (tag)
             (when (semantic-tag-of-class-p tag 'type)
+              (when (equal (semantic-tag-type tag) "interface")
+                ;; All interface members are public
+                (loop for member in (semantic-tag-type-members tag)
+                      do (semantic-tag-put-attribute
+                          member :typemodifiers
+                          (delete-duplicates (cons "public"
+                                                   (semantic-tag-modifiers member))
+                                             :test #'equal))))
               (when-let (buffer (semantic-tag-buffer tag))
                 (semantic-tag-put-attribute
                  tag :superclasses
