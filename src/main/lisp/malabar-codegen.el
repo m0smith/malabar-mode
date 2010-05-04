@@ -146,13 +146,55 @@ adds stub implementations of all the interface's methods."
       (insert implement-keyword "s ")
       (indent-according-to-mode))
     (insert qualified-interface)
-    (when (malabar--get-type-parameters interface-info)
-      (insert (malabar--get-type-parameters interface-info)))
+    (when-let (type-parameters (malabar--get-type-parameters interface-info))
+      (insert type-parameters))
     (unless (eolp)
       (newline-and-indent))
     (malabar--override-methods (malabar--get-methods interface-info) nil)
+    (malabar--instantiate-type-parameters interface-info)
     (malabar-import-and-unqualify qualified-interface)))
 
+(defun malabar--instantiate-type-parameters (tag)
+  (let ((type-instances (malabar--query-for-type-parameters tag))
+        (case-fold-search nil)
+        (import-candidates nil))
+    (while type-instances
+      (unless (equal (caar type-instances) (cdar type-instances))
+        (goto-char (point-min))
+        (let ((re (concat "\\<" (caar type-instances) "\\>"))
+              (rep (cdar type-instances)))
+          (while (re-search-forward re nil t)
+            (replace-match rep t t)))
+        (push (cdar type-instances) import-candidates))
+      (setq type-instances (cdr type-instances)))
+    (malabar--import-handle-import-candidates import-candidates)))
+
+(defun malabar--query-for-type-parameters (tag)
+  ;; FIXME: We shouldn't need to parse this here!
+  ;; FIXME: Deals badly with nested parameters
+  (let ((type-parameters
+         (malabar--parse-type-parameters (malabar--get-type-parameters tag))))
+    (with-caches
+     (mapcar (lambda (p)
+               (cons p
+                     (let ((read-param (second (malabar-prompt-for-and-qualify-class
+                                                (format "Value for type parameter %s: " p)))))
+                       (if (equal "" read-param)
+                           p
+                         read-param))))
+             type-parameters))))
+                 
+(defun malabar--parse-type-parameters (type-parameters)
+  (let ((str (subst-char-in-string
+              ?> ?\)
+              (subst-char-in-string
+               ?< ?\(
+               (subst-char-in-string ?, ?\  type-parameters t)
+               t)
+              t)))
+    (when str
+      (mapcar 'symbol-name (car (read-from-string str))))))
+              
 (defun malabar--implement-interface-move-to-insertion-point ()
   (malabar-goto-start-of-class)
   (skip-chars-forward "^{")
@@ -223,6 +265,7 @@ accessible constructors."
                     (forward-line 2))
                   accessible-constructors)
             (malabar--override-methods (malabar--get-abstract-methods class-info) t)
+            (malabar--instantiate-type-parameters class-info)
             (malabar-import-and-unqualify qualified-class)))))))
 
 (defun malabar--extend-class-move-to-constructor-insertion-point ()
