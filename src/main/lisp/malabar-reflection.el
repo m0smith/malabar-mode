@@ -314,6 +314,8 @@ e.g. `malabar-choose'."
 (defun malabar-create-method-signature (tag)
   "Creates a method signature for insertion in a class file."
   (concat (malabar--method-signature-modifiers tag) " "
+          (when-let (tp (malabar--get-type-parameters tag))
+            (concat tp " "))
           (malabar--method-signature-type tag) " "
           (semantic-tag-name tag) "("
           (mapconcat #'malabar--method-signature-parameter
