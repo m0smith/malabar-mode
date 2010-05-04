@@ -72,7 +72,7 @@ class TypestringTest
 
     @Test
     void collectionsBinarySearchHasComplicatedFirstParam() {
-        assertThat(sr.typeString(Collections.methods.find {it.name == 'binarySearch'}.genericParameterTypes[0], true),
+        assertThat(sr.typeString(Collections.methods.find {it.name == 'binarySearch' && it.genericParameterTypes.length == 2}.genericParameterTypes[0], true),
                    is("java.util.List<? extends java.lang.Comparable<? super T>>"))
     }
 
