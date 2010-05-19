@@ -17,16 +17,32 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'semantic-load)
-(require 'semantic-ctxt)
-(require 'semantic-find)
-(require 'semantic-wisent)
-(require 'semantic-ia)
 
-;; HACK: we don't want to load the old Java parser, so trick Emacs
-;; into thinking it's already loaded
-(provide 'wisent-java-wy)
-(require 'wisent-java)
+(cond ((< emacs-minor-version 2)
+       (require 'semantic-load)
+       (require 'semantic-ctxt)
+       (require 'semantic-find)
+       (require 'semantic-wisent)
+       (require 'semantic-ia)
+       ;; HACK: we don't want to load the old Java parser, so trick Emacs
+       ;; into thinking it's already loaded
+       (provide 'wisent-java-wy)
+       (require 'wisent-java))
+      (t
+       (require 'semantic)
+       (require 'semantic/ctxt)
+       (require 'semantic/find)
+       (require 'semantic/wisent)
+       (require 'semantic/ia)
+       ;; HACK: we don't want to load the old Java parser, so trick Emacs
+       ;; into thinking it's already loaded
+       (provide 'semantic/wisent/javat-wy)
+       (require 'semantic/wisent/java-tags)
+       ;; Compatibility hack
+       (require 'semantic/wisent/comp)
+       (provide 'wisent-comp)
+       (require 'semantic/lex)
+       (provide 'semantic-lex)))
 
 (require 'wisent-malabar-java-wy)
 (require 'cl)

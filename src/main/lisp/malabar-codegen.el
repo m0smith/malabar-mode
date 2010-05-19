@@ -19,8 +19,15 @@
 ;;
 (require 'cl)
 (require 'cc-cmds)
-(require 'cc-subword)
-(require 'srecode-getset)
+(if (and (= emacs-major-version 23)
+         (> emacs-minor-version 1))
+    (require 'subword)
+  (require 'cc-subword)
+  (fset 'subword-capitalize 'c-capitalize-subword))
+
+(if (> emacs-minor-version 1)
+    (require 'srecode/getset)
+  (require 'srecode-getset))
 
 (require 'malabar-variables)
 (require 'malabar-util)
@@ -307,12 +314,12 @@ accessible constructors."
         (newline insert-lines)
         (forward-line back-lines)))))
 
-(defun c-capitalize-subword-string (string)
-  "Perform `c-capitalize-subword' on STRING and return the result."
+(defun subword-capitalize-string (string)
+  "Perform `subword-capitalize' on STRING and return the result."
   (with-temp-buffer
     (insert string)
     (goto-char (point-min))
-    (c-capitalize-subword 1)
+    (subword-capitalize 1)
     (buffer-substring-no-properties (point-min) (point-max))))
 
 (defun malabar-insert-getset (all)
@@ -326,7 +333,7 @@ accessible constructors."
            (member-names (mapcar #'semantic-tag-name members)))
       (dolist (field members)
         (when (eq 'variable (semantic-tag-class field))
-          (let* ((cap-name (c-capitalize-subword-string (semantic-tag-name field)))
+          (let* ((cap-name (subword-capitalize-string (semantic-tag-name field)))
                  (setter-name (concat "set" cap-name))
                  (getter-name (concat "get" cap-name)))
             (unless (or (member setter-name member-names)
