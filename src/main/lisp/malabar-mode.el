@@ -18,7 +18,12 @@
 ;; 02110-1301 USA.
 ;;
 
-(cond ((< emacs-minor-version 2)
+(defvar malabar-use-external-cedet (or (< emacs-major-version 23)
+				  (and (= emacs-minor-version 23)
+				       (< emacs-minor-version 2)))
+"Whether or not to use the external version of CEDET.")
+
+(cond (malabar-use-external-cedet
        (require 'semantic-load)
        (require 'semantic-ctxt)
        (require 'semantic-find)
@@ -42,6 +47,7 @@
        (require 'semantic/wisent/comp)
        (provide 'wisent-comp)
        (require 'semantic/lex)
+       (require 'semantic/wisent/javat-wy)
        (provide 'semantic-lex)))
 
 (require 'wisent-malabar-java-wy)

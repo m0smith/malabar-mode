@@ -19,7 +19,6 @@
 ;;
 (require 'comint)
 (require 'ansi-color)
-(require 'working)
 (require 'cl)
 
 (require 'malabar-util)
@@ -137,14 +136,14 @@ for hacking on Malabar itself)."
 pop to the Groovy console buffer."
   (interactive)
   (unless (malabar-groovy-live-p)
-    (working-status-forms "Starting Groovy...%s" "done"
+    (let ((reporter (make-progress-reporter "Starting Groovy...")))
       (let ((initial-points-alist (mapcar (lambda (b)
                                             (with-current-buffer (get-buffer-create b)
                                               (cons b (point))))
                                           (list malabar-groovy-buffer-name
                                                 malabar-groovy-compile-server-buffer-name
                                                 malabar-groovy-eval-server-buffer-name))))
-        (working-dynamic-status nil "starting process")
+        (progress-reporter-force-update reporter nil "Starting Groovy...starting process")
         (with-current-buffer (get-buffer malabar-groovy-buffer-name)
           (unless silent
             (display-buffer malabar-groovy-buffer-name))
@@ -163,21 +162,21 @@ pop to the Groovy console buffer."
                                "-c" (number-to-string malabar-groovy-compile-server-port)
                                "-e" (number-to-string malabar-groovy-eval-server-port))))
           (malabar-groovy-mode))
-        (working-dynamic-status nil "waiting for main prompt")
+        (progress-reporter-force-update reporter nil "Starting Groovy...waiting for main prompt")
         (malabar-groovy--wait-for-prompt malabar-groovy-buffer-name initial-points-alist)
-        (working-dynamic-status nil "connecting to servers")
+        (progress-reporter-force-update reporter nil "Starting Groovy...connecting to servers")
         (make-comint malabar-groovy-compile-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-compile-server-port)))
         (make-comint malabar-groovy-eval-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-eval-server-port)))
-        (working-dynamic-status nil "waiting for server prompts")
+        (progress-reporter-force-update reporter nil "Starting Groovy...waiting for server prompts")
         (malabar-groovy--wait-for-prompt malabar-groovy-compile-server-buffer-name
                                          initial-points-alist)
         (malabar-groovy--wait-for-prompt malabar-groovy-eval-server-buffer-name
                                          initial-points-alist)
-        (working-dynamic-status nil "evaluating initial statements")
+        (progress-reporter-force-update reporter nil "Starting Groovy...evaluating initial statements")
         (dolist (process (list (get-buffer-process malabar-groovy-compile-server-buffer-name)
                                (get-buffer-process malabar-groovy-eval-server-buffer-name)
                                (get-buffer-process malabar-groovy-buffer-name)))
@@ -193,7 +192,7 @@ pop to the Groovy console buffer."
 (defun malabar-groovy-eval-in-process (process string)
   (let ((string (string-with-newline string))
         (current-message (current-message)))
-    (unless working-message
+    (unless current-message
       (message "Invoking Groovy, please wait..."))
     (comint-send-string process string)
     (if current-message
@@ -214,7 +213,7 @@ pop to the Groovy console buffer."
   (add-hook 'comint-redirect-hook
             'malabar-groovy--compile-handle-exit
             nil t))
-  
+
 (defun malabar-groovy--init-eval-buffer ()
   (malabar-groovy-mode)
   (when (assq 'comint-output-filter-functions (buffer-local-variables))
@@ -271,11 +270,11 @@ pop to the Groovy console buffer."
     (malabar-groovy-start t))
   (when (malabar-groovy-live-p)
     (let ((groovy-process (get-buffer-process malabar-groovy-eval-server-buffer-name)))
-      (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output) 
+      (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output)
       (malabar-groovy-eval-in-process groovy-process string)
       (while (not (string-match-p (regexp-quote string)
                                   (car malabar-groovy--eval-output)))
-        (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output) 
+        (setq malabar-groovy--eval-callback 'malabar-groovy--eval-get-output)
         (accept-process-output groovy-process))
       (malabar-groovy--eval-fix-output malabar-groovy--eval-output))))
 
@@ -283,7 +282,7 @@ pop to the Groovy console buffer."
   "Pass STRING to groovysh for evaluation, and read the output for Lisp use."
   (car (read-from-string (car (malabar-groovy-eval string)))))
 
-(defcustom malabar-groovy-compilation-font-lock-keywords 
+(defcustom malabar-groovy-compilation-font-lock-keywords
   '((malabar-groovy-highlight-compilation-message
      (1 '(face nil invisible t) nil t) ;
      (2 '(face nil invisible t) nil t) ; hide the class
@@ -297,7 +296,7 @@ pop to the Groovy console buffer."
   "Font lock keywords for Malabar compilation."
   :group 'malabar-mode
   :type '(alist))
-  
+
 (defun malabar-groovy-setup-compilation-buffer (&optional for-files)
   (with-current-buffer (get-buffer-create malabar-groovy-compilation-buffer-name)
     (setq buffer-read-only nil)
@@ -305,7 +304,7 @@ pop to the Groovy console buffer."
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
     (malabar-groovy-reset-compiler-notes for-files)
-    (setq malabar-groovy--compiler-notes 
+    (setq malabar-groovy--compiler-notes
           (remove-if (lambda (f)
                        (member f for-files))
                      malabar-groovy--compiler-notes
@@ -337,7 +336,7 @@ pop to the Groovy console buffer."
                                        malabar-groovy--compiler-notes)))))
     (mapc (lambda (f)
             (when-let (buf (get-file-buffer f))
-              (remove-overlays 
+              (remove-overlays
                (with-current-buffer buf
                  (mapc 'fringe-helper-remove malabar-groovy--fringe-overlays)
                  (remove-overlays (point-min) (point-max)
@@ -431,13 +430,13 @@ pop to the Groovy console buffer."
             malabar-groovy--compiler-notes)))
 
 (defface malabar-error-face '((t (:underline "red")))
-  "Face used in code buffer for error annotations.") 
+  "Face used in code buffer for error annotations.")
 
 (defface malabar-warning-face '((t (:underline "orange")))
-  "Face used in code buffer for warning annotations.") 
+  "Face used in code buffer for warning annotations.")
 
 (defface malabar-info-face '((t (:underline "blue")))
-  "Face used in code buffer for info annotations.") 
+  "Face used in code buffer for info annotations.")
 
 (defvar malabar-groovy--fringe-overlays nil)
 (make-variable-buffer-local 'malabar-groovy--fringe-overlays)

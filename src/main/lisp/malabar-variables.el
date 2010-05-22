@@ -17,7 +17,7 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(if (> emacs-minor-version 1)
+(if (not malabar-use-external-cedet)
     (require 'srecode/map)
   (require 'srecode-map))
 

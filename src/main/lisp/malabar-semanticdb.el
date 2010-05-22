@@ -18,7 +18,10 @@
 ;; 02110-1301 USA.
 ;;
 ;; Borrows heavily from semanticdb-java
-(require 'semanticdb-search)
+
+(if malabar-use-external-cedet
+    (require 'semanticdb-search)
+  (require 'semantic/db-find))
 (require 'eieio)
 (require 'eieio-opt)
 (require 'eieio-base)

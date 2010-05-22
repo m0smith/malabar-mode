@@ -25,7 +25,7 @@
   (require 'cc-subword)
   (fset 'subword-capitalize 'c-capitalize-subword))
 
-(if (> emacs-minor-version 1)
+(if (not malabar-use-external-cedet)
     (require 'srecode/getset)
   (require 'srecode-getset))
 
