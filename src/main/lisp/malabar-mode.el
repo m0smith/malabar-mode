@@ -17,10 +17,9 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-
-(defvar malabar-use-external-cedet (or (< emacs-major-version 23)
-				  (and (= emacs-minor-version 23)
-				       (< emacs-minor-version 2)))
+ 
+;; Only external CEDET defines cedet-emacs-min-version
+(defvar malabar-use-external-cedet (boundp 'cedet-emacs-min-version)
 "Whether or not to use the external version of CEDET.")
 
 (cond (malabar-use-external-cedet
