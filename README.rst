@@ -133,7 +133,7 @@ and more.
      (add-hook 'malabar-mode-hook
           (lambda () 
             (add-hook 'after-save-hook 'malabar-compile-file-silently
-                      nil t))
+                      nil t)))
           
 =======
  Usage
