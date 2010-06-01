@@ -1,6 +1,6 @@
 ;;; malabar-import.el --- Import stuff for malabar-mode
 ;;
-;; Copyright (c) 2009 Espen Wiborg <espenhw@grumblesmurf.org>
+;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
