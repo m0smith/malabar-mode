@@ -82,12 +82,15 @@ and more.
    Warning, warning, Ubuntu users: The Intrepid emacs-snapshot package
    is too old (strangely enough, by about eight days).  The Jaunty
    snapshot package should work, but you should consider getting the
-   release (23.1 at the time of writing).  Compiling your own Emacs
+   release (23.2 at the time of writing).  Compiling your own Emacs
    isn't hard.
 
 2. Get [CEDET][] and arrange for it to be on your Emacs load-path (I
    develop using CVS HEAD; older versions may or may not work),
    e.g. by linking the CEDET directory into your site-lisp directory.
+   
+   Alternatively, if you are running Emacs 23.2 or later malabar-mode
+   should work fine with the embedded CEDET.
 
 3. Clone the repository from `git://github.com/espenhw/malabar-mode.git`.
    
@@ -101,9 +104,9 @@ and more.
    yourself and send me a patch...)
 
    If you really really need a working version Right Now[TM] you can
-   always use the `malabar-1.1` tag.
+   always use the `malabar-1.3` tag.
 
-   When a Maven (pre)release is made, I will tag a version of
+   When a Maven (pre)release is made, I will usually tag a version of
    malabar-mode that locks to that version.
 
 5. Unpack the resulting `malabar-<version>-dist.zip` somewhere
@@ -114,6 +117,18 @@ and more.
 
         (require 'cedet)
         (semantic-load-enable-minimum-features) ;; or enable more if you wish
+        (require 'malabar-mode)
+        (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
+        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
+        
+   Alternatively, using Emacs 23.2 and the embedded CEDET:
+   
+        ;; Or enable more if you wish
+        (setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
+                                          global-semanticdb-minor-mode
+                                          global-semantic-idle-summary-mode
+                                          global-semantic-mru-bookmark-mode))
+        (semantic-mode 1)
         (require 'malabar-mode)
         (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
         (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
@@ -297,6 +312,8 @@ complete fork).  malabar-mode is Open Source, after all.
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
 * [Nikolaj Schumacher][] for fringe-helper and elk-test
+* [nflath](http://github.com/nflath) and [stepb](http://github.com/stepb) for caring enough to help
+* korifeo, la23ng, and andy22286 for caring enough to report bugs
 
 # Boring legal stuff
 
