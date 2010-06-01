@@ -37,6 +37,17 @@
     </developer>
   </developers>
 
+  <contributors>
+    <contributor>
+      <name>nflath</name>
+      <url>http://github.com/nflath</url>
+    </contributor>
+    <contributor>
+      <name>stepb</name>
+      <url>http://github.com/stepb</url>
+    </contributor>
+  </contributors>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.version>3.0-SNAPSHOT</maven.version>
