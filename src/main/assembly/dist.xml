@@ -20,7 +20,7 @@
       <source>COPYING.txt</source>
     </file>
     <file>
-      <source>README.rst</source>
+      <source>README.md</source>
     </file>
   </files>
 </assembly>
