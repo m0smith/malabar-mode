@@ -31,6 +31,7 @@ class GroovyServer
 {
     static ready = new CountDownLatch(2);
     static mvnServer = new MvnServer();
+    static servers = [:];
 
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
@@ -47,10 +48,8 @@ class GroovyServer
         def options = cli.parse(args);
 
         if (options.c && options.e) {
-            def compileServer = startServer("compile-server", Integer.valueOf(options.getOptionValue('c')),
-                                            ready);
-            def evalServer = startServer("eval-server", Integer.valueOf(options.getOptionValue('e')),
-                                         ready);
+            startServer("compile-server", Integer.valueOf(options.getOptionValue('c')), ready);
+            startServer("eval-server", Integer.valueOf(options.getOptionValue('e')), ready);
             ready.await();
             startConsole();
             System.exit(0);
@@ -70,6 +69,9 @@ class GroovyServer
         Utils.setIO(io);
         Binding binding = new Binding();
         binding['mvnServer'] = mvnServer;
+        servers.each { key, value ->
+            println key + ": port=" + value
+        }
         new Groovysh(binding, io).run();
     }
 }
@@ -104,7 +106,7 @@ class GroovySocketServer
         server.reuseAddress = true;
 
         server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
-        System.out.println(name + ": port=" + server.localPort);
+        GroovyServer.servers[name] = server.localPort
         latch.countDown();
         try {
             Socket client = server.accept();
