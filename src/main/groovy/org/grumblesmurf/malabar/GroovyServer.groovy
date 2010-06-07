@@ -60,7 +60,7 @@ class GroovyServer
 
     static startServer(String name, int port, CountDownLatch latch) {
         def s = new GroovySocketServer(name, port, latch);
-        new Thread(s, "GroovyServer on " + port).start();
+        new Thread(s, "GroovyServer on $port").start();
         return s;
     }
     
@@ -69,8 +69,8 @@ class GroovyServer
         Utils.setIO(io);
         Binding binding = new Binding();
         binding['mvnServer'] = mvnServer;
-        servers.each { key, value ->
-            println key + ": port=" + value
+        servers.each { name, port ->
+            println "$name: port=$port"
         }
         new Groovysh(binding, io).run();
     }
