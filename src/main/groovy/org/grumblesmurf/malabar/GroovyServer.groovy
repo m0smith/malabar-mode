@@ -47,9 +47,9 @@ class GroovyServer
         def options = cli.parse(args);
 
         if (options.c && options.e) {
-            def compileServer = startServer(Integer.valueOf(options.getOptionValue('c')),
+            def compileServer = startServer("compile-server", Integer.valueOf(options.getOptionValue('c')),
                                             ready);
-            def evalServer = startServer(Integer.valueOf(options.getOptionValue('e')),
+            def evalServer = startServer("eval-server", Integer.valueOf(options.getOptionValue('e')),
                                          ready);
             ready.await();
             startConsole();
@@ -59,8 +59,8 @@ class GroovyServer
         }
     }
 
-    static startServer(int port, CountDownLatch latch) {
-        def s = new GroovySocketServer(port, latch);
+    static startServer(String name, int port, CountDownLatch latch) {
+        def s = new GroovySocketServer(name, port, latch);
         new Thread(s, "GroovyServer on " + port).start();
         return s;
     }
@@ -77,12 +77,14 @@ class GroovyServer
 class GroovySocketServer
     implements Runnable 
 {
+    private final name;
     private final port;
     private final CountDownLatch latch;
 
     private final ServerSocket serverSocket;
 
-    GroovySocketServer(int port, CountDownLatch latch) {
+    GroovySocketServer(String name, int port, CountDownLatch latch) {
+        this.name = name;
         this.port = port;
         this.latch = latch;
     }
@@ -102,6 +104,7 @@ class GroovySocketServer
         server.reuseAddress = true;
 
         server.bind(new InetSocketAddress(InetAddress.getByName(null), port));
+        System.out.println(name + ": port=" + server.localPort);
         latch.countDown();
         try {
             Socket client = server.accept();

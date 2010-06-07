@@ -64,7 +64,7 @@ class GroovyServerTest
     @Test(timeout=2000L)
     void singleServer() {
         def ready = new CountDownLatch(1);
-        def server = GroovyServer.startServer(0, ready);
+        def server = GroovyServer.startServer("single-server",  0, ready);
         servers << server;
         ready.await();
         withSocket { s ->
@@ -75,8 +75,8 @@ class GroovyServerTest
     @Test(timeout=2000L)
     void dualServer() {
         def serversReady = new CountDownLatch(2);
-        servers << GroovyServer.startServer(0, serversReady);
-        servers << GroovyServer.startServer(0, serversReady);
+        servers << GroovyServer.startServer("dual-server-1", 0, serversReady);
+        servers << GroovyServer.startServer("dual-server-2", 0, serversReady);
         serversReady.await();
 
         servers.each { server ->

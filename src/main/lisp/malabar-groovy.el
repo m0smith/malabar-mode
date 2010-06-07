@@ -37,6 +37,8 @@
 (defvar malabar-groovy-compilation-buffer-name "*Malabar Compilation*")
 (get-buffer-create malabar-groovy-compilation-buffer-name)
 
+(defvar malabar-groovy-time-out-waiting-for-groovysh 10)
+
 (defvar malabar-groovy-buffer-name
   (concat "*" malabar-groovy-comint-name "*"))
 
@@ -86,13 +88,19 @@ for hacking on Malabar itself)."
   :group 'malabar-groovy
   :type '(repeat string))
 
-(defcustom malabar-groovy-compile-server-port 5555
-  "The port on which the Groovy compile server should listen."
+(defcustom malabar-groovy-compile-server-port 0
+  "The port on which the Groovy compile server should listen.
+By default this variable has a value of 0, which means the system will
+pick an available port, whose number will be stored back in this
+variable once the compile server has started."
   :group 'malabar-groovy
   :type 'integer)
 
-(defcustom malabar-groovy-eval-server-port 6666
-  "The port on which the Groovy eval server should listen."
+(defcustom malabar-groovy-eval-server-port 0
+  "The port on which the Groovy eval server should listen.
+By default this variable has a value of 0, which means the system will
+pick an available port, whose number will be stored back in this
+variable once the eval server has started."
   :group 'malabar-groovy
   :type 'integer)
 
@@ -116,13 +124,30 @@ for hacking on Malabar itself)."
   ;; set comint-input-filter
   (run-mode-hooks 'malabar-groovy-mode-hook))
 
+(defun malabar-groovy--match-buffer (buffer regexp count initial-points-alist time-out-msg)
+  (let ((start-time (float-time)))
+    (while (not (with-current-buffer buffer
+                  (save-excursion
+                    (goto-char (point-max))
+                    (re-search-backward regexp
+                                        (cdr (assoc buffer initial-points-alist)) t))))
+      (accept-process-output (get-buffer-process buffer) malabar-groovy-time-out-waiting-for-groovysh)
+      (when (> (- (float-time) start-time) malabar-groovy-time-out-waiting-for-groovysh)
+        (error time-out-msg))))
+  (with-current-buffer buffer (match-string-no-properties count)))
+
 (defun malabar-groovy--wait-for-prompt (buffer initial-points-alist)
-  (while (not (with-current-buffer buffer
-                (save-excursion
-                  (goto-char (point-max))
-                  (re-search-backward malabar-groovy-prompt-regexp
-                                      (cdr (assoc buffer initial-points-alist)) t))))
-    (accept-process-output (get-buffer-process buffer))))
+  (malabar-groovy--match-buffer buffer malabar-groovy-prompt-regexp 0 initial-points-alist
+                                "Error starting groovy: time-out waiting for prompt"))
+
+(defun malabar-groovy--get-server-ports-from-buffer (buffer initial-points-alist)
+  (let ((time-out-msg "Error starting groovy: time-out waiting for port"))
+    (setq malabar-groovy-compile-server-port
+          (string-to-number
+           (malabar-groovy--match-buffer buffer "compile-server: port=\\([0-9]*\\)" 1 initial-points-alist time-out-msg)))
+    (setq malabar-groovy-eval-server-port
+          (string-to-number
+           (malabar-groovy--match-buffer buffer "eval-server: port=\\([0-9]*\\)" 1 initial-points-alist time-out-msg)))))
 
 (defun malabar-groovy-stop ()
   "Stop the inferior Groovy."
@@ -136,7 +161,7 @@ for hacking on Malabar itself)."
 pop to the Groovy console buffer."
   (interactive)
   (unless (malabar-groovy-live-p)
-    (let ((reporter (make-progress-reporter "Starting Groovy..." 0 6)))
+    (let ((reporter (make-progress-reporter "Starting Groovy..." 0 7)))
       (let ((initial-points-alist (mapcar (lambda (b)
                                             (with-current-buffer (get-buffer-create b)
                                               (cons b (point))))
@@ -162,21 +187,23 @@ pop to the Groovy console buffer."
                                "-c" (number-to-string malabar-groovy-compile-server-port)
                                "-e" (number-to-string malabar-groovy-eval-server-port))))
           (malabar-groovy-mode))
-        (progress-reporter-force-update reporter 2 "Starting Groovy...waiting for main prompt")
+        (progress-reporter-force-update reporter 2 "Starting Groovy...requesting ports")
+        (malabar-groovy--get-server-ports-from-buffer malabar-groovy-buffer-name initial-points-alist)
+        (progress-reporter-force-update reporter 3 "Starting Groovy...waiting for main prompt")
         (malabar-groovy--wait-for-prompt malabar-groovy-buffer-name initial-points-alist)
-        (progress-reporter-force-update reporter 3 "Starting Groovy...connecting to servers")
+        (progress-reporter-force-update reporter 4 "Starting Groovy...connecting to servers")
         (make-comint malabar-groovy-compile-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-compile-server-port)))
         (make-comint malabar-groovy-eval-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-eval-server-port)))
-        (progress-reporter-force-update reporter 4 "Starting Groovy...waiting for server prompts")
+        (progress-reporter-force-update reporter 5 "Starting Groovy...waiting for server prompts")
         (malabar-groovy--wait-for-prompt malabar-groovy-compile-server-buffer-name
                                          initial-points-alist)
         (malabar-groovy--wait-for-prompt malabar-groovy-eval-server-buffer-name
                                          initial-points-alist)
-        (progress-reporter-force-update reporter 5 "Starting Groovy...evaluating initial statements")
+        (progress-reporter-force-update reporter 6 "Starting Groovy...evaluating initial statements")
         (dolist (process (list (get-buffer-process malabar-groovy-compile-server-buffer-name)
                                (get-buffer-process malabar-groovy-eval-server-buffer-name)
                                (get-buffer-process malabar-groovy-buffer-name)))
