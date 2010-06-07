@@ -61,7 +61,7 @@ class GroovyServerTest
         }
     }
     
-    @Test(timeout=2000L)
+    @Test(timeout=3000L)
     void singleServer() {
         def ready = new CountDownLatch(1);
         def server = GroovyServer.startServer("single-server",  0, ready);
@@ -72,7 +72,7 @@ class GroovyServerTest
         }
     }
 
-    @Test(timeout=2000L)
+    @Test(timeout=3000L)
     void dualServer() {
         def serversReady = new CountDownLatch(2);
         servers << GroovyServer.startServer("dual-server-1", 0, serversReady);
