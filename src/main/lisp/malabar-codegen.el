@@ -330,7 +330,7 @@ accessible constructors."
   (if (not all)
       (srecode-insert-getset)
     (let* ((class (srecode-auto-choose-class (point)))
-           (members (semantic-tag-type-members class))
+           (members (reverse (semantic-tag-type-members class)))
            (member-names (mapcar #'semantic-tag-name members)))
       (dolist (field members)
         (when (eq 'variable (semantic-tag-class field))
