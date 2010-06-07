@@ -161,14 +161,14 @@ variable once the eval server has started."
 pop to the Groovy console buffer."
   (interactive)
   (unless (malabar-groovy-live-p)
-    (let ((reporter (make-progress-reporter "Starting Groovy..." 0 7)))
+    (let ((reporter (make-progress-reporter "Starting Groovy... " 0 7)))
       (let ((initial-points-alist (mapcar (lambda (b)
                                             (with-current-buffer (get-buffer-create b)
                                               (cons b (point))))
                                           (list malabar-groovy-buffer-name
                                                 malabar-groovy-compile-server-buffer-name
                                                 malabar-groovy-eval-server-buffer-name))))
-        (progress-reporter-force-update reporter 1 "Starting Groovy...starting process")
+        (progress-reporter-force-update reporter 1 "Starting Groovy...starting process ")
         (with-current-buffer (get-buffer malabar-groovy-buffer-name)
           (unless silent
             (display-buffer malabar-groovy-buffer-name))
@@ -187,23 +187,23 @@ pop to the Groovy console buffer."
                                "-c" (number-to-string malabar-groovy-compile-server-port)
                                "-e" (number-to-string malabar-groovy-eval-server-port))))
           (malabar-groovy-mode))
-        (progress-reporter-force-update reporter 2 "Starting Groovy...requesting ports")
+        (progress-reporter-force-update reporter 2 "Starting Groovy...requesting ports ")
         (malabar-groovy--get-server-ports-from-buffer malabar-groovy-buffer-name initial-points-alist)
-        (progress-reporter-force-update reporter 3 "Starting Groovy...waiting for main prompt")
+        (progress-reporter-force-update reporter 3 "Starting Groovy...waiting for main prompt ")
         (malabar-groovy--wait-for-prompt malabar-groovy-buffer-name initial-points-alist)
-        (progress-reporter-force-update reporter 4 "Starting Groovy...connecting to servers")
+        (progress-reporter-force-update reporter 4 "Starting Groovy...connecting to servers ")
         (make-comint malabar-groovy-compile-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-compile-server-port)))
         (make-comint malabar-groovy-eval-server-comint-name
                      (cons "localhost"
                            (number-to-string malabar-groovy-eval-server-port)))
-        (progress-reporter-force-update reporter 5 "Starting Groovy...waiting for server prompts")
+        (progress-reporter-force-update reporter 5 "Starting Groovy...waiting for server prompts ")
         (malabar-groovy--wait-for-prompt malabar-groovy-compile-server-buffer-name
                                          initial-points-alist)
         (malabar-groovy--wait-for-prompt malabar-groovy-eval-server-buffer-name
                                          initial-points-alist)
-        (progress-reporter-force-update reporter 6 "Starting Groovy...evaluating initial statements")
+        (progress-reporter-force-update reporter 6 "Starting Groovy...evaluating initial statements ")
         (dolist (process (list (get-buffer-process malabar-groovy-compile-server-buffer-name)
                                (get-buffer-process malabar-groovy-eval-server-buffer-name)
                                (get-buffer-process malabar-groovy-buffer-name)))
@@ -212,7 +212,9 @@ pop to the Groovy console buffer."
         (with-current-buffer malabar-groovy-compile-server-buffer-name
           (malabar-groovy--init-compile-server-buffer))
         (with-current-buffer malabar-groovy-eval-server-buffer-name
-          (malabar-groovy--init-eval-buffer)))))
+          (malabar-groovy--init-eval-buffer))
+        (progress-reporter-force-update reporter 7 "Starting Groovy...")
+        (progress-reporter-done reporter))))
   (unless silent
     (pop-to-buffer malabar-groovy-buffer-name)))
 
