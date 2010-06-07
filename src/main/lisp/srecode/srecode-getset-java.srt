@@ -26,12 +26,11 @@ context declaration
 
 template getset-in-class :tag :indent :blank
 ----
-
-public {{TYPE}} get{{NAME:c-capitalize-subword-string}}() {
+public {{TYPE}} get{{NAME:subword-capitalize-string}}() {
    return {{NAME}};
 }
 
-public void set{{NAME:c-capitalize-subword-string}}({{TYPE}} {{NAME}}) {
+public void set{{NAME:subword-capitalize-string}}({{TYPE}} {{NAME}}) {
    this.{{NAME}} = {{NAME}};
 }
 
