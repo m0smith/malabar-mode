@@ -109,6 +109,8 @@ variable once the eval server has started."
   :group 'malabar-groovy
   :type '(repeat string))
 
+(defvar malabar-groovy--last-compilation-command nil)
+
 (defun malabar-groovy-mode ()
   "A major mode for the Groovy console."
   (interactive)
@@ -333,17 +335,10 @@ pop to the Groovy console buffer."
     (erase-buffer)
     (buffer-enable-undo (current-buffer))
     (malabar-groovy-reset-compiler-notes for-files)
-    (setq malabar-groovy--compiler-notes
-          (remove-if (lambda (f)
-                       (member f for-files))
-                     malabar-groovy--compiler-notes
-                     :key (lambda (n)
-                            (getf n :file))))
-    (if (not for-files) ;; Running Maven, use normal compilation mode
-        (compilation-mode)
+    (setq mode-name "Compilation")
+    (malabar-compilation-minor-mode t)
+    (when for-files
       ;; Compiling a single file (or set of files), do magic
-      (setq mode-name "Compilation")
-      (compilation-minor-mode t)
       ;; We do error message parsing slightly differently
       (font-lock-remove-keywords nil (compilation-mode-font-lock-keywords))
       (font-lock-add-keywords nil
@@ -352,6 +347,20 @@ pop to the Groovy console buffer."
                                compilation-mode-font-lock-keywords)
                               'set))
     (setq buffer-read-only nil)))
+
+(defvar malabar-compilation-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "g" 'malabar-groovy-rerun-last-compilation)
+    map))
+
+(define-minor-mode malabar-compilation-minor-mode
+  nil nil nil malabar-compilation-minor-mode-map
+  (compilation-minor-mode malabar-compilation-minor-mode))
+
+(defun malabar-groovy-rerun-last-compilation ()
+  (interactive)
+  (malabar-groovy-setup-compilation-buffer)
+  (malabar-groovy-eval-as-compilation malabar-groovy--last-compilation-command))
 
 (defvar malabar-groovy--compiler-notes nil)
 
@@ -370,7 +379,13 @@ pop to the Groovy console buffer."
                  (mapc 'fringe-helper-remove malabar-groovy--fringe-overlays)
                  (remove-overlays (point-min) (point-max)
                                   'malabar-compiler-note t)))))
-          files-to-process)))
+          files-to-process)
+    (setq malabar-groovy--compiler-notes
+          (remove-if (lambda (f)
+                       (member f files-to-process))
+                     malabar-groovy--compiler-notes
+                     :key (lambda (n)
+                            (getf n :file))))))
 
 (defun malabar-groovy-highlight-compilation-message (limit)
   ;; CLASS::FILE::LINE::COLUMN::START::END::POS::Message
@@ -424,6 +439,7 @@ pop to the Groovy console buffer."
                     (lambda ()
                       (setq compilation-in-progress
                             (cons groovy-process compilation-in-progress))
+                      (setq malabar-groovy--last-compilation-command string)
                       (comint-redirect-send-command-to-process
                        string malabar-groovy-compilation-buffer-name
                        groovy-process nil silent)))))
