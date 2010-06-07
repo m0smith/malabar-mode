@@ -323,6 +323,7 @@ accessible constructors."
     (subword-capitalize 1)
     (buffer-substring-no-properties (point-min) (point-max))))
 
+;; FIXME: This inserts in the wrong place
 (defun malabar-insert-getset (all)
   (interactive "P")
   ;; We need the latest and greatest parse
