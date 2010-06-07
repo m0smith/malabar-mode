@@ -74,7 +74,8 @@
   "A new, better, Java mode."
   ;; HACK: Since we're not loading the old java parser the installer
   ;; function isn't defined; give it a dummy definition
-  (flet ((wisent-java-wy--install-parser () nil))
+  (flet ((wisent-java-wy--install-parser () nil)
+         (wisent-java-tags-wy--install-parser () nil)) ;; For Emacs 23.2+
     (wisent-java-default-setup))
   (setq semantic-lex-depth 10)
   (setq semantic-idle-scheduler-idle-time 1)
