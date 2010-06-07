@@ -25,9 +25,10 @@
   (require 'cc-subword)
   (fset 'subword-capitalize 'c-capitalize-subword))
 
-(if (not malabar-use-external-cedet)
-    (require 'srecode/getset)
-  (require 'srecode-getset))
+(if malabar-use-external-cedet
+    (require 'srecode-getset)
+  (require 'srecode/semantic)
+  (require 'srecode/getset))
 
 (require 'malabar-variables)
 (require 'malabar-util)
