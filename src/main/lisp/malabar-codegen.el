@@ -67,19 +67,19 @@ for the method to override."
       (malabar--override-methods (list method-tag) t overridable-methods))))
 
 (defun malabar--override-methods (methods call-super &optional overridable-methods)
-  (let ((method-count (length methods))
-        (counter 0)
-        (overridable-methods (or overridable-methods
-                                 (malabar-overridable-methods))))
+  (let* ((method-count (length methods))
+         (progress-reporter (make-progress-reporter "Overriding methods..." 0 method-count))
+         (counter 0)
+         (overridable-methods (or overridable-methods
+                                  (malabar-overridable-methods))))
     (message nil)
-    (working-status-forms "Overriding methods...%s" nil
-      (let ((malabar--import-candidates nil))
-        (with-caches 
-         (dolist (method methods)
-           (working-status (/ (* (incf counter) 100) method-count) (malabar--get-name method))
-           (malabar--override-method method overridable-methods call-super t)))
-        (malabar--import-handle-import-candidates malabar--import-candidates))
-      (working-status t "done"))
+    (let ((malabar--import-candidates nil))
+      (with-caches 
+       (dolist (method methods)
+         (progress-reporter-update progress-reporter (incf counter))
+         (malabar--override-method method overridable-methods call-super t)))
+      (malabar--import-handle-import-candidates malabar--import-candidates))
+    (progress-reporter-done progress-reporter)
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
