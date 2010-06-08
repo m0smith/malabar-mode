@@ -52,4 +52,20 @@ class Projects
         projects[pom] = me
         return me;
     }
+
+    static getProjectsCoordinateMap() {
+        def map = [:];
+        projects.each {
+            def pom = it.key;
+            def pomFile = pom as File;
+            def p = it.value;
+            if (pomFile.exists()) {
+                if (p.modStamp < pomFile.lastModified()) {
+                    p = get(pom, p.requestedProfiles);
+                }
+                map[p.coordinate] = pom;
+            }
+        }
+        return map;
+    }
 }

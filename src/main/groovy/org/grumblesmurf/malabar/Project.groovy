@@ -33,6 +33,7 @@ class Project
     def name;
     def description;
     def pomFile;
+    def coordinate;
 
     def modStamp;
 
@@ -125,6 +126,17 @@ class Project
         [ compileClasspath, testClasspath, runtimeClasspath ].each {
             it.extraClassMap.clear()
         }
+    }
+
+    /**
+     * In Maven terminology a project's coordinate uniquely identifies that
+     * project in time.
+     */
+    def getCoordinate() {
+        if (coordinate == null) {
+            coordinate = "${mavenProject.groupId}:${mavenProject.artifactId}:${mavenProject.version}";
+        }
+        return coordinate;
     }
 
     private Project(pom, profiles, request, mavenProject, mvnServer) {

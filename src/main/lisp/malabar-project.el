@@ -88,6 +88,11 @@
           (malabar--make-groovy-list
            (cdr (assoc project-file malabar-project-active-profiles)))))
 
+(defun malabar-project-coordinate (project-file)
+  (malabar-groovy-eval-and-lispeval
+   (format "Utils.printAsLisp(%s.coordinate)"
+           (malabar-project-expression project-file))))
+
 (defun malabar-project-classpath (buffer)
   (concat (malabar-project buffer) "." (malabar-classpath-of-buffer buffer)))
 

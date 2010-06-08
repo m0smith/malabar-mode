@@ -40,24 +40,45 @@ class Utils
         getOut().println(v);
     }
 
+    static printAsLisp(Object o) {
+        print asLisp(o)
+    }
+
     static printAsLispList(List list) {
         print asLispList(list)
     }
 
+    static printAsLispHashTable(Map map) {
+        print asLispHashTable(map)
+    }
+
+    static asLisp(Object o) {
+        if (o instanceof String) {
+            "\"${o}\""
+        } else if (o instanceof GString) {
+            "\"${o}\""
+        } else if (o instanceof List) {
+            asLispList(o)
+        } else if (o instanceof Map) {
+            asLispHashTable(o)
+        } else {
+            o.toString()
+        }
+    }
+
     static asLispList(List list) {
         def result = new StringBuilder("(");
-        result << list.collect {
-            if (it instanceof String) {
-                "\"${it}\""
-            } else if (it instanceof GString) {
-                "\"${it}\""
-            } else if (it instanceof List) {
-                asLispList(it)
-            } else {
-                it
-            }
-        }.join(" ");
+        result << list.collect {asLisp(it)}.join(" ");
         result << ")";
+        return result as String;
+    }
+
+    static asLispHashTable(Map map) {
+        def result = new StringBuilder("#s(hash-table test equal size ${map.size()} data (");
+        result << map.collect {
+            "${asLisp(it.key)} ${asLisp(it.value)}"
+        }.join(" ");
+        result << "))";
         return result as String;
     }
 }

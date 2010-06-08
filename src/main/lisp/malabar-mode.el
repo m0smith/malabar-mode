@@ -62,6 +62,7 @@
 (require 'malabar-codegen)
 (require 'malabar-groovy)
 (require 'malabar-import)
+(require 'malabar-jump-to-project)
 (require 'malabar-misc)
 (require 'malabar-project)
 (require 'malabar-reflection)
