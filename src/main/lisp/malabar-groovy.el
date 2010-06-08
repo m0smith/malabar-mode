@@ -126,6 +126,10 @@ variable once the eval server has started."
   ;; set comint-input-filter
   (run-mode-hooks 'malabar-groovy-mode-hook))
 
+(defun malabar-groovy--check-groovysh-time-out (start-time time-out-msg)
+  (when (> (- (float-time) start-time) malabar-groovy-time-out-waiting-for-groovysh)
+        (error time-out-msg)))
+
 (defun malabar-groovy--match-buffer (buffer regexp count initial-points-alist time-out-msg)
   (let ((start-time (float-time)))
     (while (not (with-current-buffer buffer
@@ -134,8 +138,7 @@ variable once the eval server has started."
                     (re-search-backward regexp
                                         (cdr (assoc buffer initial-points-alist)) t))))
       (accept-process-output (get-buffer-process buffer) malabar-groovy-time-out-waiting-for-groovysh)
-      (when (> (- (float-time) start-time) malabar-groovy-time-out-waiting-for-groovysh)
-        (error time-out-msg))))
+      (malabar-groovy--check-groovysh-time-out start-time time-out-msg)))
   (with-current-buffer buffer (match-string-no-properties count)))
 
 (defun malabar-groovy--wait-for-prompt (buffer initial-points-alist)
@@ -154,12 +157,15 @@ variable once the eval server has started."
 (defun malabar-groovy-stop ()
   "Stop the inferior Groovy."
   (interactive)
-  (malabar-groovy-eval-in-process (get-buffer-process malabar-groovy-buffer-name)
-                                  "exit")
+  (let ((start-time (float-time)) (groovy-process (get-buffer-process malabar-groovy-buffer-name)))  
+    (malabar-groovy-eval-in-process groovy-process "exit")
+    (while (malabar-groovy-live-p)
+      (sit-for 0.1)
+      (malabar-groovy--check-groovysh-time-out start-time "Time-out waiting for Groovy to stop.")))
   (message nil))
 
 (defun malabar-groovy-start (&optional silent)
-  "Start groovy and wait for it to come up.  If SILENT is NIL,
+  "Start Groovy and wait for it to come up.  If SILENT is NIL,
 pop to the Groovy console buffer."
   (interactive)
   (unless (malabar-groovy-live-p)
@@ -219,6 +225,13 @@ pop to the Groovy console buffer."
         (progress-reporter-done reporter))))
   (unless silent
     (pop-to-buffer malabar-groovy-buffer-name)))
+
+(defun malabar-groovy-restart ()
+  "Stops Groovy (if running) and (re)starts Groovy and waits
+for it to come up."
+  (interactive)
+  (when (malabar-groovy-live-p) (malabar-groovy-stop))
+  (malabar-groovy-start))
 
 (defun malabar-groovy-eval-in-process (process string)
   (let ((string (string-with-newline string))
