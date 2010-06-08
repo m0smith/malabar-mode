@@ -98,7 +98,8 @@
       "testClasspath")))
 
 (defun malabar-find-project-file (&optional buffer)
-  (malabar--project-for-file (buffer-file-name (or buffer (current-buffer)))))
+  (when-let (file (buffer-file-name (or buffer (current-buffer))))
+    (malabar--project-for-file file)))
 
 (defun malabar--project-for-file (file)
   (when-let (dir (locate-dominating-file file "pom.xml"))
