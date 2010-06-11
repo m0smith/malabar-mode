@@ -22,7 +22,7 @@
 
 (defvar malabar-jump-to-project-history nil "`malabar-jump-to-project' history list.")
 
-(defun malabar-jump-to-project ()
+(defun malabar-find-file-in-project ()
   "For navigating to a file in another project.
 Prompts for a Maven project coordinate
 (groupId:artifactId:vaersion), with completion for all
