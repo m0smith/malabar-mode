@@ -25,11 +25,11 @@
 (defun malabar-find-file-in-project ()
   "For navigating to a file in another project.
 Prompts for a Maven project coordinate
-(groupId:artifactId:vaersion), with completion for all
+\(groupId:artifactId:version), with completion for all
 known projects, then opens an interactive 'Find file'
 at the selected project's home directory."
   (interactive)
-  (let ((table (malabar-jumpt-to-project-coordinate-hash-table)))
+  (let ((table (malabar-jump-to-project-coordinate-hash-table)))
     (if (> (hash-table-count table) 0)
         (let* ((default (when-let (project-file (malabar-find-project-file))
                           (malabar-project-coordinate project-file)))
@@ -43,14 +43,14 @@ at the selected project's home directory."
             (signal 'quit nil)))
       (message "Malabar hasn't visited any project files yet!"))))
 
-(defun malabar-jumpt-to-project-coordinate-hash-table ()
+(defun malabar-jump-to-project-coordinate-hash-table ()
   (malabar-groovy-eval-and-lispeval
    "Utils.printAsLispHashTable(Projects.projectsCoordinateMap)"))
 
 (defun malabar-jump-to-project--show-find-file (project-file)
   (let* ((project-dir (file-name-directory project-file))
          (file (read-file-name "Find file: " project-dir project-dir
-                                       (confirm-nonexistent-file-or-buffer))))
+                               (confirm-nonexistent-file-or-buffer))))
     (find-file file t)))
 
 (provide 'malabar-jump-to-project)
