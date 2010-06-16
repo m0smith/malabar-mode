@@ -33,6 +33,10 @@ class Project
     def name;
     def description;
     def pomFile;
+    /**
+     * In Maven terminology a project's coordinate uniquely identifies that
+     * project in time.
+     */
     def coordinate;
 
     def modStamp;
@@ -128,17 +132,6 @@ class Project
         }
     }
 
-    /**
-     * In Maven terminology a project's coordinate uniquely identifies that
-     * project in time.
-     */
-    def getCoordinate() {
-        if (coordinate == null) {
-            coordinate = "${mavenProject.groupId}:${mavenProject.artifactId}:${mavenProject.version}";
-        }
-        return coordinate;
-    }
-
     private Project(pom, profiles, request, mavenProject, mvnServer) {
         this.mvnServer = mvnServer
         this.request = request
@@ -148,6 +141,7 @@ class Project
         this.mavenProject = mavenProject
         name = mavenProject.name
         description = mavenProject.description
+        coordinate = mavenProject.artifact.id
 
         activeProfiles = mavenProject.activeProfiles.collect { it.id }
         availableProfiles = mavenProject.model.profiles.collect { it.id }

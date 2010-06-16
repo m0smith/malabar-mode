@@ -40,6 +40,16 @@ class ProjectsTest
     }
 
     @Test
+    void coordinatePopulated() {
+        assertThat(p.coordinate, containsString("org.grumblesmurf"));
+    }
+
+    @Test
+    void coordinateMapPopulated() {
+        assertThat(Projects.getProjectsCoordinateMap().get(p.coordinate), is(p.pomFile));
+    }
+
+    @Test
     void transitiveCompileClasspath() {
         def cp = p.compileClasspath
         assertThat(cp.asClassPath(), containsString("log4j"))
