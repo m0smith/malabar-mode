@@ -17,9 +17,12 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(if (not malabar-use-external-cedet)
-    (require 'srecode/map)
-  (require 'srecode-map))
+(cond (malabar-use-external-cedet
+       (require 'srecode-map)
+       (require 'semantic-ia))
+      (t
+       (require 'srecode/map)
+       (require 'semantic/ia)))
 
 (defgroup malabar-mode nil
   "A better Java mode")
@@ -49,7 +52,9 @@
       (define-key prefix-map [?\C-o] 'malabar-override-method)
       (define-key prefix-map [?\C-e] 'malabar-extend-class)
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
-      (define-key prefix-map [?.]    'semantic-ia-complete-symbol-menu)
+      (define-key prefix-map [?.]    (if malabar-use-external-cedet
+                                         'semantic-ia-complete-symbol-menu
+                                       'semantic-ia-complete-symbol))
       (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
       (define-key prefix-map [?\C-p] 'malabar-visit-project-file) 
       (define-key prefix-map [?\C-y] 'malabar-jump-to-thing)
