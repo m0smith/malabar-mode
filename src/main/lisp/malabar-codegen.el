@@ -19,11 +19,10 @@
 ;;
 (require 'cl)
 (require 'cc-cmds)
-(if (or (> emacs-major-version 23)
-     (and (= emacs-major-version 23)
-          (> emacs-minor-version 1)))
-    (require 'subword)
-  (require 'cc-subword)
+(if (and (<= emacs-major-version 23)
+          (< emacs-minor-version 2))
+    (require 'cc-subword)
+  (require 'subword)
   (fset 'subword-capitalize 'c-capitalize-subword))
 
 (if malabar-use-external-cedet
