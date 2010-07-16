@@ -53,6 +53,7 @@
 (require 'cl)
 (require 'thingatpt)
 (require 'compile)
+(require 'easymenu)
 
 (require 'srecode)
 
@@ -71,6 +72,35 @@
 (require 'malabar-semanticdb)
 (require 'malabar-refactor)
 
+(easy-menu-define malabar-mode-menu malabar-mode-map
+  "Menu for Malabar mode"
+  '("Malabar"
+    ("Build"
+     ["Install project" malabar-install-project]
+     ["Compile file" malabar-compile-file])
+    ("Test"
+     ["Run test" malabar-run-test]
+     ["Run JUnit test" malabar-run-junit-test]
+     ["Run all tests" malabar-run-all-tests])
+    ("Source"
+     ["Insert getter/setter" malabar-insert-getset]
+     ["Import class" malabar-import-one-class]
+     ["Import all classes" malaber-import-all]
+     ["Override method" malabar-override-method]
+     ["Extend class" malabar-extend-class]
+     ["Implement interface" malabar-implement-interface])
+    ("Refactor"
+     ["Extract constant" malabar-refactor-extract-constant])
+    ("Navigation"
+     ["Visit project file" malabar-visit-project-file]
+     ["Jump to thing" malabar-jump-to-thing]
+     ["Visit corresponding test" malabar-visit-corresponding-test])
+    "---"
+    ["Start Groovy console" malabar-groovy-start]
+    ["Stop Groovy console" malabar-groovy-stop]
+    ["Run Maven command" malabar-run-maven-command]
+    ))
+
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
   ;; HACK: Since we're not loading the old java parser the installer
@@ -83,6 +113,8 @@
   (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
   (wisent-malabar-java-wy--install-parser)
   (srecode-minor-mode 1)
+  ;; Set the menu
+  (easy-menu-add malabar-mode-menu malabar-mode-map)
   ;; Set up indentation of Java annotations.
   (malabar-annotations-setup)
   (malabar-abbrevs-setup)
