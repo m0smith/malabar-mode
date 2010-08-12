@@ -19,16 +19,24 @@
 package org.grumblesmurf.malabar;
 
 import org.codehaus.groovy.tools.shell.Groovysh;
-import org.codehaus.groovy.tools.shell.util.ANSI;
 import org.codehaus.groovy.tools.shell.IO;
 import org.codehaus.groovy.tools.shell.util.Logger;
 
+import org.fusesource.jansi.Ansi
+
 import java.net.*;
 
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch;
 
 class GroovyServer
 {
+    static {
+        // Ensure that Groovysh's static block has run
+        Groovysh.class.getName();
+        Ansi.setDetector(new AnsiDenier());
+    }
+    
     static ready = new CountDownLatch(2);
     static mvnServer = new MvnServer();
     static servers = [:].asSynchronized();
@@ -43,8 +51,6 @@ class GroovyServer
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
         cli.e(longOpt: 'evalPort', args: 1, required: true, 'evaluator port');
         
-        ANSI.enabled = false;
-
         def options = cli.parse(args);
 
         if (options.c && options.e) {
@@ -126,5 +132,13 @@ class GroovySocketServer
         } finally {
             server.close();
         }
+    }
+}
+
+class AnsiDenier
+    implements Callable<Boolean>
+{
+    public Boolean call() throws Exception {
+        return Boolean.FALSE;
     }
 }
