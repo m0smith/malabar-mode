@@ -46,6 +46,10 @@
       <name>stepb</name>
       <url>http://github.com/stepb</url>
     </contributor>
+    <contributor>
+      <name>bbatsov</name>
+      <url>http://github.com/bbatsov</url>
+    </contributor>
   </contributors>
 
   <properties>
