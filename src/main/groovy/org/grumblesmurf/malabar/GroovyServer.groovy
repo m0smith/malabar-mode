@@ -31,7 +31,7 @@ class GroovyServer
 {
     static ready = new CountDownLatch(2);
     static mvnServer = new MvnServer();
-    static servers = [:];
+    static servers = [:].asSynchronized();
 
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
@@ -69,8 +69,10 @@ class GroovyServer
         Utils.setIO(io);
         Binding binding = new Binding();
         binding['mvnServer'] = mvnServer;
-        servers.each { name, port ->
-            println "$name: port=$port"
+        synchronized (servers) {
+            servers.each { name, port ->
+                 println "$name: port=$port"
+            }
         }
         new Groovysh(binding, io).run();
     }
