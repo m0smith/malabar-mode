@@ -104,7 +104,7 @@ and more.
    yourself and send me a patch...)
 
    If you really really need a working version Right Now[TM] you can
-   always use the `malabar-1.3` tag.
+   always use the `malabar-1.4.0` tag.
 
    When a Maven (pre)release is made, I will usually tag a version of
    malabar-mode that locks to that version.
@@ -142,6 +142,8 @@ and more.
                           nil t)))
           
 # Usage
+
+Update:  malabar-mode now has a menu.  Yay!
 
 Here is a list of available interactive commands, with default
 keybindings where applicable:
@@ -278,10 +280,13 @@ operator would be.  This expansion is controlled by the variable
 
 # This is cool, I want to help
 
-Github has excellent support for forking!  If you don't want to go
-that far, git is, after all, a *distributed* VCS.  Just commit to your
-local repository and then use git-format-patch to extract patches in a
-useful format.
+Github has excellent support for forking!  Just hit the fork button at
+the top, code and go.  For everyone's convenience, you should probably
+rebase to espenhw/malabar-mode/master every now and then.  :)
+
+If you don't want to go that far, git is, after all, a *distributed*
+VCS.  Just commit to your local repository and then use
+git-format-patch to extract patches in a useful format.
 
 ## But where do I send patches?
 
@@ -312,12 +317,12 @@ complete fork).  malabar-mode is Open Source, after all.
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
 * [Nikolaj Schumacher][] for fringe-helper and elk-test
-* [nflath](http://github.com/nflath) and [stepb](http://github.com/stepb) for caring enough to help
-* korifeo, la23ng, and andy22286 for caring enough to report bugs
+* [nflath](http://github.com/nflath), [stepb](http://github.com/stepb) and [bbatsov](http://github.com/bbatsov) for caring enough to help
+* Everybody else for caring enough read this and report bugs
 
 # Boring legal stuff
 
-malabar-mode is copyright (c) 2009 Espen Wiborg <espenhw@grumblesmurf.org>
+malabar-mode is copyright (c) 2009-2010 Espen Wiborg <espenhw@grumblesmurf.org>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
