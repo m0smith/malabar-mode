@@ -67,6 +67,7 @@ class Groovysh
         interp = new Interpreter(classLoader, binding);
 
         registrar.call(this);
+        this << new SetProjectCommand(this);
     }
 
     private static Closure createDefaultRegistrar() {
