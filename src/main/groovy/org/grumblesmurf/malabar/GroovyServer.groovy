@@ -91,7 +91,7 @@ class GroovySocketServer
     private final port;
     private final CountDownLatch latch;
 
-    private final ServerSocket serverSocket;
+    private ServerSocket serverSocket;
 
     GroovySocketServer(String name, int port, CountDownLatch latch) {
         this.name = name;
