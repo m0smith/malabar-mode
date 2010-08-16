@@ -18,35 +18,26 @@
  */ 
 package org.grumblesmurf.malabar;
 
-import org.codehaus.groovy.tools.shell.Groovysh;
+import java.net.*;
+
+import java.util.concurrent.CountDownLatch;
+
 import org.codehaus.groovy.tools.shell.IO;
 import org.codehaus.groovy.tools.shell.util.Logger;
 
-import org.fusesource.jansi.Ansi
-
-import java.net.*;
-
-import java.util.concurrent.Callable
-import java.util.concurrent.CountDownLatch;
-
 class GroovyServer
 {
-    static {
-        // Ensure that Groovysh's static block has run
-        Groovysh.class.getName();
-        Ansi.setDetector(new AnsiDenier());
-    }
-    
     static ready = new CountDownLatch(2);
     static mvnServer = new MvnServer();
     static servers = [:].asSynchronized();
+    static console;
 
     static void main(String[] args) {
         ExpandoMetaClass.enableGlobally();
         
         Object.metaClass.println = Utils.&println; 
         Object.metaClass.print = Utils.&print;
-        
+
         def cli = new CliBuilder();
         cli.c(longOpt: 'compilerPort', args: 1, required: true, 'compiler port');
         cli.e(longOpt: 'evalPort', args: 1, required: true, 'evaluator port');
@@ -80,7 +71,8 @@ class GroovyServer
                  println "$name: port=$port"
             }
         }
-        new Groovysh(binding, io).run();
+        console = new Groovysh("", binding, io);
+        console.run();
     }
 }
 
@@ -123,7 +115,8 @@ class GroovySocketServer
                 Utils.setIO(io);
                 Binding binding = new Binding();
                 binding['mvnServer'] = GroovyServer.mvnServer;
-                new Groovysh(binding, io).run();
+                // Intentional use of Groovysh
+                new Groovysh("", binding, io).run();
             } finally {
                 client.close();
             }
@@ -132,13 +125,5 @@ class GroovySocketServer
         } finally {
             server.close();
         }
-    }
-}
-
-class AnsiDenier
-    implements Callable<Boolean>
-{
-    public Boolean call() throws Exception {
-        return Boolean.FALSE;
     }
 }
