@@ -36,7 +36,6 @@ class Projects
         }
 
         MvnServer mvnServer = GroovyServer.mvnServer;
-        def maven = mvnServer.maven
         MavenExecutionRequest req = mvnServer.newRequest(pomFile.parentFile, profiles)
 
         ProjectBuildingRequest config = req.getProjectBuildingRequest()

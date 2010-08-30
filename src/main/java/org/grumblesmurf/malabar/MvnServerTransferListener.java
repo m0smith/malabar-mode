@@ -18,38 +18,59 @@
  */ 
 package org.grumblesmurf.malabar;
 
-import org.apache.maven.repository.ArtifactTransferListener;
-import org.apache.maven.repository.ArtifactTransferEvent;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
-import org.codehaus.plexus.logging.AbstractLogEnabled;
+import java.util.Locale;
+
+import org.sonatype.aether.transfer.TransferEvent;
+import org.sonatype.aether.transfer.TransferResource;
+import org.sonatype.aether.util.listener.AbstractTransferListener;
 
 public class MvnServerTransferListener
-    extends AbstractLogEnabled
-    implements ArtifactTransferListener
+    extends AbstractTransferListener
 {
-    public void transferInitiated(ArtifactTransferEvent transferEvent) {
+    public void transferInitiated(TransferEvent event) {
+        String type = eventType(event);        
+
+        Utils.println(String.format("%sing: %s", type, descriptor(event.getResource())));
     }
 
-    public void transferStarted(ArtifactTransferEvent transferEvent) {
+    private String descriptor(TransferResource resource) {
+        return resource.getRepositoryUrl() + resource.getResourceName();
     }
 
-    public void transferProgress(ArtifactTransferEvent transferEvent) {
+    public void transferSucceeded(TransferEvent event) {
+        TransferResource artifact = event.getResource();
+        long contentLength = event.getTransferredBytes();
+        if (contentLength >= 0) {
+            String type = eventType(event);
+            String len = contentLength >= 1024 ?
+                toKB(contentLength) + " KB" :
+                contentLength + " B";
+
+            String throughput = "";
+            long duration = System.currentTimeMillis() - artifact.getTransferStartTime();
+            if (duration > 0) {
+                DecimalFormat format =
+                    new DecimalFormat("0.0",
+                                      new DecimalFormatSymbols(Locale.ENGLISH));
+                double kbPerSec = (contentLength / 1024.0) / (duration / 1000.0);
+                throughput = " at " + format.format(kbPerSec) + " KB/sec";
+            }
+
+            Utils.println(String.format("%sed: %s (%s%s)",
+                                        type, descriptor(artifact),
+                                        len, throughput));
+        }
     }
 
-    public void transferCompleted(ArtifactTransferEvent transferEvent) {
+    private String eventType(TransferEvent event) {
+        return event.getRequestType() == TransferEvent.RequestType.PUT ?
+            "Upload" : "Download";        
     }
-
-    public void transferError(ArtifactTransferEvent event) {
-        Utils.println(event.getException().getMessage());
-    }
-
-    public void debug(String message) {
-    }
-
-    public boolean isShowChecksumEvents() {
-        return false;
-    }
-
-    public void setShowChecksumEvents(boolean showChecksumEvents) {
+    
+    protected long toKB(long bytes) {
+        return ( bytes + 1023 ) / 1024;
     }
 }

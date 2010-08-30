@@ -28,7 +28,6 @@ import org.apache.maven.execution.MavenExecutionRequestPopulationException;
 import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.model.building.ModelProcessor;
-import org.apache.maven.repository.ArtifactTransferListener;
 import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
 import org.apache.maven.settings.building.SettingsBuilder;
 
@@ -38,10 +37,12 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.logging.Logger;
 
+import org.sonatype.aether.transfer.TransferListener;
+
 public class MvnServer
 {
     final Logger logger;
-    final ArtifactTransferListener transferListener;
+    final TransferListener transferListener;
     final ExecutionListener executionListener;
     final Maven maven;
     final ModelProcessor modelProcessor;
@@ -86,6 +87,10 @@ public class MvnServer
             withComponent(MavenExecutionRequestPopulator.class) {
                 it.populateFromSettings(req, settings);
                 it.populateDefaults(req);
+            }
+
+            withComponent(Maven.class) {
+                req.projectBuildingRequest.repositorySession = it.newRepositorySession(req);
             }
             
             req

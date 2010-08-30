@@ -52,13 +52,13 @@ class ProjectsTest
     @Test
     void transitiveCompileClasspath() {
         def cp = p.compileClasspath
-        assertThat(cp.asClassPath(), containsString("log4j"))
+        assertThat(cp.asClassPath(), containsString("groovy"))
     }
 
     @Test
     void transitiveTestClasspath() {
         def cp = p.testClasspath
-        assertThat(cp.asClassPath(), containsString("slf4j"))
+        assertThat(cp.asClassPath(), containsString("gmaven-runtime"))
     }
 
     @Test
