@@ -58,7 +58,8 @@ anything you don't like.
 
 ### But there is more:
 
-- Tight integration with [Maven][]
+- Tight integration with [Maven][]; if fact, so tight that if you're
+  not using Maven (why?) you should not consider malabar-mode.
 
 - A [Groovy][] console for rapid prototyping and exploratory programming
 
