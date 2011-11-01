@@ -1,5 +1,11 @@
 # malabar-mode :: A better Java mode for Emacs
 
+**Note: I no longer have time to work on malabar-mode.  If someone
+wants to step up and take over the project, please contact me, either
+via email or with a GitHub message, and I'll update the repo
+description and this readme to point at the new canonical
+repository.**
+
 You may want to skip to [Installation](#Installation).
 
 ## Why yet another Java mode?
