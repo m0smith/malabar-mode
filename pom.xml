@@ -54,9 +54,9 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.version>3.0.3</maven.version>
-    <aether.version>1.11</aether.version>
-    <wagon.version>1.0</wagon.version>
+    <maven.version>3.0.4</maven.version>
+    <aether.version>1.13.1</aether.version>
+    <wagon.version>2.2</wagon.version>
     <groovy.version>1.8.5</groovy.version>
     <gmaven.version>1.4</gmaven.version>
     <gmaven.runtime.version>1.8</gmaven.runtime.version>
@@ -104,18 +104,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
-      <artifactId>wagon-http-lightweight</artifactId>
+      <artifactId>wagon-http</artifactId>
       <version>${wagon.version}</version>
       <scope>runtime</scope>
     </dependency>
     
-    <dependency>
-      <groupId>org.sonatype.plexus</groupId>
-      <artifactId>plexus-build-api</artifactId>
-      <version>0.0.7</version>
-      <scope>runtime</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
