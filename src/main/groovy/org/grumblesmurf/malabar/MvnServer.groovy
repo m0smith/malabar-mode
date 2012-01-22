@@ -149,6 +149,9 @@ class RunDescriptor
                 userProperties = owner.properties
                 
                 mvnServer.maven.execute(delegate).with {
+                    // if (hasExceptions()) {
+                    //     exceptions.each {mvnServer.logger.error("Execution error", it)}
+                    // }
                     !hasExceptions();
                 }
             }
