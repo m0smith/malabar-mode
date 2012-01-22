@@ -29,8 +29,6 @@ import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
 
-import org.codehaus.groovy.tools.shell.util.ANSI;
-
 class GroovyServerTest
 {
     def servers = [];
@@ -38,11 +36,6 @@ class GroovyServerTest
     static exceptionHandler = { 
     } as Thread.UncaughtExceptionHandler;
     
-    @Before
-    void disableANSI() {
-        ANSI.enabled = false;
-    }
-
     @After
     void shutdownServers() {
         servers.each {

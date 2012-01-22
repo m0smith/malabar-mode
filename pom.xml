@@ -57,6 +57,9 @@
     <maven.version>3.0.3</maven.version>
     <aether.version>1.11</aether.version>
     <wagon.version>1.0</wagon.version>
+    <groovy.version>1.8.5</groovy.version>
+    <gmaven.version>1.4</gmaven.version>
+    <gmaven.runtime.version>1.8</gmaven.runtime.version>
   </properties>
   
   <dependencies>
@@ -116,23 +119,23 @@
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>1.7.4</version>
+      <version>${groovy.version}</version>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
-      <version>0.9.94</version>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>org.fusesource.jansi</groupId>
       <artifactId>jansi</artifactId>
-      <version>1.2.1</version>
+      <version>1.7</version>
     </dependency>
     
     <dependency>
-      <groupId>org.codehaus.groovy.maven.runtime</groupId>
-      <artifactId>gmaven-runtime-1.6</artifactId>
-      <version>1.0</version>
+      <groupId>org.codehaus.gmaven.runtime</groupId>
+      <artifactId>gmaven-runtime-${gmaven.runtime.version}</artifactId>
+      <version>${gmaven.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -144,9 +147,12 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.groovy.maven</groupId>
+        <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>
-        <version>1.0</version>
+        <version>${gmaven.version}</version>
+        <configuration>
+          <providerSelection>${gmaven.runtime.version}</providerSelection>
+        </configuration>
         <executions>
           <execution>
             <goals>
