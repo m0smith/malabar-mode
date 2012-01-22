@@ -320,6 +320,23 @@ And of course, if I nix your feature request, you're free to maintain
 your own local patch branch if you wish (or, for that matter, a
 complete fork).  malabar-mode is Open Source, after all.
 
+# Hacking
+If you want to hackig malabar-mode, you can add followings in your `.emacs`::
+
+    (setq malabar-groovy-lib-dir "~/src/malabar-mode/target/lib")
+    (setq malabar-groovy-extra-classpath '("~/src/malabar-mode/target/classes"))
+    (add-to-list 'load-path "~/src/malabar-mode/src/main/lisp/")
+
+1. First, Run `mvn package -P devel` for extracting libraries into
+   `target/lib`. it ommits unpacking packaged zip.
+
+2. After editing groovy files, you should run `mvn compile` for
+   compiling groovy files into `target/classes`. and `M-x
+   malabar-groovy-restart` for applying changes
+   
+3. After editing elisp files, you should eval these functions for
+   applying changes.
+
 # Acknowledgments
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
