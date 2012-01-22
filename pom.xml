@@ -307,21 +307,17 @@
       <build>
         <plugins>
           <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
+            <artifactId>maven-dependency-plugin</artifactId>
             <executions>
               <execution>
                 <id>devel-lib</id>
                 <phase>package</phase>
                 <goals>
-                  <goal>single</goal>
+                  <goal>copy-dependencies</goal>
                 </goals>
                 <configuration>
-                  <descriptors>
-                    <descriptor>src/main/assembly/devel-lib.xml</descriptor>
-                  </descriptors>
-                  <finalName>lib</finalName>
-                  <appendAssemblyId>false</appendAssemblyId>
-                  <attach>false</attach>
+                  <silent>true</silent>
+                  <outputDirectory>${project.build.directory}/lib</outputDirectory>
                 </configuration>
               </execution>
             </executions>
