@@ -63,11 +63,16 @@ class Compiler
                                  null, compilationUnits);
             def success = task.call();
             diagnosticCollector.diagnostics.each {
-                def start = [it.source as String, it.lineNumber].join(":")
-                def message = it.getMessage(null).replaceFirst(start + ":", "")
-                println([it.kind, it.source as String, it.lineNumber, it.columnNumber,
-                         it.startPosition, it.endPosition, it.position,
-                         message].join("::"))
+                if (it.source) {
+                    def src = it.source.toUri().path
+                    def start = [src, it.lineNumber].join(":")
+                    def message = it.getMessage(null).replaceFirst(start + ":", "")
+                    println([it.kind, src, it.lineNumber, it.columnNumber,
+                             it.startPosition, it.endPosition, it.position,
+                             message].join("::"))
+                } else {
+                    println("[${it.kind}] ${it.getMessage(null)}")
+                }
             }
             fileManager.close();
             if (success)
