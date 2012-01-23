@@ -290,7 +290,7 @@ for it to come up."
 (defconst malabar-groovy--eval-log-output-marker-re
   (concat "^" (regexp-opt (mapcar (lambda (level)
                                     (concat "[" (symbol-name level) "]"))
-                                  '(DEBUG INFO WARN ERROR FATAL)))))
+                                  '(DEBUG INFO WARN WARNING ERROR FATAL)))))
 
 (defun malabar-groovy--eval-fix-output (cell)
   (let* ((string (car cell))
