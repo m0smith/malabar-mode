@@ -1,3 +1,8 @@
+// Stolen more-or-less verbatim from the Groovy tree
+// Changes:
+// - Ripped out the Ansi stuff
+// - Customized prompt
+// - Removed user script behavior
 /*
  * Copyright 2003-2011 the original author or authors.
  *
@@ -14,7 +19,7 @@
  * limitations under the License.
  */
 
-package org.codehaus.groovy.tools.shell
+package org.grumblesmurf.malabar
 
 import jline.Terminal
 import jline.History
@@ -27,6 +32,16 @@ import org.fusesource.jansi.AnsiRenderer
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 
+import org.codehaus.groovy.tools.shell.BufferManager
+import org.codehaus.groovy.tools.shell.ExitNotification
+import org.codehaus.groovy.tools.shell.IO
+import org.codehaus.groovy.tools.shell.InteractiveShellRunner
+import org.codehaus.groovy.tools.shell.Interpreter
+import org.codehaus.groovy.tools.shell.ParseCode
+import org.codehaus.groovy.tools.shell.Parser
+import org.codehaus.groovy.tools.shell.Shell
+
+
 /**
  * An interactive shell for evaluating Groovy code from the command-line (aka. groovysh).
  *
@@ -38,12 +53,11 @@ class Groovysh extends Shell {
     static {
         // Install the system adapters
         AnsiConsole.systemInstall()
-
-        // Register jline ansi detector
-        Ansi.setDetector(new AnsiDetector())
+        Ansi.enabled = false
     }
 
-    private static final MessageSource messages = new MessageSource(Groovysh.class)
+
+    private static final MessageSource messages = new MessageSource(org.codehaus.groovy.tools.shell.Groovysh.class)
 
     final BufferManager buffers = new BufferManager()
 
@@ -53,6 +67,8 @@ class Groovysh extends Shell {
     
     final List imports = []
     
+    final String project
+
     InteractiveShellRunner runner
     
     History history
@@ -60,41 +76,36 @@ class Groovysh extends Shell {
     boolean historyFull  // used as a workaround for GROOVY-2177
     String evictedLine  // remembers the command which will get evicted if history is full
 
-    Groovysh(final ClassLoader classLoader, final Binding binding, final IO io, final Closure registrar) {
+    Groovysh(final String project, final ClassLoader classLoader, final Binding binding, final IO io, final Closure registrar) {
         super(io)
         
         assert classLoader
         assert binding
         assert registrar
 
+        this.project = project
+
         parser = new Parser()
         
         interp = new Interpreter(classLoader, binding)
 
         registrar.call(this)
+        this << new SetProjectCommand(this)
     }
 
     private static Closure createDefaultRegistrar() {
         return { shell ->
             def r = new XmlCommandRegistrar(shell, classLoader)
-            r.register(getClass().getResource('commands.xml'))
+            r.register(Shell.getResource('commands.xml'))
         }
     }
 
-    Groovysh(final ClassLoader classLoader, final Binding binding, final IO io) {
-        this(classLoader, binding, io, createDefaultRegistrar())
+    Groovysh(final String project, final ClassLoader classLoader, final Binding binding, final IO io) {
+        this(project, classLoader, binding, io, createDefaultRegistrar())
     }
 
-    Groovysh(final Binding binding, final IO io) {
-        this(Thread.currentThread().contextClassLoader, binding, io)
-    }
-
-    Groovysh(final IO io) {
-        this(new Binding(), io)
-    }
-    
-    Groovysh() {
-        this(new IO())
+    Groovysh(final String project, final Binding binding, final IO io) {
+        this(project, Thread.currentThread().contextClassLoader, binding, io)
     }
 
     //
@@ -226,45 +237,6 @@ class Groovysh extends Shell {
 
         // Make a %03d-like string for the line number
         return num.toString().padLeft(3, '0')
-    }
-
-    //
-    // User Profile Scripts
-    //
-
-    File getUserStateDirectory() {
-        def userHome = new File(System.getProperty('user.home'))
-        def dir = new File(userHome, '.groovy')
-        return dir.canonicalFile
-    }
-
-    private void loadUserScript(final String filename) {
-        assert filename
-        
-        def file = new File(userStateDirectory, filename)
-        
-        if (file.exists()) {
-            def command = registry['load']
-
-            if (command) {
-                log.debug("Loading user-script: $file")
-
-                // Disable the result hook for profile scripts
-                def previousHook = resultHook
-                resultHook = { result -> /* nothing */}
-
-                try {
-                    command.load(file.toURI().toURL())
-                }
-                finally {
-                    // Restore the result hook
-                    resultHook = previousHook
-                }
-            }
-            else {
-                log.error("Unable to load user-script, missing 'load' command")
-            }
-        }
     }
 
     //
@@ -420,8 +392,6 @@ class Groovysh extends Shell {
         def code
 
         try {
-            loadUserScript('groovysh.profile')
-
             // if args were passed in, just execute as a command
             // (but cygwin gives an empty string, so ignore that)
             if (commandLine != null && commandLine.trim().size() > 0) {
@@ -429,14 +399,11 @@ class Groovysh extends Shell {
                 execute(commandLine)
             }
             else {
-                loadUserScript('groovysh.rc')
-
                 // Setup the interactive runner
                 runner = new InteractiveShellRunner(this, this.&renderPrompt as Closure)
 
                 // Setup the history
                 runner.history = history = new History()
-                runner.historyFile = new File(userStateDirectory, 'groovysh.history')
 
                 // Setup the error handler
                 runner.errorHandler = this.&displayError
