@@ -28,9 +28,6 @@ import org.codehaus.groovy.tools.shell.util.MessageSource
 import org.codehaus.groovy.tools.shell.util.XmlCommandRegistrar
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.codehaus.groovy.tools.shell.util.Preferences
-import org.fusesource.jansi.AnsiRenderer
-import org.fusesource.jansi.Ansi
-import org.fusesource.jansi.AnsiConsole
 
 import org.codehaus.groovy.tools.shell.BufferManager
 import org.codehaus.groovy.tools.shell.ExitNotification
@@ -49,13 +46,6 @@ import org.codehaus.groovy.tools.shell.Shell
  * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
  */
 class Groovysh extends Shell {
-
-    static {
-        // Install the system adapters
-        AnsiConsole.systemInstall()
-        Ansi.enabled = false
-    }
-
 
     private static final MessageSource messages = new MessageSource(org.codehaus.groovy.tools.shell.Groovysh.class)
 
@@ -193,15 +183,13 @@ class Groovysh extends Shell {
         buffer.eachWithIndex { line, index ->
             def lineNum = formatLineNumber(index)
             
-            io.out.println(" ${lineNum}@|bold >|@ $line")
+            io.out.println(" ${lineNum}> $line")
         }
     }
 
     //
     // Prompt
     //
-
-    private AnsiRenderer prompt = new AnsiRenderer()
 
     /*
         Builds the command prompt name in 1 of 3 ways:
@@ -214,19 +202,19 @@ class Groovysh extends Shell {
      */
     private String buildPrompt(){
        def lineNum = formatLineNumber(buffers.current().size())
-       def formattedPrompt = "@|bold groovy:|@${lineNum}@|bold >|@ "
+       def formattedPrompt = "groovy:${lineNum}> "
 
        def GROOVYSHELL_PROPERTY =  System.getProperty("groovysh.prompt")
        def GROOVYSHELL_ENV      =  System.getenv("GROOVYSH_PROMPT")
 
-       if (GROOVYSHELL_PROPERTY)  return  "@|bold ${GROOVYSHELL_PROPERTY}:|@${lineNum}@|bold >|@ "
-       if (GROOVYSHELL_ENV)       return  "@|bold ${GROOVYSHELL_ENV}:|@${lineNum}@|bold >|@ "
+       if (GROOVYSHELL_PROPERTY)  return  "${GROOVYSHELL_PROPERTY}:${lineNum}> "
+       if (GROOVYSHELL_ENV)       return  "${GROOVYSHELL_ENV}:${lineNum}> "
 
        return formattedPrompt
     }
 
     public String renderPrompt() {
-        return prompt.render( buildPrompt() )
+        return buildPrompt()
     }
 
     /**
@@ -282,7 +270,7 @@ class Groovysh extends Shell {
 
         if (showLastResult) {
             // Need to use String.valueOf() here to avoid icky exceptions causes by GString coercion
-            io.out.println("@|bold ===>|@ ${String.valueOf(result)}")
+            io.out.println("===> ${String.valueOf(result)}")
         }
     }
 
@@ -307,8 +295,8 @@ class Groovysh extends Shell {
     final Closure defaultErrorHook = { Throwable cause ->
         assert cause != null
 
-        io.err.println("@|bold,red ERROR|@ ${cause.class.name}:")
-        io.err.println("@|bold,red ${cause.message}|@")
+        io.err.println("ERROR ${cause.class.name}:")
+        io.err.println("${cause.message}")
 
         maybeRecordError(cause)
 
@@ -329,13 +317,13 @@ class Groovysh extends Shell {
             def buff = new StringBuffer()
 
             for (e in trace) {
-                buff << "        @|bold at|@ ${e.className}.${e.methodName} (@|bold "
+                buff << "        at ${e.className}.${e.methodName} ("
 
                 buff << (e.nativeMethod ? 'Native Method' :
                             (e.fileName != null && e.lineNumber != -1 ? "${e.fileName}:${e.lineNumber}" :
                                 (e.fileName != null ? e.fileName : 'Unknown Source')))
 
-                buff << '|@)'
+                buff << ')'
 
                 io.err.println(buff)
 
@@ -343,7 +331,7 @@ class Groovysh extends Shell {
 
                 // Stop the trace once we find the root of the evaluated script
                 if (e.className == Interpreter.SCRIPT_FILENAME && e.methodName == 'run') {
-                    io.err.println('        @|bold ...|@')
+                    io.err.println('        ...')
                     break
                 }
             }
