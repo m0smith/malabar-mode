@@ -62,11 +62,8 @@
           (concat package "." class)
         class))))
 
-(defun malabar-visit-corresponding-test (&optional buffer silent)
-  "Returns (TEST-BUF . EXISTED) where TEST-BUF is a buffer
-visiting the test class corresponding to BUFFER and EXISTED is T
-if the file already existed."
-  (interactive)
+(defun malabar-find-corresponding-test (&optional buffer)
+  "Returns test source file corresponding to BUFFER."
   (let ((buffer (or buffer (current-buffer))))
     (if (malabar-test-class-buffer-p buffer)
         (cons buffer t)
@@ -75,12 +72,18 @@ if the file already existed."
                          (file-name-extension (buffer-file-name buffer) t)))
             (test-source-directories (malabar-project-test-source-directories
                                       (malabar-find-project-file buffer))))
-        (let ((filename (or (locate-file class-file test-source-directories)
-                            (expand-file-name class-file (car test-source-directories)))))
-          (cons (if silent
-                    (find-file-noselect filename t)
-                  (find-file filename))
-                (file-exists-p filename)))))))
+        (or (locate-file class-file test-source-directories)
+	    (expand-file-name class-file (car test-source-directories)))))))
+  
+
+(defun malabar-visit-corresponding-test (&optional buffer silent)
+  "Returns buffer visiting the test source file corresponding to BUFFER."
+  (interactive)
+  (let ((filename (malabar-find-corresponding-test buffer)))
+    (make-directory (file-name-directory filename) t)
+    (if silent
+	(find-file-noselect filename t)
+      (find-file filename))))
 
 (defun malabar-run-test-internal (test-starter &optional requires-qualification)
   (malabar-setup-compilation-buffer '()) ;; HACK
@@ -95,17 +98,9 @@ if the file already existed."
 
 (put 'with-existing-corresponding-test-buffer 'lisp-indent-function 1)
 (defmacro* with-existing-corresponding-test-buffer ((buffer silent) &body body)
-  (let ((res (gensym))
-        (buf (gensym))
-        (exist-p (gensym)))
-    `(let* ((,res (malabar-visit-corresponding-test ,buffer ,silent))
-            (,buf (car ,res))
-            (,exist-p (cdr ,res)))
-       (if ,exist-p
-           (with-current-buffer ,buf
-             ,@body)
-         ;; the visit-function created a buffer, kill it
-         (kill-buffer ,buf)))))
+  `(when (file-exists-p (malabar-find-corresponding-test ,buffer))
+     (with-current-buffer (malabar-visit-corresponding-test ,buffer ,silent)
+       ,@body)))
 
 (defun malabar-run-junit-test ()
   "Runs the current buffer (or its corresponding test) as a
