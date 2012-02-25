@@ -67,9 +67,13 @@ public class MvnServer
     }
     
     public MavenExecutionRequest newRequest(basedir, profiles) {
+        def systemProperties = new Properties()
+        systemProperties += System.properties
+
         return new DefaultMavenExecutionRequest(
             userSettingsFile:MavenCli.DEFAULT_USER_SETTINGS_FILE,
             globalSettingsFile:MavenCli.DEFAULT_GLOBAL_SETTINGS_FILE,
+            systemProperties:systemProperties,
             baseDirectory:basedir,
             pom:modelProcessor.locatePom(basedir),
             transferListener:transferListener,
