@@ -49,7 +49,7 @@ class ClasspathTest
     
     @AfterClass
     static void setExceptionHandler() {
-        Thread[] threads = new Thread[Thread.activeCount() * 2];
+        def threads = new Thread[Thread.activeCount() * 2];
         Thread.enumerate(threads);
         threads.each {
             if (it) {
@@ -60,50 +60,55 @@ class ClasspathTest
 
     @Test
     void objectHasNoSuper() {
-        String result = classInfo("java.lang.Object");
+        def result = classInfo("java.lang.Object");
         assertThat(result, containsString('("java.lang.Object" type'));
         assertThat(result, not(containsString(":superclasses")));
     }
 
     @Test
     void superOfIntegerIsNumber() {
-        String result = classInfo("java.lang.Integer");
+        def result = classInfo("java.lang.Integer");
         assertThat(result, containsString('("java.lang.Integer" type'));
         assertThat(result, containsString(':superclasses "java.lang.Number"'));
     }
 
     @Test
     void inputStreamImplementsCloseable() {
-        String result = classInfo("java.io.InputStream");
-        assertThat(result, containsString(':interfaces ("java.io.Closeable")'));
+        def result = interfaces(classInfo("java.io.InputStream"));
+        assertThat(result, hasItems("java.io.Closeable"));
     }
 
     @Test
     void outputStreamImplementsCloseableAndFlushable() {
-        String result = classInfo("java.io.OutputStream");
-        assertThat(result, containsString(':interfaces ("java.io.Closeable" "java.io.Flushable")'));
+        def result = interfaces(classInfo("java.io.OutputStream"));
+        assertThat(result, hasItems("java.io.Closeable", "java.io.Flushable"));
     }
 
     @Test
     void collectionImplementsIterableE() {
-        String result = classInfo("java.util.Collection");
-        assertThat(result, containsString(':interfaces ("java.lang.Iterable<E>")'));
+        def result = interfaces(classInfo("java.util.Collection"));
+        assertThat(result, hasItems("java.lang.Iterable<E>"));
     }
 
     @Test
     void scannerImplementsIteratorString() {
-        String result = classInfo("java.util.Scanner");
-        assertThat(result, containsString(':interfaces ("java.util.Iterator<java.lang.String>")'));
+        def result = interfaces(classInfo("java.util.Scanner"));
+        assertThat(result, hasItems("java.util.Iterator<java.lang.String>"));
     }
 
     @Test
     void classInfoOfEnumDoesntInfLoop() {
-        String result = classInfo("java.lang.Enum");
+        def result = classInfo("java.lang.Enum");
         assertThat(result, containsString('valueOf'));
     }
 
     def classInfo(name) {
         new Classpath().getClassInfo(name);
         return out.toString();
+    }
+
+    def interfaces(classInfo) {
+        def m = classInfo =~ /:interfaces \((.+?)\)/
+        return m[0][1].replace('"', "").split(" ").toList();
     }
 }
