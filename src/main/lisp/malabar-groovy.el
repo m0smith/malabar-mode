@@ -429,6 +429,7 @@ for it to come up."
                                                      (point)))
                    :position-info
                    (let ((positions (match-string-no-properties 7)))
+		     (message "#%s" positions)
                      (mapcar #'1+
                              (car
                               (read-from-string
@@ -517,13 +518,14 @@ for it to come up."
                                            (warning 'malabar-warning-face)
                                            (info 'malabar-info-face)))
               (overlay-put overlay 'help-echo (getf compiler-note :message)))
-            (push (fringe-helper-insert-region
-                   beg end (fringe-lib-load (case class
-                                              (error fringe-lib-exclamation-mark)
-                                              (warning fringe-lib-question-mark)
-                                              (info fringe-lib-wave)))
-                   'left-fringe (when (eq class 'error) 'font-lock-warning-face))
-                  malabar-groovy--fringe-overlays)
+	    (when (display-graphic-p)
+	      (push (fringe-helper-insert-region
+		     beg end (fringe-lib-load (case class
+						(error fringe-lib-exclamation-mark)
+						(warning fringe-lib-question-mark)
+						(info fringe-lib-wave)))
+		     'left-fringe (when (eq class 'error) 'font-lock-warning-face))
+		    malabar-groovy--fringe-overlays))
             (set-buffer-modified-p modified)))))))
 
 (provide 'malabar-groovy)
