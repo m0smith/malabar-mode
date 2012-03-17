@@ -41,6 +41,8 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.logging.Logger;
 
+import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.resolution.ArtifactRequest;
 import org.sonatype.aether.transfer.TransferListener;
 
 public class MvnServer
@@ -137,15 +139,18 @@ public class MvnServer
     }
 
     public boolean resolveArtifact(Artifact artifact, MavenExecutionRequest request) {
-        withComponent(ArtifactResolver) { ar ->
+        withComponent(RepositorySystem) { repoSystem ->
+            def artifactRequest = new ArtifactRequest()
+            artifactRequest.artifact = RepositoryUtils.toArtifact(artifact)
+            artifactRequest.repositories = RepositoryUtils.toRepos(request.remoteRepositories)
             try {
-                // TODO ArtifactResolver#resolve is deprecated
-                ar.resolve(artifact, request.remoteRepositories, request.localRepository);
-                return true
-            } catch (Exception e) {
+                def result = repoSystem.resolveArtifact(request.projectBuildingRequest.repositorySession,
+                                                        artifactRequest)
+                return result.resolved
+            } catch (e) {
                 e.printStackTrace()
                 // TODO log
-                return null
+                return false;
             }
         }
     }
