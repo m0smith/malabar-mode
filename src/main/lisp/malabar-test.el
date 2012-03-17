@@ -25,10 +25,23 @@
   :group 'malabar-mode
   :type 'string)
 
+(defcustom malabar-test-class-buffer-p-function 'malabar-test-class-buffer-p/simple
+  "The predicate function for check test class name."
+  :group 'malabar-mode
+  :type '(choice
+	  (const :tag "Simple" malabar-test-class-buffer-p/simple)
+	  (const :tag "Strict" malabar-test-class-buffer-p/strict)
+	  (function :tag "Other Function")))
+
+
 (defvar malabar-failed-maven-test-re "^  \\([[:alnum:]]+\\)(\\([[:alnum:].]+\\))$")
 (defvar malabar-failed-junit-test-re "^  Failure point:  \\([^:]+\\):\\([0-9]+\\)$")
 
 (defun malabar-test-class-buffer-p (buffer)
+  "Return non-nil when buffer is test class."
+  (funcall malabar-test-class-buffer-p-function buffer))
+
+(defun malabar-test-class-buffer-p/strict (buffer)
   (let* ((type-tag (car (semantic-brute-find-tag-by-class 'type buffer)))
          (superclasses (semantic-tag-type-superclasses type-tag)))
     (or (member "TestCase" superclasses)
@@ -41,6 +54,10 @@
                                       (string-ends-with m "Test")))
                                (semantic-tag-modifiers member-tag)))
               (semantic-tag-type-members type-tag)))))
+
+(defun malabar-test-class-buffer-p/simple (buffer)
+  (let ((filename (buffer-file-name buffer)))
+    (and filename (string-match "Test$" (file-name-sans-extension filename)))))
 
 (defun malabar-find-test-class-from-error ()
   (let* ((class-name (match-string-no-properties 2))
@@ -66,7 +83,7 @@
   "Returns test source file corresponding to BUFFER."
   (let ((buffer (or buffer (current-buffer))))
     (if (malabar-test-class-buffer-p buffer)
-        (cons buffer t)
+	(buffer-file-name buffer)
       (let ((class-file (malabar-class-name-to-filename
                          (malabar-corresponding-test-class-name buffer)
                          (file-name-extension (buffer-file-name buffer) t)))
