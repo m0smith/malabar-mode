@@ -100,31 +100,28 @@ class Project
         return result.wasSuccessful();
     }
 
-    def sourceJarForClass(String name) {
+    File findSourceJarForClass(String name) {
         def artifact = testClasspath.artifactForClass(name);
         if (artifact == null) {
-            println "nil";
-            return
+            return null
         }
-        
-        mvnServer.withComponent(org.apache.maven.artifact.factory.ArtifactFactory) { af ->
-            def sourceArtifact =
-                af.createArtifactWithClassifier(artifact.groupId,
-                                                artifact.artifactId,
-                                                artifact.version,
-                                                artifact.type,
-                                                "sources");
-            mvnServer.withComponent(org.apache.maven.artifact.resolver.ArtifactResolver) { ar ->
-                try {
-                    def localRepo = request.localRepository
-                    ar.resolve(sourceArtifact, request.remoteRepositories, localRepo);
-                    def f = new File(localRepo.basedir, localRepo.pathOf(sourceArtifact))
-                    println "\"${f}\""
-                } catch (Exception e) {
-                    // TODO log
-                    println "nil"
-                }
-            }
+
+        def sourceArtifact = mvnServer.classfiedArtifact(artifact, "sources")
+        def resolved = mvnServer.resolveArtifact(sourceArtifact, request)
+        if (resolved) {
+            def localRepo = request.localRepository
+            return new File(localRepo.basedir, localRepo.pathOf(sourceArtifact))
+        } else {
+            return null
+        }
+    }
+
+    def sourceJarForClass(String name) {
+        def jar = findSourceJarForClass(name)
+        if (jar) {
+            Utils.printAsLisp("${jar}")
+        } else {
+            Utils.printAsLisp(null)
         }
     }
 

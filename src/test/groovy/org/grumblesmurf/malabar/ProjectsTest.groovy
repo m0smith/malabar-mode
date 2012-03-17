@@ -66,4 +66,9 @@ class ProjectsTest
         assertThat(p.mvnServer, is(not(nullValue())));
         assertThat(p.run("validate"), is(true));
     }
+
+    @Test
+    void findSourceJarForClass() {
+        assertThat(p.findSourceJarForClass("org.apache.maven.Maven"), is(not(nullValue())))
+    }
 }

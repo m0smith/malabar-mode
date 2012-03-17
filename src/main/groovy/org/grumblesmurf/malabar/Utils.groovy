@@ -61,6 +61,8 @@ class Utils
             asLispList(o)
         } else if (o instanceof Map) {
             asLispHashTable(o)
+        } else if (o == null) {
+            "nil"
         } else {
             o.toString()
         }

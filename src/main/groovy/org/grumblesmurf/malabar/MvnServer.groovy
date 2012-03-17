@@ -19,6 +19,10 @@
 package org.grumblesmurf.malabar;
 
 import org.apache.maven.Maven;
+import org.apache.maven.RepositoryUtils;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.factory.ArtifactFactory;
+import org.apache.maven.artifact.resolver.ArtifactResolver
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.MavenLoggerManager;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
@@ -120,6 +124,30 @@ public class MvnServer
             pom:pomFileName as File,
             recursive:recursive,
             goals:goals);
+    }
+
+    public Artifact classfiedArtifact(Artifact artifact, String classifier) {
+        withComponent(org.apache.maven.artifact.factory.ArtifactFactory) { af ->
+            return af.createArtifactWithClassifier(artifact.groupId,
+                                                   artifact.artifactId,
+                                                   artifact.version,
+                                                   artifact.type,
+                                                   classifier)
+        }
+    }
+
+    public boolean resolveArtifact(Artifact artifact, MavenExecutionRequest request) {
+        withComponent(ArtifactResolver) { ar ->
+            try {
+                // TODO ArtifactResolver#resolve is deprecated
+                ar.resolve(artifact, request.remoteRepositories, request.localRepository);
+                return true
+            } catch (Exception e) {
+                e.printStackTrace()
+                // TODO log
+                return null
+            }
+        }
     }
 }
 
