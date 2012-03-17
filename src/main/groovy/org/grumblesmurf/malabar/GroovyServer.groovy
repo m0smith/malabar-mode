@@ -44,7 +44,7 @@ class GroovyServer
         
         def options = cli.parse(args);
 
-        if (options.c && options.e) {
+        if (options && options.c && options.e) {
             startServer("compile-server", Integer.valueOf(options.getOptionValue('c')), ready);
             startServer("eval-server", Integer.valueOf(options.getOptionValue('e')), ready);
             ready.await();
