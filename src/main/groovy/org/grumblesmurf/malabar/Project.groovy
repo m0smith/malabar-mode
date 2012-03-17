@@ -107,23 +107,25 @@ class Project
             return
         }
         
-        def af = GroovyServer.mvnServer.plexus.lookup(org.apache.maven.artifact.factory.ArtifactFactory);
-        def sourceArtifact =
-            af.createArtifactWithClassifier(artifact.groupId,
-                                            artifact.artifactId,
-                                            artifact.version,
-                                            artifact.type,
-                                            "sources");
-        def ar = mvnServer.plexus.lookup(org.apache.maven.artifact.resolver.ArtifactResolver);
-        try {
-            def localRepo = request.localRepository
-            ar.resolve(sourceArtifact, request.remoteRepositories, localRepo);
-            def f = new File(localRepo.basedir, localRepo.pathOf(sourceArtifact))
-            println "\"${f}\""
-        } catch (Exception e) {
-            // TODO log
-            println "nil"
-        } 
+        mvnServer.withComponent(org.apache.maven.artifact.factory.ArtifactFactory) { af ->
+            def sourceArtifact =
+                af.createArtifactWithClassifier(artifact.groupId,
+                                                artifact.artifactId,
+                                                artifact.version,
+                                                artifact.type,
+                                                "sources");
+            mvnServer.withComponent(org.apache.maven.artifact.resolver.ArtifactResolver) { ar ->
+                try {
+                    def localRepo = request.localRepository
+                    ar.resolve(sourceArtifact, request.remoteRepositories, localRepo);
+                    def f = new File(localRepo.basedir, localRepo.pathOf(sourceArtifact))
+                    println "\"${f}\""
+                } catch (Exception e) {
+                    // TODO log
+                    println "nil"
+                }
+            }
+        }
     }
 
     def successfulCompilation() {
