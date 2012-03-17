@@ -1,0 +1,12 @@
+#!/bin/bash
+
+root=$(dirname "$0")/..
+classpath=$(echo $root/target/lib/*.jar | tr ' ' ':'):"$root/target/classes"
+main=org.grumblesmurf.malabar.GroovyServer
+if [ -z "$JAVA_HOME" ]; then
+  javacmd=java
+else
+  javacmd="$JAVA_HOME/bin/java"
+fi
+
+"$javacmd" -cp "$classpath" "$main" "$@"
