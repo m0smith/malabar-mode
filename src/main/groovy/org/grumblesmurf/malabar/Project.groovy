@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of the
@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- */ 
+ */
 package org.grumblesmurf.malabar
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.resolver.filter.CumulativeScopeArtifactFilter;
+import java.util.regex.Matcher;
 
 class Project
 {
@@ -61,7 +62,7 @@ class Project
     def compiler;
 
     def mvnServer;
-    
+
     def runtest(testname) {
         return run(["test"], [], [ test: testname ]);
     }
@@ -144,22 +145,22 @@ class Project
 
         activeProfiles = mavenProject.activeProfiles.collect { it.id }
         availableProfiles = mavenProject.model.profiles.collect { it.id }
-        
-        srcDirectories = mavenProject.compileSourceRoots
-        classesDirectory = mavenProject.build.outputDirectory
+
+        srcDirectories = mavenProject.compileSourceRoots.collect { Utils.standardizeSlashes(it) }
+        classesDirectory = Utils.standardizeSlashes(mavenProject.build.outputDirectory)
         resources = mavenProject.resources.collect {
             // TODO: better resource handling
-            it.directory
+            Utils.standardizeSlashes(it.directory)
         }
 
-        testSrcDirectories = mavenProject.testCompileSourceRoots
+        testSrcDirectories = mavenProject.testCompileSourceRoots.collect { Utils.standardizeSlashes(it) }
         testSrcDirectories += testSrcDirectories.collect {
-            it.replaceFirst('src/test/java', 'src/test/groovy')
+            Utils.standardizeSlashes(it).replaceFirst('src/test/java', 'src/test/groovy')
         }
-        testClassesDirectory = mavenProject.build.testOutputDirectory
+        testClassesDirectory = Utils.standardizeSlashes(mavenProject.build.testOutputDirectory)
         testResources = mavenProject.testResources.collect {
             // TODO: better resource handling
-            it.directory
+            Utils.standardizeSlashes(it.directory)
         }
 
         def filter = new CumulativeScopeArtifactFilter([Artifact.SCOPE_COMPILE])

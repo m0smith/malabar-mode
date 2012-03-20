@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of the
@@ -15,33 +15,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301 USA.
- */ 
+ */
 package org.grumblesmurf.malabar
 
 import org.codehaus.groovy.tools.RootLoader;
 import java.util.jar.*;
 
-class Classpath 
+class Classpath
 {
     def artifacts = [];
-    
+
     def extraEntries = [];
-    
+
     def bootUrls = [];
 
     def extUrls = [];
-    
+
     def urls = [];
-    
+
     Classpath() {
         System.getProperty("sun.boot.class.path").split(File.pathSeparator).each() {
-            bootUrls << "file:" + it
+            bootUrls << (new File(it)).toURI().toString()
         }
 
         System.getProperty("java.ext.dirs").split(File.pathSeparator).each() { dir ->
             try {
                 (dir as File).eachFileMatch(~/.*.jar/) {
-                    extUrls << "file:" + it
+                    extUrls << it.toURI().toString()
                 }
             } catch (FileNotFoundException e) {
                 // EAT IT
@@ -52,24 +52,21 @@ class Classpath
     Classpath(extraEntries, artifacts) {
         this()
         this.artifacts = artifacts;
-        
+
         this.extraEntries = extraEntries.collect {
-            if ((it as File).isDirectory() && !it.endsWith("/"))
-              it = it + "/"
-            this.urls << "file:" + it
-            "file:" + it
+            (new File(it)).toURI().toString()
         }
-        
+
         artifacts.each {
             if (it.file)
-                this.urls << "file:" + it.file.path
+                this.urls <<  (new File(it.file.path)).toURI().toString()
         }
     }
 
     def asClassPath() {
         return urls.collect{it.substring(5)}.join(':')
     }
-    
+
     private classloader;
 
     def classMap = [:]
@@ -78,12 +75,12 @@ class Classpath
 
     // TODO: This is not good
     def currentArtifact
-        
+
     def classnamecollector = { fileName, path, map ->
         def classbinaryname = fileName[0..-7];
         def simplename = classbinaryname[classbinaryname.lastIndexOf('$') + 1..-1]
         def pkgname = path.replace('/', '.')
-                        
+
         if (!map.containsKey(simplename)) {
             map[simplename] = []
         }
@@ -91,9 +88,10 @@ class Classpath
         if (currentArtifact)
             classToArtifact[pkgname + "." + classbinaryname] = currentArtifact
     }
-            
+
     def classcollector = { it, map ->
         URI uri = new URI(it);
+
         File file = new File(uri);
         String absolutePath = file.absolutePath
         if (file.exists()) {
@@ -120,7 +118,7 @@ class Classpath
             }
         }
     }
-            
+
     def getClasses(String name) {
         if (name.contains(".")) {
             try {
@@ -131,7 +129,7 @@ class Classpath
             }
             return;
         }
-        
+
         if (classMap.isEmpty()) {
             populateClassMap();
         }
@@ -163,7 +161,7 @@ class Classpath
         artifacts.each {
             currentArtifact = it
             if (it.file)
-                classcollector("file:" + it.file.path, classMap)
+                classcollector(new File(it.file.path).toURI().toString(), classMap)
         }
     }
 
@@ -173,13 +171,13 @@ class Classpath
         }
         return classToArtifact[name];
     }
-    
+
     def newClassLoader() {
-        def realUrls = urls.collect { new URL(it) }
+        def realUrls = urls.collect { it.toURL() }
         return new RootLoader(realUrls as URL[],
                               ClassLoader.systemClassLoader.parent)
     }
-        
+
     def getClassLoader() {
         if (classloader == null) {
             classloader = newClassLoader();
