@@ -85,7 +85,7 @@
     ("Source"
      ["Insert getter/setter" malabar-insert-getset]
      ["Import class" malabar-import-one-class]
-     ["Import all classes" malaber-import-all]
+     ["Import all classes" malabar-import-all]
      ["Override method" malabar-override-method]
      ["Extend class" malabar-extend-class]
      ["Implement interface" malabar-implement-interface])
