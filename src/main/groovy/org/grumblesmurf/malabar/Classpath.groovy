@@ -56,6 +56,7 @@ class Classpath
         this.extraEntries = extraEntries.collect {
             (new File(it)).toURI().toString()
         }
+        this.urls += this.extraEntries
 
         artifacts.each {
             if (it.file)
@@ -64,7 +65,7 @@ class Classpath
     }
 
     def asClassPath() {
-        return urls.collect{it.substring(5)}.join(':')
+        return urls.collect{new File(it.toURI()).path}.join(File.pathSeparator)
     }
 
     private classloader;
