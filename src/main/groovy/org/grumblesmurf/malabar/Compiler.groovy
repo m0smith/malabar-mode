@@ -64,10 +64,10 @@ class Compiler
             def success = task.call();
             diagnosticCollector.diagnostics.each {
                 if (it.source) {
-                    def src = it.source.toUri().path
+                    def src = new File(it.source.toUri()).path
                     def start = [src, it.lineNumber].join(":")
-                    def message = it.getMessage(null).replaceFirst(start + ":", "")
-                    println([it.kind, src, it.lineNumber, it.columnNumber,
+                    def message = it.getMessage(null).replace(start + ":", "")
+                    println([it.kind, Utils.standardizeSlashes(src), it.lineNumber, it.columnNumber,
                              it.startPosition, it.endPosition, it.position,
                              message].join("::"))
                 } else {

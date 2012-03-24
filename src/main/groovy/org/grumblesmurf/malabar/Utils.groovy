@@ -83,4 +83,8 @@ class Utils
         result << "))";
         return result as String;
     }
+
+    static standardizeSlashes(String path) {
+        path.replaceAll('\\\\', '/')
+    }
 }

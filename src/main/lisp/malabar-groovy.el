@@ -157,7 +157,7 @@ variable once the eval server has started."
 (defun malabar-groovy-stop ()
   "Stop the inferior Groovy."
   (interactive)
-  (let ((start-time (float-time)) (groovy-process (get-buffer-process malabar-groovy-buffer-name)))  
+  (let ((start-time (float-time)) (groovy-process (get-buffer-process malabar-groovy-buffer-name)))
     (malabar-groovy-eval-in-process groovy-process "exit")
     (while (malabar-groovy-live-p)
       (sit-for 0.1)
@@ -202,10 +202,10 @@ pop to the Groovy console buffer."
         (progress-reporter-force-update reporter 4 "Starting Groovy...connecting to servers ")
         (make-comint malabar-groovy-compile-server-comint-name
                      (cons "localhost"
-                           (number-to-string malabar-groovy-compile-server-port)))
+                           malabar-groovy-compile-server-port))
         (make-comint malabar-groovy-eval-server-comint-name
                      (cons "localhost"
-                           (number-to-string malabar-groovy-eval-server-port)))
+                           malabar-groovy-eval-server-port))
         (progress-reporter-force-update reporter 5 "Starting Groovy...waiting for server prompts ")
         (malabar-groovy--wait-for-prompt malabar-groovy-compile-server-buffer-name
                                          initial-points-alist)
