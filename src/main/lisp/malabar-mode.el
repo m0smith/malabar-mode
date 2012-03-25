@@ -103,15 +103,7 @@
 
 (define-derived-mode malabar-mode java-mode "malabar"
   "A new, better, Java mode."
-  ;; HACK: Since we're not loading the old java parser the installer
-  ;; function isn't defined; give it a dummy definition
-  (flet ((wisent-java-wy--install-parser () nil)
-         (wisent-java-tags-wy--install-parser () nil)) ;; For Emacs 23.2+
-    (wisent-java-default-setup))
-  (setq semantic-lex-depth 10)
-  (setq semantic-idle-scheduler-idle-time 1)
-  (setq semantic-lex-analyzer 'wisent-malabar-java-lexer)
-  (wisent-malabar-java-wy--install-parser)
+  (wisent-malabar-java-setup)
   (srecode-minor-mode 1)
   ;; Set the menu
   (easy-menu-add malabar-mode-menu malabar-mode-map)
@@ -121,6 +113,19 @@
   (malabar-groovy-start t))
 
 (remove-hook 'java-mode-hook 'wisent-java-default-setup)
+(add-hook 'java-mode-hook 'wisent-malabar-java-setup)
+(when (boundp 'semantic-new-buffer-setup-functions)
+  (setq semantic-new-buffer-setup-functions
+        (subst 'wisent-malabar-java-setup 'wisent-java-default-setup
+               semantic-new-buffer-setup-functions)))
+
+(defun malabar-mode-maybe ()
+  "Turn on `malabar-mode' if project exists. Otherwise, turn on `malabar-mode-fallback'."
+  (interactive)
+  (call-interactively
+   (if (malabar-project-exists-p)
+       'malabar-mode
+     malabar-mode-fallback)))
 
 (defun malabar-electric-colon (arg)
   "Acts as `c-electric-colon'.

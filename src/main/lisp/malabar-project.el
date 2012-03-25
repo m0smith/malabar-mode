@@ -108,6 +108,10 @@
           (malabar--project-for-file file))
         (error "No POM found for buffer %s" buffer))))
 
+(defun malabar-project-exists-p (&optional buffer)
+  (when-let (file (buffer-file-name (or buffer (current-buffer))))
+    (malabar--project-for-file file)))
+
 (defun malabar--project-for-file (file)
   (when-let (dir (locate-dominating-file file "pom.xml"))
     (malabar--project-file dir)))

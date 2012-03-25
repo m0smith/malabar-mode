@@ -135,4 +135,9 @@ See `malabar-electric-colon'."
   :group 'malabar-mode
   :type '(boolean))
 
+(defcustom malabar-mode-fallback 'java-mode
+  "Fallback mode for `malabar-mode-maybe'."
+  :group 'malabar-mode
+  :type 'function)
+
 (provide 'malabar-variables)
