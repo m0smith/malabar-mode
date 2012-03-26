@@ -120,7 +120,7 @@ class Project
     def sourceJarForClass(String name) {
         def jar = findSourceJarForClass(name)
         if (jar) {
-            Utils.printAsLisp("${jar}")
+            Utils.printAsLisp("${Utils.standardizeSlashes(jar.path)}")
         } else {
             Utils.printAsLisp(null)
         }
