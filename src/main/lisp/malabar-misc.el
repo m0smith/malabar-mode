@@ -73,6 +73,8 @@
           (semantic-tag-type-members class-tag))))
 
 (defun malabar-semantic-fetch-tags ()
+  (unless (semantic-active-p)
+    (semantic-new-buffer-fcn))
   (let ((tags (semantic-fetch-tags)))
     (mapc (lambda (tag)
             (when (semantic-tag-of-class-p tag 'type)
