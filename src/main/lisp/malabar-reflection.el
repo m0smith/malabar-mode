@@ -90,7 +90,8 @@
                                       (malabar--load-sibling-source classname buffer))
                                  (malabar--load-archived-source classname buffer)
                                  (malabar--load-extra-source classname)))
-      (malabar--get-class-info-from-buffer source-buffer))))
+      (when-let (tag (malabar--get-class-info-from-buffer source-buffer))
+        (malabar--class-info-set-from-source tag)))))
 
 (defun malabar--load-local-source (classname buffer)
   ;; First, try resolving in local project
@@ -170,6 +171,12 @@
 (defun malabar--get-class-info-from-buffer (buffer)
   (with-current-buffer buffer
     (malabar-get-class-tag-at-point)))
+
+(defun malabar--class-info-from-source-p (tag)
+  (semantic-tag-get-attribute tag :malabar-from-source))
+
+(defun malabar--class-info-set-from-source (tag)
+  (semantic-tag-put-attribute tag :malabar-from-source t))
 
 (define-cached-function malabar--get-source-jar (classname buffer)
   (malabar-groovy-eval-and-lispeval

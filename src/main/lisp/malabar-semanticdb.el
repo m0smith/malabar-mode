@@ -63,10 +63,16 @@ if it gives you trouble.")
   (let ((default-answer (semanticdb-typecache-find-default type path find-file-match)))
     (or default-answer
         (and (stringp type)
-             (or (gethash type malabar--java-typecache)
+             (or (let ((tag (gethash type malabar--java-typecache)))
+                   (and (malabar-semanticdb--tag-alive-p tag) tag))
                  (puthash type 
                           (malabar--get-type-tag (malabar-qualify-class-name-in-buffer type))
                           malabar--java-typecache))))))
+
+(defun malabar-semanticdb--tag-alive-p (tag)
+  (and tag
+       (or (not (malabar--class-info-from-source-p tag))
+           (buffer-live-p (semantic-tag-buffer tag)))))
 
 (defmethod semanticdb-get-database-tables ((obj semanticdb-project-database-malabar))
   (when (not (slot-boundp obj 'tables))
