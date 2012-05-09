@@ -151,8 +151,9 @@
           (setq buffer-file-name (expand-file-name (concat archive ":" file-name)))
           (setq buffer-file-truename (file-name-nondirectory file-name))
           (let ((exit-code
-                 (archive-extract-by-stdout archive file-name
-                                            archive-zip-extract)))
+                 (let ((coding-system-for-read 'undecided))
+                   (archive-extract-by-stdout archive file-name
+                                              archive-zip-extract))))
             (if (and (numberp exit-code) (zerop exit-code))
                 (progn (malabar-mode)
                        (goto-char (point-min))
