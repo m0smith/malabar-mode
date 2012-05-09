@@ -145,12 +145,9 @@
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
   ;; TODO:  This won't work for inner classes
-  (let ((file-name (malabar-class-name-to-filename classname))
-        (buffer (get-buffer buffer-name)))
-    (or buffer
-        (save-excursion
-          (setq buffer (get-buffer-create buffer-name))
-          (set-buffer buffer)
+  (let ((file-name (malabar-class-name-to-filename classname)))
+    (or (get-buffer buffer-name)
+        (with-current-buffer (get-buffer-create buffer-name)
           (setq buffer-file-name (expand-file-name (concat archive ":" file-name)))
           (setq buffer-file-truename (file-name-nondirectory file-name))
           (let ((exit-code
@@ -163,9 +160,8 @@
                              buffer-saved-size (buffer-size)
                              buffer-read-only t)
                        (set-buffer-modified-p nil)
-                       buffer)
-              (set-buffer-modified-p nil)
-              (kill-buffer buffer)
+                       (current-buffer))
+              (kill-buffer (current-buffer))
               nil))))))
 
 (defun malabar--get-class-info-from-buffer (buffer)
