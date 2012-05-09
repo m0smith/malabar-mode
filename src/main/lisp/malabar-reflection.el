@@ -90,7 +90,8 @@
                                       (malabar--load-sibling-source classname buffer))
                                  (malabar--load-archived-source classname buffer)
                                  (malabar--load-extra-source classname)))
-      (malabar--get-class-info-from-buffer source-buffer))))
+      (when-let (tag (malabar--get-class-info-from-buffer source-buffer))
+        (malabar--class-info-set-from-source tag)))))
 
 (defun malabar--load-local-source (classname buffer)
   ;; First, try resolving in local project
@@ -144,17 +145,15 @@
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
   ;; TODO:  This won't work for inner classes
-  (let ((file-name (malabar-class-name-to-filename classname))
-        (buffer (get-buffer buffer-name)))
-    (or buffer
-        (save-excursion
-          (setq buffer (get-buffer-create buffer-name))
-          (set-buffer buffer)
+  (let ((file-name (malabar-class-name-to-filename classname)))
+    (or (get-buffer buffer-name)
+        (with-current-buffer (get-buffer-create buffer-name)
           (setq buffer-file-name (expand-file-name (concat archive ":" file-name)))
           (setq buffer-file-truename (file-name-nondirectory file-name))
           (let ((exit-code
-                 (archive-extract-by-stdout archive file-name
-                                            archive-zip-extract)))
+                 (let ((coding-system-for-read 'undecided))
+                   (archive-extract-by-stdout archive file-name
+                                              archive-zip-extract))))
             (if (and (numberp exit-code) (zerop exit-code))
                 (progn (malabar-mode)
                        (goto-char (point-min))
@@ -162,14 +161,19 @@
                              buffer-saved-size (buffer-size)
                              buffer-read-only t)
                        (set-buffer-modified-p nil)
-                       buffer)
-              (set-buffer-modified-p nil)
-              (kill-buffer buffer)
+                       (current-buffer))
+              (kill-buffer (current-buffer))
               nil))))))
 
 (defun malabar--get-class-info-from-buffer (buffer)
   (with-current-buffer buffer
     (malabar-get-class-tag-at-point)))
+
+(defun malabar--class-info-from-source-p (tag)
+  (semantic-tag-get-attribute tag :malabar-from-source))
+
+(defun malabar--class-info-set-from-source (tag)
+  (semantic-tag-put-attribute tag :malabar-from-source t))
 
 (define-cached-function malabar--get-source-jar (classname buffer)
   (malabar-groovy-eval-and-lispeval
