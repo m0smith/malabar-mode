@@ -20,6 +20,7 @@ package org.grumblesmurf.malabar;
 
 import org.junit.Test;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
 import static org.junit.matchers.JUnitMatchers.*;
@@ -28,6 +29,13 @@ import static org.hamcrest.CoreMatchers.*;
 class ProjectsTest 
 {
     Project p;
+
+  // @BeforeClass
+    static void redirectOutput() {
+        Object.metaClass.println = Utils.&println;
+        Object.metaClass.print = Utils.&print;
+    }
+
     
     @Before
     void instantiateProject() {
