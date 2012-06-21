@@ -30,7 +30,7 @@ class ProjectsTest
 {
     Project p;
 
-  // @BeforeClass
+    @BeforeClass
     static void redirectOutput() {
         Object.metaClass.println = Utils.&println;
         Object.metaClass.print = Utils.&print;
