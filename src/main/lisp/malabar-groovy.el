@@ -364,6 +364,8 @@ for it to come up."
 (defvar malabar-compilation-minor-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "g" 'malabar-groovy-rerun-last-compilation)
+    (define-key map "n" 'next-error)
+    (define-key map "p" 'previous-error)
     map))
 
 (define-minor-mode malabar-compilation-minor-mode
@@ -438,6 +440,10 @@ for it to come up."
                                        ")"))))))
              malabar-groovy--compiler-notes
              :test #'equal)))
+
+;; CLASS::FILE::LINE::COLUMN::START::END::POS::Message
+(add-to-list 'compilation-error-regexp-alist '("ERROR::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)" 1 2))
+(add-to-list 'compilation-error-regexp-alist '("WARNING::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)::\\(.+?\\)" 1 2 nil 1))
 
 (defvar malabar-groovy--compilation-backlog nil)
 
