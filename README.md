@@ -1,52 +1,16 @@
 # malabar-mode :: A better Java mode for Emacs
 
-**Note: I no longer have time to work on malabar-mode.  If someone
-wants to step up and take over the project, please contact me, either
-via email or with a GitHub message, and I'll update the repo
-description and this readme to point at the new canonical
-repository.**
+malabar-mode extends java-mode with hooks into Maven that make
+it easy to compile files on the fly and execute Maven build
+commands.
+
+This is a fork of
+[buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
+[espenhw's malabar-mode](https://github.com/espenhw/malabar-mode). Development
+of malabar-mode has stagnated. This fork is an attempt to keep
+it up to date and develop at a modest pace.
 
 You may want to skip to [Installation](#Installation).
-
-## Why yet another Java mode?
-
-After all there is java-mode, included with recent Emacsen, and
-[JDEE][] if you want something more IDEish.  So why yet another?
-
-### java-mode
-
-There's nothing (much) wrong with java-mode, but it doesn't provide
-enough power to do the things a Java developer (I, at least) needs to
-do every day.
-
-### JDEE
-
-Enter JDEE.  It's big, it's powerful, it probably includes more
-features than you'll ever need; I mean, who needs to
-[run jdb on an applet][] these days?
-
-Yet even so, something is lacking.  It's something big, it's something
-new, it's something no Java developer can live without these days:
-
-Generics.
-
-That's right; use generics (or enums, or foreach loops - annotations,
-on the other hand, are quite reasonably supported) and JDEE will, at
-best, get confused.  Part of the reason is that JDEE uses [BeanShell][]
-underneath; BSH is, sadly, unmaintained and lacks support for Java 5
-features.
-
-## So why not use an IDE?
-
-Because, in my arrogant opinion, the current crop of IDEs is complete
-and utter crap, not worth the bits to store or the CPU cycles to run
-(and *definitely* not worth the enormous amounts of memory they
-require).  I have a major rant brewing on this subject; watch
-[my blog][] if you care.
-
-You see, when it comes down to brass tacks, code is really just text.
-And Emacs beats any other text editor out there hands down (vi lovers,
-I hear you; I like vi, too, but Emacs is just *better*).
 
 ## What malabar-mode offers
 
@@ -64,12 +28,12 @@ anything you don't like.
 
 ### But there is more:
 
-- Tight integration with [Maven][]; if fact, so tight that if you're
-  not using Maven (why?) you should not consider malabar-mode.
+- Tight integration with [Maven](http://maven.apache.org/). If
+  you're not using Maven, you should not consider malabar-mode.
 
-- A [Groovy][] console for rapid prototyping and exploratory programming
+- A [Groovy](http://groovy.codehaus.org/) console for rapid prototyping and exploratory programming
 
-- [JUnit][] integration, both for running tests standalone and through Maven
+- [JUnit](http://www.junit.org/) integration, both for running tests standalone and through Maven
 
 - Import help; import one class or all needed classes in the buffer
   (with prompting if the class name is ambiguous)
@@ -341,7 +305,8 @@ If you want to hackig malabar-mode, you can add followings in your `.emacs`::
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
 * [Nikolaj Schumacher][] for fringe-helper and elk-test
-* [nflath](http://github.com/nflath), [stepb](http://github.com/stepb) and [bbatsov](http://github.com/bbatsov) for caring enough to help
+* [espenhw](https://github.com/espenhw) for getting the whole thing rolling
+* [nflath](https://github.com/nflath), [stepb](https://github.com/stepb) and [bbatsov](https://github.com/bbatsov) for caring enough to help
 * Everybody else for caring enough read this and report bugs
 
 # Boring legal stuff
