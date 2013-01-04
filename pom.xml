@@ -3,21 +3,19 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.grumblesmurf</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.5-SNAPSHOT</version>
-  <name>Malabar: A better Java mode for Emacs</name>
+  <version>1.5.0-SNAPSHOT</version>
+  <name>malabar-mode</name>
+  <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
-  <description>
-    A new, better Java mode for Emacs.
-  </description>
-  <url>http://github.com/espenhw/malabar-mode</url>
+  <url>http://github.com/dstu/malabar-mode</url>
   <scm>
-    <url>http://github.com/espenhw/malabar-mode</url>
-    <connection>scm:git:git://github.com/espenhw/malabar-mode.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/espenhw/malabar-mode.git</developerConnection>
+    <url>http://github.com/dstu/malabar-mode</url>
+    <connection>scm:git:git://github.com/dstu/malabar-mode.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/dstu/malabar-mode.git</developerConnection>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>http://github.com/espenhw/malabar-mode/issues</url>
+    <url>http://github.com/dstu/malabar-mode/issues</url>
   </issueManagement>
   <licenses>
     <license>
@@ -35,6 +33,13 @@
         <role>Evil mastermind</role>
       </roles>
     </developer>
+    <developer>
+      <id>dstu</id>
+      <name>Stu Black</name>
+      <roles>
+        <role>Keeper of the flame</role>
+      </roles>
+    </developer>
   </developers>
 
   <contributors>
@@ -50,16 +55,32 @@
       <name>bbatsov</name>
       <url>http://github.com/bbatsov</url>
     </contributor>
+    <contributor>
+      <name>buzztaiki</name>
+      <url>http://github.com/buzztaiki</url>
+    </contributor>
   </contributors>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.source.version>1.7</project.build.source.version>
+    <project.build.target.version>1.7</project.build.target.version>
     <maven.version>3.0.4</maven.version>
+    <maven.compiler.plugin.version>3.0</maven.compiler.plugin.version>
+    <maven.assembly.plugin.version>2.4</maven.assembly.plugin.version>
+    <exec.maven.plugin.version>1.2.1</exec.maven.plugin.version>
+    <maven.release.plugin.version>2.4</maven.release.plugin.version>
+    <maven.project.info.reports.plugin.version>2.6</maven.project.info.reports.plugin.version>
+    <maven.surefire.report.plugin.version>2.13</maven.surefire.report.plugin.version>
+    <maven.dependency.plugin.version>2.6</maven.dependency.plugin.version>
     <aether.version>1.13.1</aether.version>
     <wagon.version>2.2</wagon.version>
-    <groovy.version>1.8.5</groovy.version>
+    <groovy.major.version>1.8</groovy.major.version>
+    <groovy.version>1.8.8</groovy.version>
     <gmaven.version>1.4</gmaven.version>
-    <gmaven.runtime.version>1.8</gmaven.runtime.version>
+    <jline.version>1.0</jline.version>
+    <jansi.version>1.9</jansi.version>
+    <junit.version>4.11</junit.version>
   </properties>
   
   <dependencies>
@@ -117,24 +138,24 @@
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
-      <version>1.0</version>
+      <version>${jline.version}</version>
     </dependency>
     <dependency>
       <groupId>org.fusesource.jansi</groupId>
       <artifactId>jansi</artifactId>
-      <version>1.7</version>
-    </dependency>
-    
+      <version>${jansi.version}</version>
+    </dependency>    
+
     <dependency>
       <groupId>org.codehaus.gmaven.runtime</groupId>
-      <artifactId>gmaven-runtime-${gmaven.runtime.version}</artifactId>
+      <artifactId>gmaven-runtime-${groovy.major.version}</artifactId>
       <version>${gmaven.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.5</version>
+      <version>${junit.version}</version>
     </dependency>
   </dependencies>
   <build>
@@ -144,7 +165,7 @@
         <artifactId>gmaven-plugin</artifactId>
         <version>${gmaven.version}</version>
         <configuration>
-          <providerSelection>${gmaven.runtime.version}</providerSelection>
+          <providerSelection>${groovy.major.version}</providerSelection>
         </configuration>
         <executions>
           <execution>
@@ -158,15 +179,16 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>${maven.compiler.plugin.version}</version>
         <configuration>
-          <encoding>UTF-8</encoding>
-          <source>1.5</source>
-          <target>1.5</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <source>${project.build.source.version}</source>
+          <target>${project.build.target.version}</target>
         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
+	<version>${maven.assembly.plugin.version}</version>
         <executions>
           <execution>
             <id>make-assembly</id>
@@ -185,7 +207,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.1.1</version>
+        <version>${exec.maven.plugin.version}</version>
         <executions>
           <execution>
             <id>run-elisp-tests</id>
@@ -223,7 +245,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.0</version>
+        <version>${maven.release.plugin.version}</version>
         <configuration>
           <goals>site-deploy</goals>
         </configuration>
@@ -236,7 +258,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.1.2</version>
+        <version>${maven.project.info.reports.plugin.version}</version>
         <reportSets>
           <reportSet>
             <reports>
@@ -259,41 +281,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.4.2</version>
+        <version>${maven.surefire.report.plugin.version}</version>
       </plugin>
     </plugins>
   </reporting>
-
-  <repositories>
-    <repository>
-      <id>sonatype.maven.snapshots</id>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <url>http://repository.sonatype.org/content/repositories/maven.snapshots/</url>
-    </repository>
-    <repository>
-      <id>sonatype.plexus.snapshots</id>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <url>http://repository.sonatype.org/content/repositories/plexus-oss-snapshots/</url>
-    </repository>
-  </repositories>
   
-  <distributionManagement>
-    <site>
-      <id>grumblesmurf-site</id>
-      <url>scpexe://java.grumblesmurf.org/srv/www/java.grumblesmurf.org/htdocs/malabar/</url>
-    </site>
-  </distributionManagement>
-
   <profiles>
     <profile>
       <id>devel</id>
@@ -301,6 +293,7 @@
         <plugins>
           <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
+	    <version>${maven.dependency.plugin.version}</version>
             <executions>
               <execution>
                 <id>devel-lib</id>
