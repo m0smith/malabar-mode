@@ -44,7 +44,7 @@ class ProjectsTest
     
     @Test
     void projectPopulated() {
-        assertThat(p.name, is("Malabar: A better Java mode for Emacs"));
+        assertThat(p.name, is("malabar-mode"));
     }
 
     @Test

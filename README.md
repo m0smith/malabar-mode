@@ -1,52 +1,16 @@
 # malabar-mode :: A better Java mode for Emacs
 
-**Note: I no longer have time to work on malabar-mode.  If someone
-wants to step up and take over the project, please contact me, either
-via email or with a GitHub message, and I'll update the repo
-description and this readme to point at the new canonical
-repository.**
+malabar-mode extends java-mode with hooks into Maven that make
+it easy to compile files on the fly and execute Maven build
+commands.
+
+This is a fork of
+[buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
+[espenhw's malabar-mode](https://github.com/espenhw/malabar-mode). Development
+of malabar-mode has stagnated. This fork is an attempt to keep
+it up to date and develop at a modest pace.
 
 You may want to skip to [Installation](#Installation).
-
-## Why yet another Java mode?
-
-After all there is java-mode, included with recent Emacsen, and
-[JDEE][] if you want something more IDEish.  So why yet another?
-
-### java-mode
-
-There's nothing (much) wrong with java-mode, but it doesn't provide
-enough power to do the things a Java developer (I, at least) needs to
-do every day.
-
-### JDEE
-
-Enter JDEE.  It's big, it's powerful, it probably includes more
-features than you'll ever need; I mean, who needs to
-[run jdb on an applet][] these days?
-
-Yet even so, something is lacking.  It's something big, it's something
-new, it's something no Java developer can live without these days:
-
-Generics.
-
-That's right; use generics (or enums, or foreach loops - annotations,
-on the other hand, are quite reasonably supported) and JDEE will, at
-best, get confused.  Part of the reason is that JDEE uses [BeanShell][]
-underneath; BSH is, sadly, unmaintained and lacks support for Java 5
-features.
-
-## So why not use an IDE?
-
-Because, in my arrogant opinion, the current crop of IDEs is complete
-and utter crap, not worth the bits to store or the CPU cycles to run
-(and *definitely* not worth the enormous amounts of memory they
-require).  I have a major rant brewing on this subject; watch
-[my blog][] if you care.
-
-You see, when it comes down to brass tacks, code is really just text.
-And Emacs beats any other text editor out there hands down (vi lovers,
-I hear you; I like vi, too, but Emacs is just *better*).
 
 ## What malabar-mode offers
 
@@ -64,8 +28,8 @@ anything you don't like.
 
 ### But there is more:
 
-- Tight integration with [Maven][]; if fact, so tight that if you're
-  not using Maven (why?) you should not consider malabar-mode.
+- Tight integration with [Maven][]. If
+  you're not using Maven, you should not consider malabar-mode.
 
 - A [Groovy][] console for rapid prototyping and exploratory programming
 
@@ -83,44 +47,36 @@ and more.
 <a name="Installation" />
 # Installation
 
-1. You probably already have Emacs (if not, go get it right now.  I'll
-   wait).  However, for this beast, you will need Emacs 23.
+malabar-mode must be installed by hand. There's
+[an issue for making it installable from a package manager](https://github.com/dstu/malabar-mode/issues/1),
+but for now you must build it yourself.
 
-   Warning, warning, Ubuntu users: The Intrepid emacs-snapshot package
-   is too old (strangely enough, by about eight days).  The Jaunty
-   snapshot package should work, but you should consider getting the
-   release (23.2 at the time of writing).  Compiling your own Emacs
-   isn't hard.
+## Prerequisites
 
-2. Get [CEDET][] and arrange for it to be on your Emacs load-path (I
-   develop using CVS HEAD; older versions may or may not work),
-   e.g. by linking the CEDET directory into your site-lisp directory.
-   
-   Alternatively, if you are running Emacs 23.2 or later malabar-mode
-   should work fine with the embedded CEDET.
+### Emacs
 
-3. Clone the repository from `git://github.com/espenhw/malabar-mode.git`.
-   
-4. Build with `mvn package`.  If load-test.el fails, it is most
+malabar-mode was originally developed on Emacs 23, but
+development now targets Emacs 24.
+
+### CEDET
+
+A relatively recent [CEDET][] is needed in your Emacs
+environment. If you have a version of Emacs 23.2 or later,
+malabar-mode should work fine with the embedded CEDET.
+
+## Build latest development snapshot from source
+
+1. Clone the repository from
+   `git://github.com/dstu/malabar-mode.git`.
+
+2. Build with `mvn package`. If load-test.el fails, it is most
    likely because CEDET is not on your load-path.
 
-   Note that since malabar-mode `master` tracks Maven 3.0-SNAPSHOT
-   directly, it may fail to work (or even compile) due to upstream
-   changes.  I usually fix such breakage reasonably quickly, so don't
-   despair (or even better, if you notice breakage you can fix it
-   yourself and send me a patch...)
-
-   If you really really need a working version Right Now[TM] you can
-   always use the `malabar-1.4.0` tag.
-
-   When a Maven (pre)release is made, I will usually tag a version of
-   malabar-mode that locks to that version.
-
-5. Unpack the resulting `malabar-<version>-dist.zip` somewhere
+3. Unpack the resulting `malabar-<version>-dist.zip` somewhere
    
-6. Add `malabar-<version>/lisp` to your Emacs load-path
+4. Add `malabar-<version>/lisp` to your Emacs load-path
    
-7. Add the following to your .emacs::
+5. Add the following to your .emacs::
 
         (require 'cedet)
         (semantic-load-enable-minimum-features) ;; or enable more if you wish
@@ -128,7 +84,7 @@ and more.
         (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
         (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
         
-   Alternatively, using Emacs 23.2 and the embedded CEDET:
+   Alternatively, using Emacs 23.2+ and the embedded CEDET:
    
         ;; Or enable more if you wish
         (setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
@@ -140,7 +96,7 @@ and more.
         (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
         (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
 
-8. (optional) If you want to mimic the IDEish compile-on-save
+6. (optional) If you want to mimic the IDEish compile-on-save
    behaviour, add the following as well::
 
         (add-hook 'malabar-mode-hook
@@ -321,27 +277,50 @@ your own local patch branch if you wish (or, for that matter, a
 complete fork).  malabar-mode is Open Source, after all.
 
 # Hacking
-If you want to hackig malabar-mode, you can add followings in your `.emacs`::
+
+This fork of malabar-mode uses [git-flow][] to manage branching
+in development. As such, branches are:
+
+<dl>
+<dt>develop</dt>
+<dd>tracks the latest state of development (that isn't occurring in an isolated branch)</dd>
+<dt>master</dt>
+<dd>tracks the latest stable snapshot</dd>
+</dl>
+
+Feature, release, feature, hotfix, and support branches won't
+usually be shared. If they are pushed to github, they shouldn't
+be rebased but may disappear after they are merged with
+`develop` or `master`.
+
+## Emacs environment
+
+Your Emacs environment can be configured to use a "live" version
+of malabar-mode with the following steps:
+
+1. Add the following to your `.emacs`:
 
     (setq malabar-groovy-lib-dir "~/src/malabar-mode/target/lib")
     (setq malabar-groovy-extra-classpath '("~/src/malabar-mode/target/classes"))
     (add-to-list 'load-path "~/src/malabar-mode/src/main/lisp/")
 
-1. First, Run `mvn package -P devel` for extracting libraries into
-   `target/lib`. it ommits unpacking packaged zip.
-
-2. After editing groovy files, you should run `mvn compile` for
-   compiling groovy files into `target/classes`. and `M-x
-   malabar-groovy-restart` for applying changes
+2. Run `mvn package -P devel` to extract libraries into
+   `target/lib`.
    
-3. After editing elisp files, you should eval these functions for
-   applying changes.
+With this configuration, you can rebuild malabar-mode's JVM
+component with `mvn compile`, which will compile classes into
+`target/classes`. To apply these changes, restart malabar-mode
+in Emacs with `M-x malabar-groovy-restart`.
+
+After editing elisp files, eval them to apply changes
+immediately.
 
 # Acknowledgments
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
 * [Nikolaj Schumacher][] for fringe-helper and elk-test
-* [nflath](http://github.com/nflath), [stepb](http://github.com/stepb) and [bbatsov](http://github.com/bbatsov) for caring enough to help
+* [espenhw](https://github.com/espenhw) for getting the whole thing rolling
+* [nflath](https://github.com/nflath), [stepb](https://github.com/stepb) and [bbatsov](https://github.com/bbatsov) for caring enough to help
 * Everybody else for caring enough read this and report bugs
 
 # Boring legal stuff
@@ -368,7 +347,8 @@ For the full text of the GPL, see <http://www.gnu.org/licenses/gpl2.txt>.
 [CEDET]: http://cedet.sourceforge.net/
 [Groovy]: http://groovy.codehaus.org/
 [Junit]: http://www.junit.org/
-[issue tracker]: http://github.com/espenhw/malabar-mode/issues
+[issue tracker]: http://github.com/dstu/malabar-mode/issues
 [Nikolaj Schumacher]: http://nschum.de/src/emacs/
 [standard Semantic code completion]: http://cedet.sourceforge.net/intellisense.shtml
-[Elvis operator]: http://groovy.codehaus.org/Operators#Operators-ElvisOperator%28%3F%3A%29
+[Elvis operator]: http://groovy.codehaus.org/Operators#Operators-ElvisOperator
+[git-flow]: http://nvie.com/posts/a-successful-git-branching-model/
