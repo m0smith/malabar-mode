@@ -63,8 +63,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.build.source.version>1.7</project.build.source.version>
-    <project.build.target.version>1.7</project.build.target.version>
+    <project.build.source.version>1.6</project.build.source.version>
+    <project.build.target.version>1.6</project.build.target.version>
     <maven.version>3.0.4</maven.version>
     <maven.compiler.plugin.version>3.0</maven.compiler.plugin.version>
     <maven.assembly.plugin.version>2.4</maven.assembly.plugin.version>
