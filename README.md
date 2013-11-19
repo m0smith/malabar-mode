@@ -315,6 +315,15 @@ in Emacs with `M-x malabar-groovy-restart`.
 After editing elisp files, eval them to apply changes
 immediately.
 
+## Hints for Cygwin
+
+Try
+
+    (setq malabar-util-path-separator ";")
+    (setq malabar-util-path-filter 'cygwin-convert-file-name-to-windows)
+    (setq malabar-util-groovy-file-filter 'malabar-util-reverse-slash)
+
+
 # Acknowledgments
 
 * [JDEE][] for being a source of frustration and inspiration (and sometimes of code)
