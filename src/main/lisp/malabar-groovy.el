@@ -109,6 +109,7 @@ variable once the eval server has started."
   :group 'malabar-groovy
   :type '(repeat string))
 
+
 (defvar malabar-groovy--last-compilation-command nil)
 
 (defun malabar-groovy-mode ()
@@ -164,6 +165,18 @@ variable once the eval server has started."
       (malabar-groovy--check-groovysh-time-out start-time "Time-out waiting for Groovy to stop.")))
   (message nil))
 
+
+
+(defun malabar-groovy-make-class-path ()
+  (mapconcat malabar-util-path-filter
+	     (mapcar
+   
+	      #'expand-file-name
+	      (append malabar-groovy-extra-classpath
+		      (directory-files malabar-groovy-lib-dir t
+				       ".*\\.jar$")))
+	      malabar-util-path-separator))
+
 (defun malabar-groovy-start (&optional silent)
   "Start Groovy and wait for it to come up.  If SILENT is NIL,
 pop to the Groovy console buffer."
@@ -180,21 +193,20 @@ pop to the Groovy console buffer."
         (with-current-buffer (get-buffer malabar-groovy-buffer-name)
           (unless silent
             (display-buffer malabar-groovy-buffer-name))
-          (apply #'make-comint
-                 malabar-groovy-comint-name
-                 malabar-groovy-java-command
-                 nil
-                 "-cp"
-                 (mapconcat #'expand-file-name
-                            (append malabar-groovy-extra-classpath
-                                    (directory-files malabar-groovy-lib-dir t
-                                                     ".*\\.jar$"))
-                            path-separator)
-                 (append malabar-groovy-java-options
-                         (list malabar-groovy-server-class
-                               "-c" (number-to-string malabar-groovy-compile-server-port)
-                               "-e" (number-to-string malabar-groovy-eval-server-port))))
-          (malabar-groovy-mode))
+	  (let ((class-path (malabar-groovy-make-class-path)))
+	    ;;(message "%s" class-path)
+	    (apply #'make-comint
+		   malabar-groovy-comint-name
+		   malabar-groovy-java-command
+		   nil
+		   "-cp"
+		   class-path
+		   (append malabar-groovy-java-options
+			   (list malabar-groovy-server-class
+				 "-c" (number-to-string malabar-groovy-compile-server-port)
+				 "-e" (number-to-string malabar-groovy-eval-server-port))))
+	    (malabar-groovy-mode)))
+
         (progress-reporter-force-update reporter 2 "Starting Groovy...requesting ports ")
         (malabar-groovy--get-server-ports-from-buffer malabar-groovy-buffer-name initial-points-alist)
         (progress-reporter-force-update reporter 3 "Starting Groovy...waiting for main prompt ")
