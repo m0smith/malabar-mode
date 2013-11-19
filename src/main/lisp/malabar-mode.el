@@ -160,7 +160,8 @@ command performs the following transform:
 (defun malabar-compile-file (&optional silent)
   "Compiles the current buffer."
   (interactive)
-  (malabar-compile-files (list (buffer-file-name (current-buffer))) silent))
+  (let ((target (funcall malabar-util-path-filter (buffer-file-name (current-buffer)))))
+    (malabar-compile-files (list target) silent)))
 
 (defun malabar-compile-files (files-to-compile silent)
   (let ((project-files (delete-dups (mapcar 'malabar--project-for-file files-to-compile))))
@@ -174,7 +175,7 @@ command performs the following transform:
      (mapconcat (lambda (f)
                   (concat (format "%s.compiler.compile('%s')"
                                   (malabar-project-expression (car project-files))
-                                  f)))
+                                  (funcall malabar-util-groovy-file-filter f))))
                 files-to-compile
                 "; ")
      silent)))
