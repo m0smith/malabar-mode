@@ -20,6 +20,40 @@
 (require 'cl)
 (require 'semantic)
 
+
+(defcustom malabar-util-path-separator path-separator
+  "Charater used to separate CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
+
+(defcustom malabar-util-path-filter 'identity
+  "Filter to process CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
+(defcustom malabar-util-groovy-file-filter 'identity
+  "Filter to process CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
+(defun malabar-util-expand-file-name (f &optional DEFAULT-DIRECTORY)
+  (let ((rtnval (funcall malabar-util-path-filter 
+			 (expand-file-name f DEFAULT-DIRECTORY))))
+   ;; (message "malabar-util-expand-file-name: %s" rtnval)
+    rtnval))
+
+(defun malabar-util-groovy-expand-file-name (f &optional DEFAULT-DIRECTORY)
+  (let ((rtnval 
+	 (funcall malabar-util-groovy-file-filter
+		  (funcall malabar-util-path-filter 
+			   (expand-file-name f DEFAULT-DIRECTORY)))))
+    ;;(message "malabar-util-grooy-expand-file-name: %s" rtnval)
+    rtnval))
+
+(defun malabar-util-reverse-slash (f)
+  (replace-regexp-in-string "\\\\" "/" f t t))
+
 (defmacro* when-let ((var value) &body body)
   "Evaluate VALUE, and if the result is non-nil bind it to VAR and
 evaluate BODY.
