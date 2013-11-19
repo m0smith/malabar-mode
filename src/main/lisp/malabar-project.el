@@ -114,10 +114,10 @@
 
 (defun malabar--project-for-file (file)
   (when-let (dir (locate-dominating-file file "pom.xml"))
-    (malabar--project-file dir)))
+    (funcall malabar-util-groovy-file-filter (malabar--project-file dir))))
 
 (defun malabar--project-file (dir)
-  (let ((file (expand-file-name "pom.xml" dir)))
+  (let ((file (malabar-util-groovy-expand-file-name "pom.xml" dir)))
     (and (file-readable-p file)
          file)))
 
