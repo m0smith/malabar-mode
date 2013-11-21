@@ -170,13 +170,37 @@ return the corresponding cdr."
              (string= file (file-name-nondirectory dir-file))
              (throw 'found dir-file))))))
 
+(defun malabar-get-specific-tag (tag &optional buffer)
+  (car (semantic-find-tags-by-class tag (or buffer
+					    (current-buffer)))))
+
 (defun malabar-get-package-tag (&optional buffer)
-  (car (semantic-find-tags-by-class 'package (or buffer
-                                                 (current-buffer)))))
+  (malabar-get-specific-tag 'package buffer))
+
+(defun malabar-get-class-tag (&optional buffer)
+  (malabar-get-specific-tag 'type buffer))
 
 (defun malabar-get-package-name (&optional buffer)
   (when-let (package-tag (malabar-get-package-tag buffer))
     (semantic-tag-name package-tag)))
+
+(defun malabar-get-class-name (&optional buffer)
+  (when-let (package-tag (malabar-get-class-tag buffer))
+    (semantic-tag-name package-tag)))
+
+(defun malabar-get-fully-qualified-class-name (&optional buffer)
+  (format "%s.%s" (malabar-get-package-name buffer)
+	  (malabar-get-class-name buffer)))
+
+(defun malabar-show-fully-qualified-class-name (&optional buffer)
+  (interactive)
+  (message (malabar-get-fully-qualified-class-name buffer)))
+
+(defun malabar-fully-qualified-class-name-kill-ring-save (&optional buffer)
+  (interactive)
+  (let ((s (malabar-get-fully-qualified-class-name buffer)))
+    (kill-new s)
+    (message "Copied %s" s)))
 
 (defun malabar-get-class-tag-at-point ()
   (malabar-semantic-fetch-tags)

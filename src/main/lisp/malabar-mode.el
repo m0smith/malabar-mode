@@ -88,7 +88,8 @@
      ["Import all classes" malabar-import-all]
      ["Override method" malabar-override-method]
      ["Extend class" malabar-extend-class]
-     ["Implement interface" malabar-implement-interface])
+     ["Implement interface" malabar-implement-interface]
+     ["Copy Quaified Class Name" malabar-fully-qualified-class-name-kill-ring-save])
     ("Refactor"
      ["Extract constant" malabar-refactor-extract-constant])
     ("Navigation"
