@@ -20,6 +20,9 @@
 (require 'cl)
 (require 'semantic)
 
+;; Only external CEDET defines cedet-emacs-min-version
+(defvar malabar-use-external-cedet (boundp 'cedet-emacs-min-version)
+"Whether or not to use the external version of CEDET.")
 
 (defcustom malabar-util-path-separator path-separator
   "Charater used to separate CLASSPATH entries."

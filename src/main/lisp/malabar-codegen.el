@@ -19,6 +19,8 @@
 ;;
 (require 'cl)
 (require 'cc-cmds)
+(require 'malabar-util)
+
 (if (or (> emacs-major-version 23)
         (and (= emacs-major-version 23)
              (>= emacs-minor-version 2)))

@@ -18,6 +18,7 @@
 ;; 02110-1301 USA.
 ;;
 (require 'cl)
+(require 'compile)
 (require 'malabar-project)
 (require 'malabar-groovy)
 (require 'malabar-util)

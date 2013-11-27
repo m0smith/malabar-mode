@@ -21,6 +21,7 @@
 (require 'skeleton)
 (require 'cl)
 (require 'malabar-variables)
+(require 'malabar-util)
 
 (defun malabar-abbrevs-delete-abbrev ()
   "Delete the abbrev (prior to expanding)."
