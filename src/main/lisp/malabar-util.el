@@ -20,25 +20,6 @@
 (require 'cl)
 (require 'semantic)
 
-;; Only external CEDET defines cedet-emacs-min-version
-(defvar malabar-use-external-cedet (boundp 'cedet-emacs-min-version)
-"Whether or not to use the external version of CEDET.")
-
-(defcustom malabar-util-path-separator path-separator
-  "Charater used to separate CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
-
-
-(defcustom malabar-util-path-filter 'identity
-  "Filter to process CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
-
-(defcustom malabar-util-groovy-file-filter 'identity
-  "Filter to process CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
 
 (defun malabar-util-expand-file-name (f &optional DEFAULT-DIRECTORY)
   (let ((rtnval (funcall malabar-util-path-filter 

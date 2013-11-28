@@ -17,6 +17,12 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
+
+;; Only external CEDET defines cedet-emacs-min-version
+(defvar malabar-use-external-cedet (boundp 'cedet-emacs-min-version)
+"Whether or not to use the external version of CEDET.")
+
+
 (cond (malabar-use-external-cedet
        (require 'srecode-map)
        (require 'semantic-ia))
@@ -31,6 +37,23 @@
   "The prefix key for malabar-mode commands."
   :group 'malabar-mode
   :type 'sexp)
+
+(defcustom malabar-util-path-separator path-separator
+  "Charater used to separate CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
+
+(defcustom malabar-util-path-filter 'identity
+  "Filter to process CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
+(defcustom malabar-util-groovy-file-filter 'identity
+  "Filter to process CLASSPATH entries."
+  :group 'malabar-groovy
+  :type ' string)
+
 
 (defvar malabar-refactor-map
   (let ((map (make-sparse-keymap)))

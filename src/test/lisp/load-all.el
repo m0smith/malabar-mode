@@ -21,4 +21,5 @@
                                                     t t)))
 
 (require 'cedet)
+(require 'malabar-variables)
 (require 'malabar-mode)

@@ -19,7 +19,7 @@
 ;;
 (require 'cl)
 (require 'cc-cmds)
-(require 'malabar-util)
+(require 'malabar-variables)
 
 (if (or (> emacs-major-version 23)
         (and (= emacs-major-version 23)
@@ -33,7 +33,6 @@
   (require 'srecode/semantic)
   (require 'srecode/getset))
 
-(require 'malabar-variables)
 (require 'malabar-util)
 (require 'malabar-reflection)
 (require 'malabar-import)

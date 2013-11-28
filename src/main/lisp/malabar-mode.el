@@ -18,7 +18,7 @@
 ;; 02110-1301 USA.
 ;;
 
-
+(require 'malabar-variables)
 (cond (malabar-use-external-cedet
        (require 'semantic-load)
        (require 'semantic-ctxt)
@@ -54,7 +54,7 @@
 
 (require 'srecode)
 
-(require 'malabar-variables)
+
 (require 'malabar-abbrevs)
 (require 'malabar-annotations)
 (require 'malabar-codegen)
