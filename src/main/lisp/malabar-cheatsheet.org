@@ -2,6 +2,27 @@
 
 * malabar-mode cheat sheet
 
+** Abbrevs
+
+| Abbrev | Expansion              |
+|--------+------------------------|
+| pu     | public                 |
+| pri    | private                |
+| pro    | protected              |
+| st     | static                 |
+| vo     | void                   |
+| ab     | abstract               |
+| bo     | boolean                |
+| cl     | class                  |
+| impl   | implements             |
+| ext    | extends                |
+| pa     | package                |
+| re     | return                 |
+| sysout | Systme.out.println(_); |
+| #Test  | @Test template         |
+|        |                        |
+
+
 ** Building
 
 | Binding     | Function                | Description                            |
@@ -34,4 +55,5 @@
 | C-c C-v C-e | malabar-extend-class        | Prompts for a class, adds stub implementations of all that class’s abstract methods and accessible constructors and inserts the appropriate extends clause. |
 | C-c C-v C-i | malabar-implement-interface | Prompts for an interface, adds stub implementations of all that interface’s methods and adds the interface to the class’s implements clause.                |
 | C-c C-v C-g | malabar-insert-getset       | Insert a getter/setter for a field, adding the field if needed                                                                                              |
+|             |                             |                                                                                                                                                             |
 |             |                             |                                                                                                                                                             |
