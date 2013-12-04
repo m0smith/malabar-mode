@@ -159,6 +159,12 @@ argument, cleans the project first ('mvn clean install')."
   (interactive "P")
   (malabar-build-project clean-p 'install))
 
+(defun malabar-package-project (clean-p)
+  "Runs 'mvn package' on the current project.  With prefix
+argument, cleans the project first ('mvn clean package')."
+  (interactive "P")
+  (malabar-build-project clean-p 'package))
+
 (defvar malabar-maven-command-line-history nil
   "Minibuffer history for `malabar-run-maven-command`.")
 
