@@ -64,6 +64,7 @@
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
     (let ((prefix-map (make-sparse-keymap)))
+      (define-key prefix-map [?p] 'malabar-package-project)
       (define-key prefix-map [?\C-b] 'malabar-install-project)
       (define-key prefix-map [?\C-c] 'malabar-compile-file)
       (define-key prefix-map [?\C-g] 'malabar-insert-getset)
