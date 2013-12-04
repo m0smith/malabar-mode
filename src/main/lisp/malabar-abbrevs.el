@@ -48,6 +48,15 @@
   nil
   > "System.out.println(" _ ");"  >)
 
+(define-malabar-abbrev-skeleton malabar-abbrevs-main
+  "Create a main method"
+  nil
+  > "/**" > \n 
+  "* " > \n 
+  "* @param args - Arguments passed from the command line" > \n 
+  "**/" > \n 
+  "public static void main(String[] args) {" \n > _ \n "}" >)
+
 
 (defcustom malabar-abbrevs-abbrev-regexp
   "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*"
