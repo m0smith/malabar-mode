@@ -73,6 +73,7 @@
   "Menu for Malabar mode"
   '("Malabar"
     ("Build"
+     ["Package project" malabar-package-project]
      ["Install project" malabar-install-project]
      ["Compile file" malabar-compile-file])
     ("Test"
