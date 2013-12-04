@@ -1,0 +1,15 @@
+
+
+* malabar-mode cheat sheet
+
+** Building
+
+| Binding     | Function                | Description                            |
+|-------------+-------------------------+----------------------------------------|
+| C-c C-v C-c | malabar-compile-file    | Compile the file in the current buffer |
+| C-c C-v p   | malabar-package-project | Run 'mvn package'                      |
+| C-c C-v C-b | malabar-package-project | Run 'mvn install'                      |
+
+
+ 
+
