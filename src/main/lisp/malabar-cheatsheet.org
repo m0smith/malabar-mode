@@ -1,5 +1,4 @@
 
-
 * malabar-mode cheat sheet
 
 ** Abbrevs
@@ -18,7 +17,8 @@
 | ext    | extends                |
 | pa     | package                |
 | re     | return                 |
-| sysout | Systme.out.println(_); |
+| sysout | System.out.println(_); |
+| main   | Create a main method   |
 | #Test  | @Test template         |
 |        |                        |
 
