@@ -41,7 +41,7 @@ anything you don't like.
 - Extend class / implement interface / override method helpers
 
 - Simplistic refactorings
-- See the [Cheat Sheet][src/main/lisp/malabar-cheatsheet.org]
+- See the [Cheat Sheet](src/main/lisp/malabar-cheatsheet.org "Malabar Mode Cheat Sheet")
 
 and more.
 
