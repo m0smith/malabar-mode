@@ -43,6 +43,12 @@
   "fail(\"Unfinished test\");" \n
   "}" > \n)
 
+(define-malabar-abbrev-skeleton malabar-abbrevs-sysout
+  "Create a call to System.out.println"
+  nil
+  > "System.out.println(" _ ");"  >)
+
+
 (defcustom malabar-abbrevs-abbrev-regexp
   "\\(?:^\\|\\s-\\)\\(#?\\w+\\)\\W*"
   "The regexp to recognize abbrevs.  Group one is used for abbrev
