@@ -108,6 +108,7 @@
     ("pa" "package")
     ("re" "return")
     ("sysout" malabar-abbrevs-sysout)
+    ("main" malabar-abbrevs-main)
     ("#Test" malabar-abbrevs-create-test))
   "The list of abbrevs which should be recognized only in the
 specified case."
