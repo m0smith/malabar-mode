@@ -54,7 +54,7 @@ class GroovyServerTest
         }
     }
     
-    @Test(timeout=3000L)
+    @Test(timeout=8000L)
     void singleServer() {
         def ready = new CountDownLatch(1);
         def server = GroovyServer.startServer("single-server",  0, ready);
