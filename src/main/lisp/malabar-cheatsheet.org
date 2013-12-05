@@ -1,6 +1,8 @@
 
 * malabar-mode cheat sheet
 
+[[*Abbrevs][Abbrevs]] [[*Building][Building]] [[*Class%20Inspection][Class Inspection]]  [[*Navigation][Navigation]]  [[*Code%20Generation][Code Generation]]
+
 ** Abbrevs
 
 | Abbrev | Expansion              |
