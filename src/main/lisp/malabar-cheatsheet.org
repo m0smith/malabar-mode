@@ -5,24 +5,22 @@
 
 ** Abbrevs
 
-| Abbrev | Expansion              |
-|--------+------------------------|
-| pu     | public                 |
-| pri    | private                |
-| pro    | protected              |
-| st     | static                 |
-| vo     | void                   |
-| ab     | abstract               |
-| bo     | boolean                |
-| cl     | class                  |
-| impl   | implements             |
-| ext    | extends                |
-| pa     | package                |
-| re     | return                 |
-| sysout | System.out.println(_); |
-| main   | Create a main method   |
-| #Test  | @Test template         |
-|        |                        |
+| Abbrev | Expansion  | Abbrev | Expansion              |
+|--------+------------+--------+------------------------|
+| pu     | public     | main   | Create a main method   |
+| pri    | private    | #Test  | @Test template         |
+| pro    | protected  | sysout | System.out.println(_); |
+| st     | static     |        |                        |
+| vo     | void       |        |                        |
+| ab     | abstract   |        |                        |
+| bo     | boolean    |        |                        |
+| cl     | class      |        |                        |
+| impl   | implements |        |                        |
+| ext    | extends    |        |                        |
+| pa     | package    |        |                        |
+| re     | return     |        |                        |
+
+
 
 
 ** Building
