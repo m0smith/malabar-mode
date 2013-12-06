@@ -29,7 +29,7 @@
 |-------------+-------------------------+----------------------------------------|
 | C-c C-v C-c | malabar-compile-file    | Compile the file in the current buffer |
 | C-c C-v p   | malabar-package-project | Run 'mvn package'                      |
-| C-c C-v C-b | malabar-package-project | Run 'mvn install'                      |
+| C-c C-v C-b | malabar-install-project | Run 'mvn install'                      |
 | C-c C-v M-t | malabar-run-all-tests   | Run 'mvn test'                         |
 
 ** Class Inspection
@@ -45,15 +45,20 @@
 |-------------+--------------------------------------+--------------------------------------------------------------------------|
 | C-c , m     | semantic-complete-jump-local-members | Jump to a method, variable or class.  Use space to cycle between methods |
 | C-c , J     | semantic-complete-jump               | Jump to a method, variable or class.  Use space to cycle between methods |
+| c-c , ,     | semantic-force-refresh               | Refresh the navigation tags                                              |
+| c-c , n     | senator-next-tag                     | Navigate to the next semantic tags                                       |
+| c-c , p     | senator-previous-tag                 | Navigate to the previous semantic tags                               |
 | C-c C-v C-y | malabar-jump-to-thing                | Jump to the definition of the thing at point                             |
 | C-c C-v C-p | malabar-visit-project-file           | Open the project file for this buffer, ei nearest pom.xml                |
 
+
 ** Code Generation
 
-| Binding     | Function                    | Description                                                                                                                                                 |
-|-------------+-----------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| C-c C-v C-e | malabar-extend-class        | Prompts for a class, adds stub implementations of all that class’s abstract methods and accessible constructors and inserts the appropriate extends clause. |
-| C-c C-v C-i | malabar-implement-interface | Prompts for an interface, adds stub implementations of all that interface’s methods and adds the interface to the class’s implements clause.                |
-| C-c C-v C-g | malabar-insert-getset       | Insert a getter/setter for a field, adding the field if needed                                                                                              |
-|             |                             |                                                                                                                                                             |
-|             |                             |                                                                                                                                                             |
+| Binding     | Function                         | Description                                                                                                                                                 |
+|-------------+----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| C-c C-v C-e | malabar-extend-class             | Prompts for a class, adds stub implementations of all that class’s abstract methods and accessible constructors and inserts the appropriate extends clause. |
+| C-c C-v C-i | malabar-implement-interface      | Prompts for an interface, adds stub implementations of all that interface’s methods and adds the interface to the class’s implements clause.                |
+| C-c C-v C-g | malabar-insert-getset            | Insert a getter/setter for a field, adding the field if needed                                                                                              |
+| C-c C-v C-. | semantic-ia-complete-symbol      | Complete the current symbol                                                                                                                                 |
+| C-c C-v .   | semantic-ia-complete-symbol-menu | Complete the current symbol with menu                                                                                                                       |
+|             |                                  |                                                                                                                                                             |
