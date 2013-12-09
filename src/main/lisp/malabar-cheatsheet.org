@@ -43,11 +43,13 @@
 
 | Binding     | Function                             | Description                                                              |
 |-------------+--------------------------------------+--------------------------------------------------------------------------|
+| C-M-f       | forward-sexp                         | Move to next interesting thing                                           |
+| C-M-b       | backward-sexp                        | Move to previous interesting thing                                   |
 | C-c , m     | semantic-complete-jump-local-members | Jump to a method, variable or class.  Use space to cycle between methods |
 | C-c , J     | semantic-complete-jump               | Jump to a method, variable or class.  Use space to cycle between methods |
 | c-c , ,     | semantic-force-refresh               | Refresh the navigation tags                                              |
 | c-c , n     | senator-next-tag                     | Navigate to the next semantic tags                                       |
-| c-c , p     | senator-previous-tag                 | Navigate to the previous semantic tags                               |
+| c-c , p     | senator-previous-tag                 | Navigate to the previous semantic tags                                   |
 | C-c C-v C-y | malabar-jump-to-thing                | Jump to the definition of the thing at point                             |
 | C-c C-v C-p | malabar-visit-project-file           | Open the project file for this buffer, ei nearest pom.xml                |
 
