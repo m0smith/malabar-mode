@@ -4,10 +4,10 @@ malabar-mode extends java-mode with hooks into Maven that make
 it easy to compile files on the fly and execute Maven build
 commands.
 
-This is a fork of
+This is based on a fork of
 [buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
-[espenhw's malabar-mode](https://github.com/espenhw/malabar-mode). Development
-of malabar-mode has stagnated. This fork is an attempt to keep
+[espenhw's malabar-mode](https://github.com/espenhw/malabar-mode) which has been merged
+back into the master branch. Development of malabar-mode has restarted. This is an attempt to keep
 it up to date and develop at a modest pace.
 
 You may want to skip to [Installation](#Installation).
