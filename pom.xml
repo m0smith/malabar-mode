@@ -7,15 +7,15 @@
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
-  <url>http://github.com/dstu/malabar-mode</url>
+  <url>http://github.com/m0smith/malabar-mode</url>
   <scm>
-    <url>http://github.com/dstu/malabar-mode</url>
-    <connection>scm:git:git://github.com/dstu/malabar-mode.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/dstu/malabar-mode.git</developerConnection>
+    <url>http://github.com/m0smith/malabar-mode</url>
+    <connection>scm:git:git://github.com/m0smith/malabar-mode.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/m0smith/malabar-mode.git</developerConnection>
   </scm>
   <issueManagement>
     <system>GitHub</system>
-    <url>http://github.com/dstu/malabar-mode/issues</url>
+    <url>http://github.com/m0smith/malabar-mode/issues</url>
   </issueManagement>
   <licenses>
     <license>
@@ -39,6 +39,15 @@
       <roles>
         <role>Keeper of the flame</role>
       </roles>
+    </developer>
+    <developer>
+      <id>m0smith</id>
+      <url>http://www.m0smith.com</url>
+      <name>Matthew O. Smith</name>
+      <roles>
+        <role>Reanimator</role>
+      </roles>
+      <timezone>-7</timezone>
     </developer>
   </developers>
 
@@ -70,10 +79,10 @@
     <project.build.source.version>1.6</project.build.source.version>
     <project.build.target.version>1.6</project.build.target.version>
     <maven.version>3.0.4</maven.version>
-    <maven.compiler.plugin.version>3.0</maven.compiler.plugin.version>
+    <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
     <maven.assembly.plugin.version>2.4</maven.assembly.plugin.version>
     <exec.maven.plugin.version>1.2.1</exec.maven.plugin.version>
-    <maven.release.plugin.version>2.4</maven.release.plugin.version>
+    <maven.release.plugin.version>2.4.2</maven.release.plugin.version>
     <maven.project.info.reports.plugin.version>2.6</maven.project.info.reports.plugin.version>
     <maven.surefire.report.plugin.version>2.13</maven.surefire.report.plugin.version>
     <maven.dependency.plugin.version>2.6</maven.dependency.plugin.version>
