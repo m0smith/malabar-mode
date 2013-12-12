@@ -117,6 +117,23 @@ class Project
         }
     }
 
+    /**
+     * Return the URL of the jar or directory contains the class in the 
+     * test classpath.
+     */
+    URL which(String name) {
+        def classloader = testClasspath.newClassLoader();
+	def clazz=classloader.loadClass(name);
+	def n = name.replace('.', '/') + ".class";
+	def url = clazz.getResource( "/" + n );
+	System.out.printf("Resource: %s Class: %s URL: %s%n", n, clazz.name, url);
+	return url;
+    }
+    
+    /**
+     * Find the File for a source for a class.
+     * @return A ELisp String
+     */
     def sourceJarForClass(String name) {
         def jar = findSourceJarForClass(name)
         if (jar) {
