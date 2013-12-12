@@ -1,27 +1,21 @@
-
 * malabar-mode cheat sheet
-
-[[*Abbrevs][Abbrevs]] [[*Building][Building]] [[*Class%20Inspection][Class Inspection]]  [[*Navigation][Navigation]]  [[*Code%20Generation][Code Generation]]
 
 ** Abbrevs
 
-| Abbrev | Expansion  | Abbrev | Expansion              |
-|--------+------------+--------+------------------------|
-| pu     | public     | main   | Create a main method   |
-| pri    | private    | #Test  | @Test template         |
-| pro    | protected  | sysout | System.out.println(_); |
-| st     | static     |        |                        |
-| vo     | void       |        |                        |
-| ab     | abstract   |        |                        |
-| bo     | boolean    |        |                        |
-| cl     | class      |        |                        |
-| impl   | implements |        |                        |
-| ext    | extends    |        |                        |
-| pa     | package    |        |                        |
-| re     | return     |        |                        |
-
-
-
+| Abbrev | Expansion  | Abbrev | Expansion                 |
+|--------+------------+--------+---------------------------|
+| pu     | public     | main   | Create a main method      |
+| pri    | private    | #Test  | @Test template            |
+| pro    | protected  | sysout | System.out.printf("_%n"); |
+| st     | static     |        |                           |
+| vo     | void       |        |                           |
+| ab     | abstract   |        |                           |
+| bo     | boolean    |        |                           |
+| cl     | class      |        |                           |
+| impl   | implements |        |                           |
+| ext    | extends    |        |                           |
+| pa     | package    |        |                           |
+| re     | return     |        |                           |
 
 ** Building
 
@@ -53,7 +47,6 @@
 | c-c , p     | senator-previous-tag                 | Navigate to the previous semantic tags                                   |
 | C-c C-v C-y | malabar-jump-to-thing                | Jump to the definition of the thing at point                             |
 | C-c C-v C-p | malabar-visit-project-file           | Open the project file for this buffer, ei nearest pom.xml                |
-
 
 ** Code Generation
 
