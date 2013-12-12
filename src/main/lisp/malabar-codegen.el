@@ -85,12 +85,20 @@ for the method to override."
     (let ((class-tag (malabar-get-class-tag-at-point)))
       (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
 
+
+(defun malabar--add-override-annotation? (is-extension)
+  "Return non-nil if the @Override tag should be added.
+   Issue: gh-84"
+  t)
+
 (defun malabar--override-method (method-tag overridable-methods
                                             is-extension no-indent-defun)
+  "Create an overridden method at the end of the current class"
   (malabar-goto-end-of-class)
-  (insert "\n" (if is-extension
-                   "@Override\n"
-                 "")
+  (insert "\n" 
+	  (if (malabar--add-override-annotation? is-extension)
+	      "@Override\n" 
+	    "")
           (malabar-create-method-signature method-tag) " {\n"
           "// TODO: Stub\n"
           (let ((call-super (and is-extension
