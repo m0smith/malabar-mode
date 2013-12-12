@@ -46,7 +46,7 @@
 (define-malabar-abbrev-skeleton malabar-abbrevs-sysout
   "Create a call to System.out.println"
   nil
-  > "System.out.println(" _ ");"  >)
+  > "System.out.printf(\"" _ "%n\");"  >)
 
 (define-malabar-abbrev-skeleton malabar-abbrevs-main
   "Create a main method"
