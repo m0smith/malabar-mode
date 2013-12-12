@@ -84,7 +84,6 @@ class ProjectsTest
     @Test
     void testWhich() {
 	def s = p.which("org.apache.maven.Maven");
-	System.out.printf("testWhich: %s%n", s);
         assertThat(s, is(not(nullValue())))
     }
 }
