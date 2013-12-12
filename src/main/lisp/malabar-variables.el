@@ -81,6 +81,7 @@
                                        'semantic-ia-complete-symbol))
       (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
       (define-key prefix-map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
+      (define-key prefix-map [?w] 'malabar-which)
       (define-key prefix-map [?\C-p] 'malabar-visit-project-file) 
       (define-key prefix-map [?\C-y] 'malabar-jump-to-thing)
       (define-key prefix-map [?\C-r] malabar-refactor-map)
