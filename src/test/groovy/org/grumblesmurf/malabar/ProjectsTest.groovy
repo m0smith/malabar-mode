@@ -77,6 +77,14 @@ class ProjectsTest
 
     @Test
     void findSourceJarForClass() {
-        assertThat(p.findSourceJarForClass("org.apache.maven.Maven"), is(not(nullValue())))
+	def s= p.findSourceJarForClass("org.apache.maven.Maven");
+        assertThat(s, is(not(nullValue())))
+    }
+
+    @Test
+    void testWhich() {
+	def s = p.which("org.apache.maven.Maven");
+	System.out.printf("testWhich: %s%n", s);
+        assertThat(s, is(not(nullValue())))
     }
 }
