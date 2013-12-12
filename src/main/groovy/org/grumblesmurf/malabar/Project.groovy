@@ -120,14 +120,30 @@ class Project
     /**
      * Return the URL of the jar or directory contains the class in the 
      * test classpath.
+     * @param name The binary class name like "java.lang.Object"
+     * @return URL the URL containg the class.
      */
     URL which(String name) {
         def classloader = testClasspath.newClassLoader();
 	def clazz=classloader.loadClass(name);
 	def n = name.replace('.', '/') + ".class";
 	def url = clazz.getResource( "/" + n );
-	System.out.printf("Resource: %s Class: %s URL: %s%n", n, clazz.name, url);
 	return url;
+    }
+    /**
+     * Return the URL of the jar or directory contains the class in the 
+     * test classpath.
+     * @param name The binary class name like "java.lang.Object"
+     * @return ELisp String of the resource
+     */
+
+    def whichAsLisp(String name) {
+	def jar = which(name)
+        if (jar) {
+            Utils.printAsLisp("${Utils.standardizeSlashes(jar.toString())}")
+        } else {
+            Utils.printAsLisp(null)
+        }
     }
     
     /**
