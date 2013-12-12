@@ -84,6 +84,22 @@
                  (malabar-project-classpath buffer)
                  classname)))))
 
+(defun malabar-which (classname &optional buffer)
+  "Find which JAR or DIRECTORY has classname in the project which
+manages buffer.  Buffer need not be visiting a java file.  Any
+file which is part of the project will work."
+  (interactive "sClassname:\nbBuffer:")
+  (let* ((buf (or (get-buffer buffer) (current-buffer)))
+	 (mbuf (malabar-project buf))
+	 (cmd (format "%s.whichAsLisp( '%s' )" mbuf classname))
+	 (rtnval (malabar-groovy-eval-and-lispeval cmd)))
+    (kill-new rtnval)
+    (message "Copied %s" rtnval)
+    rtnval))
+	     
+	    
+
+
 (defun malabar--get-class-info-from-source (classname buffer)
   (let ((use-dialog-box nil))
     (when-let (source-buffer (or (malabar--load-local-source classname buffer)
