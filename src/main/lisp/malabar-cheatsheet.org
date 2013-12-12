@@ -34,10 +34,11 @@
 
 ** Class Inspection
 
-| Binding   | Function                                          | Description                                                         |
-|-----------+---------------------------------------------------+---------------------------------------------------------------------|
-| C-c C-v * | malabar-fully-qualified-class-name-kill-ring-save | Copy the fully qualified class name current buffer to the kill ring |
-|           |                                                   |                                                                     |
+| Binding   | Function                                          | Description                                                 |
+|-----------+---------------------------------------------------+-------------------------------------------------------------|
+| C-c C-v * | malabar-fully-qualified-class-name-kill-ring-save | Copy the binary class name current buffer to the kill ring  |
+| C-c C-v w | malabar-which                                     | Copy the location of the binary class name to the kill ring |
+|           |                                                   |                                                             |
 
 ** Navigation
 
