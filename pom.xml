@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.grumblesmurf</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.5.2-SNAPSHOT</version>
+  <version>1.6-SNAPSHOT</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
