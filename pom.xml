@@ -203,6 +203,10 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
 	<version>${maven.assembly.plugin.version}</version>
+	<configuration>
+	  <finalName>${project.artifactId}</finalName>
+	  <appendAssemblyId>false</appendAssemblyId>
+	</configuration>
         <executions>
           <execution>
             <id>make-assembly</id>
