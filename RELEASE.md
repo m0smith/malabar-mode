@@ -25,7 +25,7 @@ being written to a new branch.
 	git push
 ```
 4 . Update the MELPA recipe to match
-```elisp
+```
   	(malabar-mode 
 		      :repo "m0smith/malabar-mode" 
 		      :fetcher github 
@@ -36,12 +36,14 @@ being written to a new branch.
 			     ))
 ```
 5. Test the install from the melpa project dir
+
 ```
         rm -rf ~/.emacs.d/elpa/malabar-mode-*
         make clean
         make recipes/malabar-mode
         emacs --batch --exec '(package-install-file "/full/path/to/melpa/packages/malabar-mode-<MELPA-VERSION>.tar")'
 ```
+
 Then test in emacs
 6. Commit MELPA branch and make pull request
 
