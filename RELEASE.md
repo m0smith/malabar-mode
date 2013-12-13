@@ -18,10 +18,10 @@ being written to a new branch.
         mvn clean package
         mkdir dist
         cd dist
-	unzip ../target/*.zip
-	cd ..
-	git add dist
-	git commit -a -m "<RELEASE>"
+        unzip ../target/*.zip
+        cd ..
+        git add dist
+        git commit -a -m "<RELEASE>"
 ```
 4 . Update the MELPA recipe to match
 ```elisp
@@ -35,5 +35,7 @@ being written to a new branch.
 			     ))
 ```
 5.  Switch back the malabar-mode master branch
+```
   	 git checkout master
+```
 6.  Update the pom.xml version to start the next development cycle
