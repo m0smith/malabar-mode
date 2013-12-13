@@ -4,7 +4,7 @@
 I do not think I can use the maven release plugin as the artifact is
 being written to a new branch.
 
-1.  Create a release branch:
+##  Create a release branch:
 
 ```
        git branch <RELEASE>
@@ -12,9 +12,9 @@ being written to a new branch.
        git checkout <RELEASE>
 ```
 
-2.  Edit the pom.xml on the branch with the new VERSION
+## Edit the pom.xml on the branch with the new VERSION
 
-3.  Create the dist in the RELEASE branch
+##  Create the dist in the RELEASE branch
 
 ```
         mvn clean package
@@ -27,7 +27,7 @@ being written to a new branch.
 	git push
 ```
 
-4 . Update the MELPA recipe to match
+## Update the MELPA recipe to match
 
 ```
   	(malabar-mode 
@@ -40,7 +40,7 @@ being written to a new branch.
 			     ))
 ```
 
-5. Test the install from the melpa project dir and then test in emacs
+## Test the install from the melpa project dir and then test in emacs
 
 ```
         rm -rf ~/.emacs.d/elpa/malabar-mode-*
@@ -51,13 +51,13 @@ being written to a new branch.
 
 
 
-6. Commit MELPA branch and make pull request
+## Commit MELPA branch and make pull request
 
-7.  Switch back the malabar-mode master branch
+##  Switch back the malabar-mode master branch
 
 ```
   	 git checkout master
 ```
-8.  Update the pom.xml version to start the next development cycle
+##  Update the pom.xml version to start the next development cycle
 
 
