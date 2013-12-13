@@ -1,26 +1,22 @@
-
 # Steps to release to melpa.  
 
 I do not think I can use the maven release plugin as the artifact is
 being written to a new branch.
 
-##  Create a release branch:
+**Update the dist repo:**
 
 ```
-       git branch <RELEASE>
-       git push origin <RELEASE>
-       git checkout <RELEASE>
+	 git clone https://github.com/m0smith/malabar-mode-dist.git
 ```
 
-## Edit the pom.xml on the branch with the new VERSION
+**Edit the pom.xml and malabar-mode.el on the branch with the new VERSION**
 
-##  Create the dist in the RELEASE branch
+**Create the dist in the RELEASE branch**
 
 ```
         mvn clean package
-        mkdir dist
-        cd dist
-        unzip ../target/*.zip
+        cd malabar-mode-dist
+        unzip ~/projects/malabar-mode/target/*.zip
         cd ..
         git add dist
         git commit -a -m "<RELEASE>"
