@@ -4,7 +4,7 @@
 ;;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
 ;;; URL: http://www.github.com/m0smith/malabar-mode
 ;;; Version: 1.5.2
-;;; Package-Requires: ((fringe-helper "20130519.741") (cl-lib "0.3"))
+;;; Package-Requires: ((fringe-helper "1.0.1") (cl-lib "0.3"))
 ;;; Keywords: java, maven, language, malabar
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -378,3 +378,4 @@ membership into account.  This function is much like
   (pulse-momentary-highlight-one-line (point)))
 
 (provide 'malabar-mode)
+;;; malabar-mode.el ends here
