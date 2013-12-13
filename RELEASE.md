@@ -5,6 +5,7 @@ I do not think I can use the maven release plugin as the artifact is
 being written to a new branch.
 
 1.  Create a release branch:
+
 ```
        git branch <RELEASE>
        git push origin <RELEASE>
@@ -14,6 +15,7 @@ being written to a new branch.
 2.  Edit the pom.xml on the branch with the new VERSION
 
 3.  Create the dist in the RELEASE branch
+
 ```
         mvn clean package
         mkdir dist
@@ -24,7 +26,9 @@ being written to a new branch.
         git commit -a -m "<RELEASE>"
 	git push
 ```
+
 4 . Update the MELPA recipe to match
+
 ```
   	(malabar-mode 
 		      :repo "m0smith/malabar-mode" 
@@ -35,6 +39,7 @@ being written to a new branch.
 			     ("lib" "dist/malabar-<VERSION>/lib/*")
 			     ))
 ```
+
 5. Test the install from the melpa project dir and then test in emacs
 
 ```
@@ -49,6 +54,7 @@ being written to a new branch.
 6. Commit MELPA branch and make pull request
 
 7.  Switch back the malabar-mode master branch
+
 ```
   	 git checkout master
 ```
