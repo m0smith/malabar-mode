@@ -22,6 +22,7 @@ being written to a new branch.
         cd ..
         git add dist
         git commit -a -m "<RELEASE>"
+	git push
 ```
 4 . Update the MELPA recipe to match
 ```elisp
@@ -34,8 +35,20 @@ being written to a new branch.
 			     ("lib" "dist/malabar-<VERSION>/lib/*")
 			     ))
 ```
-5.  Switch back the malabar-mode master branch
+5. Test the install from the melpa project dir
+```
+	rm -rf ~/.emacs.d/elpa/malabar-mode-*
+	make clean
+	make recipes/malabar-mode
+	emacs --batch --exec '(package-install-file "/full/path/to/melpa/packages/malabar-mode-<MELPA-VERSION>.tar")'
+```
+Then test in emacs
+6. Commit MELPA branch and make pull request
+
+7.  Switch back the malabar-mode master branch
 ```
   	 git checkout master
 ```
-6.  Update the pom.xml version to start the next development cycle
+8.  Update the pom.xml version to start the next development cycle
+
+
