@@ -60,7 +60,9 @@ unless you know what you're doing."
   :group 'malabar-groovy
   :type 'string)
 
-(defcustom malabar-groovy-lib-dir "~/malabar/lib"
+(defcustom malabar-groovy-lib-dir 
+  (file-name-as-directory (expand-file-name "lib"
+                                            (file-name-directory load-file-name))
   "The location of all Malabar's JARs."
   :group 'malabar-groovy
   :type 'directory)
