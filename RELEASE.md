@@ -45,6 +45,7 @@ being written to a new branch.
 ```
 
 Then test in emacs
+
 6. Commit MELPA branch and make pull request
 
 7.  Switch back the malabar-mode master branch
