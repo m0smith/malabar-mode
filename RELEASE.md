@@ -1,46 +1,40 @@
-
 # Steps to release to melpa.  
 
 I do not think I can use the maven release plugin as the artifact is
 being written to a new branch.
 
-##  Create a release branch:
+**Update the dist repo:**
 
 ```
-       git branch <RELEASE>
-       git push origin <RELEASE>
-       git checkout <RELEASE>
+	 git clone https://github.com/m0smith/malabar-mode-dist.git
 ```
 
-## Edit the pom.xml on the branch with the new VERSION
+**Edit the pom.xml and malabar-mode.el on the branch with the new VERSION**
 
-##  Create the dist in the RELEASE branch
+**Update the malabar-mode-dist repo with the release**
 
 ```
         mvn clean package
-        mkdir dist
-        cd dist
-        unzip ../target/*.zip
-        cd ..
-        git add dist
+        cd malabar-mode-dist
+        rm -rf malabar
+        unzip ~/projects/malabar-mode/target/*.zip
         git commit -a -m "<RELEASE>"
 	git push
 ```
 
-## Update the MELPA recipe to match
+**Update the MELPA recipe to match**
 
 ```
   	(malabar-mode 
-		      :repo "m0smith/malabar-mode" 
+		      :repo "m0smith/malabar-mode-dist" 
 		      :fetcher github 
-		      :commit "origin/<RELEASE>"
 		      :files (
-		      	     ("." "dist/malabar-<VERSION>/lisp/*")
-			     ("lib" "dist/malabar-<VERSION>/lib/*")
+		      	     ("." "malabar/lisp/*")
+			     ("lib" "malabar/lib/*")
 			     ))
 ```
 
-## Test the install from the melpa project dir and then test in emacs
+**Test the install from the melpa project dir and then test in emacs**
 
 ```
         rm -rf ~/.emacs.d/elpa/malabar-mode-*
@@ -51,13 +45,9 @@ being written to a new branch.
 
 
 
-## Commit MELPA branch and make pull request
+**Commit MELPA branch and make pull request**
 
-##  Switch back the malabar-mode master branch
 
-```
-  	 git checkout master
-```
-##  Update the pom.xml version to start the next development cycle
+**Update the pom.xml version to start the next development cycle**
 
 
