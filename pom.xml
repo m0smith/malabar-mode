@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.grumblesmurf</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.6-SNAPSHOT</version>
+  <version>1.5.1-SNAPSHOT</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
@@ -173,6 +173,16 @@
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.7</version>
+        <configuration>
+	  <includeScope>compile</includeScope>
+          <outputFile>${user.home}/.malabar_mode/classpath</outputFile>
+        </configuration>
+
+      </plugin>
       <plugin>
         <groupId>org.codehaus.gmaven</groupId>
         <artifactId>gmaven-plugin</artifactId>

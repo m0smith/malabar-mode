@@ -170,14 +170,16 @@ variable once the eval server has started."
 
 
 (defun malabar-groovy-make-class-path ()
-  (mapconcat malabar-util-path-filter
-	     (mapcar
+  (concat 
+   (mapconcat malabar-util-path-filter
+	      (mapcar #'expand-file-name malabar-groovy-extra-classpath)
+	      malabar-util-path-separator)
+   malabar-util-path-separator
+   (with-temp-buffer
+     (insert-file-contents (expand-file-name "~/.malabar_mode/classpath"))
+     (buffer-string))))
    
-	      #'expand-file-name
-	      (append malabar-groovy-extra-classpath
-		      (directory-files malabar-groovy-lib-dir t
-				       ".*\\.jar$")))
-	      malabar-util-path-separator))
+	      
 
 (defun malabar-groovy-start (&optional silent)
   "Start Groovy and wait for it to come up.  If SILENT is NIL,
