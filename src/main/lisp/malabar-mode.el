@@ -1,11 +1,12 @@
 ;;; malabar-mode.el --- A better Java mode for Emacs
 ;;
 
-;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
-;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.5.2
-;; Package-Requires: ((fringe-helper "20130519.741") (cl-lib "0.3"))
-;; Keywords: java, maven, language, malabar
+;;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
+;;; URL: http://www.github.com/m0smith/malabar-mode
+;;; Version: 1.5.2
+;;; Package-Requires: ((fringe-helper "20130519.741") (cl-lib "0.3"))
+;;; Keywords: java, maven, language, malabar
+
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
 ;; This program is free software; you can redistribute it and/or
