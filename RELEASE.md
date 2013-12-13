@@ -37,10 +37,10 @@ being written to a new branch.
 ```
 5. Test the install from the melpa project dir
 ```
-	rm -rf ~/.emacs.d/elpa/malabar-mode-*
-	make clean
-	make recipes/malabar-mode
-	emacs --batch --exec '(package-install-file "/full/path/to/melpa/packages/malabar-mode-<MELPA-VERSION>.tar")'
+        rm -rf ~/.emacs.d/elpa/malabar-mode-*
+        make clean
+        make recipes/malabar-mode
+        emacs --batch --exec '(package-install-file "/full/path/to/melpa/packages/malabar-mode-<MELPA-VERSION>.tar")'
 ```
 Then test in emacs
 6. Commit MELPA branch and make pull request
