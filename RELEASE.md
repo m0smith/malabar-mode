@@ -35,7 +35,7 @@ being written to a new branch.
 			     ("lib" "dist/malabar-<VERSION>/lib/*")
 			     ))
 ```
-5. Test the install from the melpa project dir
+5. Test the install from the melpa project dir and then test in emacs
 
 ```
         rm -rf ~/.emacs.d/elpa/malabar-mode-*
@@ -44,7 +44,7 @@ being written to a new branch.
         emacs --batch --exec '(package-install-file "/full/path/to/melpa/packages/malabar-mode-<MELPA-VERSION>.tar")'
 ```
 
-Then test in emacs
+
 
 6. Commit MELPA branch and make pull request
 
