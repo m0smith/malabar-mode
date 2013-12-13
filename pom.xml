@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.grumblesmurf</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.5.2-SNAPSHOT</version>
+  <version>1.5.2</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
@@ -235,6 +235,8 @@
                 <argument>-Q</argument>
                 <argument>--batch</argument>
                 <argument>-l</argument>
+                <argument>src/test/lisp/init.el</argument>
+                <argument>-l</argument>
                 <argument>src/test/lisp/all-tests.el</argument>
               </arguments>
             </configuration>
@@ -250,6 +252,8 @@
               <arguments>
                 <argument>-Q</argument>
                 <argument>--batch</argument>
+                <argument>-l</argument>
+                <argument>src/test/lisp/init.el</argument>
                 <argument>-l</argument>
                 <argument>src/test/lisp/load-all.el</argument>
               </arguments>
