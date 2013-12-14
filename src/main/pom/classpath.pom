@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.grumblesmurf</groupId>
+  <artifactId>malabar-classpath</artifactId>
+  <version>1.5.1-SNAPSHOT</version>
+  <name>malabar-classpath</name>
+  <description>A Maven-enabled Java mode for Emacs</description>
+  <inceptionYear>2013</inceptionYear>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.grumblesmurf</groupId>
+      <artifactId>malabar</artifactId>
+      <version>1.5.1-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.7</version>
+        <configuration>
+	  <includeScope>compile</includeScope>
+          <outputFile>${user.home}/.malabar_mode/classpath</outputFile>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
