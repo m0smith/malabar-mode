@@ -49,7 +49,8 @@ class ProjectsTest
 
     @Test
     void coordinatePopulated() {
-        assertThat(p.coordinate, containsString("org.grumblesmurf"));
+        //assertThat(p.coordinate, containsString("org.grumblesmurf"));
+        assertThat(p.coordinate, containsString("com.software-ninja"));
     }
 
     @Test
