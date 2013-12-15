@@ -177,7 +177,7 @@ it with an external call to maven."
     (save-current-buffer
       (set-buffer (generate-new-buffer "*malabar-groovy-classpath-gen*"))
       (let ((default-directory (or classpath-pom-dir malabar-install-directory))))
-	(call-process "mvn" nil t nil "-X" "-f" "classpath.pom" "dependency:build-classpath"))))
+	(call-process "mvn" nil t nil "-X" "-f" "pom/classpath.pom" "dependency:build-classpath"))))
   (concat 
    (mapconcat malabar-util-path-filter
 	      (mapcar #'expand-file-name malabar-groovy-extra-classpath)
