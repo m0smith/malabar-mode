@@ -130,6 +130,12 @@ specified case."
   :type '(alist :key-type string :value-type (group (choice string
                                                             function))))
 
+(defcustom malabar-install-directory
+  (file-name-as-directory (file-name-directory load-file-name))
+  "The directory where malabar-mode was installed"
+  :group 'malabar-mode
+  :type 'directory)
+
 (defcustom malabar-srecode-template-directory
   (file-name-as-directory (expand-file-name "srecode"
                                             (file-name-directory load-file-name)))
