@@ -176,7 +176,7 @@ it with an external call to maven."
   (when (not (file-exists-p malabar-mode-config-classpath-file))
     (save-current-buffer
       (set-buffer (generate-new-buffer "*malabar-groovy-classpath-gen*"))
-      (let ((default-directory (or classpath-pom-dir (file-name-directory load-file-name))))
+      (let ((default-directory (or classpath-pom-dir malabar-install-directory))))
 	(call-process "mvn" nil t nil "-X" "-f" "classpath.pom" "dependency:build-classpath"))))
   (concat 
    (mapconcat malabar-util-path-filter
