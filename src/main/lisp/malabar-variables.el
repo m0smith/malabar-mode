@@ -38,6 +38,19 @@
   :group 'malabar-mode
   :type 'sexp)
 
+(defcustom malabar-mode-config-dir "~/.malabar_mode"
+  "Directory where configuration files are kept"
+  :group 'malabar-mode
+  :type 'directory)
+
+(defcustom malabar-mode-config-classpath-file 
+  (format "%s/%s" malabar-mode-config-dir "classpath")
+  "File that contains the classpath used to start groovy"
+  :group 'malabar-mode
+  :type 'file)
+
+
+
 (defcustom malabar-util-path-separator path-separator
   "Charater used to separate CLASSPATH entries."
   :group 'malabar-groovy

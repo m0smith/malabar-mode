@@ -169,14 +169,22 @@ variable once the eval server has started."
 
 
 
-(defun malabar-groovy-make-class-path ()
+(defun malabar-groovy-make-class-path ( &optional classpath-pom-dir)
+  "Return the classpath to be used by malabar groovy.  It loads the function
+from malabar-mode-config-classpath-file if it exists.  If not, it attempts to generate
+it with an external call to maven."
+  (when (not (file-exists-p malabar-mode-config-classpath-file))
+    (save-current-buffer
+      (set-buffer (generate-new-buffer "*malabar-groovy-classpath-gen*"))
+      (let ((default-directory (or classpath-pom-dir (file-name-directory load-file-name))))
+	(call-process "mvn" nil t nil "-X" "-f" "classpath.pom" "dependency:build-classpath"))))
   (concat 
    (mapconcat malabar-util-path-filter
 	      (mapcar #'expand-file-name malabar-groovy-extra-classpath)
 	      malabar-util-path-separator)
    malabar-util-path-separator
    (with-temp-buffer
-     (insert-file-contents (expand-file-name "~/.malabar_mode/classpath"))
+     (insert-file-contents (expand-file-name malabar-mode-config-classpath-file))
      (buffer-string))))
    
 	      
