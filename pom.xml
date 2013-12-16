@@ -8,15 +8,15 @@
   </parent>
   <groupId>com.software-ninja</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.5.1</version>
+  <version>1.5.1-SNAPSHOT</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
   <url>http://github.com/m0smith/malabar-mode</url>
   <scm>
     <url>https://github.com/m0smith/malabar-mode.git</url>
-    <connection>scm:git:https://github.com/m0smith/malabar-mode.git</connection>
-    <developerConnection>scm:git:https://github.com/m0smith/malabar-mode.git</developerConnection>
+    <connection>scm:git:git@github.com:m0smith/malabar-mode.git</connection>
+    <developerConnection>scm:git:git@github.com:m0smith/malabar-mode.git</developerConnection>
     <tag>malabar-1.5.1</tag>
   </scm>
   <issueManagement>
