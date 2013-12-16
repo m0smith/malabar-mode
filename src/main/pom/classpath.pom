@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.software-ninja</groupId>
   <artifactId>malabar-classpath</artifactId>
-  <version>1.5.1-SNAPSHOT</version>
+  <version>1.5.1</version>
   <name>malabar-classpath</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2013</inceptionYear>
