@@ -48,11 +48,20 @@ and more.
 <a name="Installation" />
 # Installation
 
-malabar-mode must be installed by hand. There's
-[an issue for making it installable from a package manager](https://github.com/dstu/malabar-mode/issues/1),
-but for now you must build it yourself.
+The malabar-mode package is now part of
+[MELPA](http://melpa.milkbox.net/) thanks to this
+[issue](https://github.com/dstu/malabar-mode/issues/1).  Make sure you
+have the MELPA package archive enabled in your init.el or .emacs and
+your package contents are up to date (use `M-x
+package-refresh-contents` if you can’t find the malabar-mode package and
+you’ve added MELPA to your package archives.
+
 
 ## Prerequisites
+
+### Maven
+
+The first time malabar-mode runs it will need to have the mvn executable in the `exec-path` and access to maven central in order to load its dependencies.  Also, starting the first time can take a long time as it downloads needed jars.
 
 ### Emacs
 
@@ -65,26 +74,15 @@ A relatively recent [CEDET][] is needed in your Emacs
 environment. If you have a version of Emacs 23.2 or later,
 malabar-mode should work fine with the embedded CEDET.
 
-## Build latest development snapshot from source
+1. Add the following to your .emacs::
 
-1. Clone the repository from
-   `git://github.com/dstu/malabar-mode.git`.
+       (require 'cedet)
+       (require 'semantic)
+       (load "semantic/loaddefs.el")
+       (semantic-mode 1);;
+       (require 'malabar-mode)
+       (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))       
 
-2. Build with `mvn package`. If load-test.el fails, it is most
-   likely because CEDET is not on your load-path.
-
-3. Unpack the resulting `malabar-<version>-dist.zip` somewhere
-   
-4. Add `malabar-<version>/lisp` to your Emacs load-path
-   
-5. Add the following to your .emacs::
-
-        (require 'cedet)
-        (semantic-load-enable-minimum-features) ;; or enable more if you wish
-        (require 'malabar-mode)
-        (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
-        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
-        
    Alternatively, using Emacs 23.2+ and the embedded CEDET:
    
         ;; Or enable more if you wish
@@ -97,7 +95,7 @@ malabar-mode should work fine with the embedded CEDET.
         (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
         (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
 
-6. (optional) If you want to mimic the IDEish compile-on-save
+2. (optional) If you want to mimic the IDEish compile-on-save
    behaviour, add the following as well::
 
         (add-hook 'malabar-mode-hook
