@@ -89,6 +89,7 @@
       (define-key prefix-map [?\C-o] 'malabar-override-method)
       (define-key prefix-map [?\C-e] 'malabar-extend-class)
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
+      (define-key prefix-map [?i] 'semantic-ia-describe-class)
       (define-key prefix-map [?.]    (if malabar-use-external-cedet
                                          'semantic-ia-complete-symbol-menu
                                        'semantic-ia-complete-symbol))
