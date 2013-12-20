@@ -17,7 +17,7 @@
     <url>https://github.com/m0smith/malabar-mode.git</url>
     <connection>scm:git:git@github.com:m0smith/malabar-mode.git</connection>
     <developerConnection>scm:git:git@github.com:m0smith/malabar-mode.git</developerConnection>
-    <tag>malabar-1.5.1</tag>
+    <tag>malabar-${project.version}</tag>
   </scm>
   <issueManagement>
     <system>GitHub</system>
@@ -364,3 +364,4 @@
     </profile>
   </profiles>
 </project>
+
