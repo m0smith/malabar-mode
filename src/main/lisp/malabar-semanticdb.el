@@ -172,7 +172,10 @@ provide super class and implemented interfaces"
 	    (princ "\n")))))))
 
 (defun malabar-semantic-button-handler (button)
-  "Handle the button for `malabar-semantic-heirarchy`"
+  "Handle the button for `malabar-semantic-heirarchy` to be able
+to open referenced classes.  Expects the button property 'buffer
+to hold the original buffer where `malabar-semantic-heirarchy`
+was called."
   (with-current-buffer (button-get button 'buffer)
     (malabar-semantic-heirarchy (button-label button))))
 
