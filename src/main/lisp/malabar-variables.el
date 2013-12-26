@@ -31,7 +31,9 @@
        (require 'semantic/ia)))
 
 (defgroup malabar-mode nil
-  "A better Java mode")
+  "A better Java mode"
+  :tag "Java"
+  :group 'languages)
 
 (defcustom malabar-mode-key-prefix [?\C-c ?\C-v]
   "The prefix key for malabar-mode commands."
