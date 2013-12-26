@@ -87,7 +87,8 @@ if it gives you trouble.")
   (car (semanticdb-get-database-tables obj)))
 
 (defmethod semanticdb-equivalent-mode ((table semanticdb-table-malabar) &optional buffer)
-  (with-current-buffer
+  (save-excursion
+    (set-buffer buffer)
     (eq (or mode-local-active-mode major-mode) 'malabar-mode)))
 
 (defmethod semanticdb-find-tags-by-name-method
@@ -114,16 +115,6 @@ if it gives you trouble.")
   (when-let (project-dir (locate-dominating-file dir "pom.xml"))
     (expand-file-name project-dir)))
 (pushnew 'malabar-semanticdb-root semanticdb-project-root-functions)
-
-
-(define-mode-local-override semantic-format-tag-summarize malabar-mode
-  (tag &optional parent color)		
-  "OVerride the `semantic-format-tag-summarize-default` to
-provide super class and implemented interfaces"
-  (let ((rtnval (semantic-format-tag-summarize-default tag parent color)))
-    (format "XXX %s %s" rtnval tag)))
-
-
 
 ;;; See gh-93
 (defun malabar-semantic-heirarchy (typename)
