@@ -176,7 +176,8 @@ provide super class and implemented interfaces"
 to open referenced classes.  Expects the button property 'buffer
 to hold the original buffer where `malabar-semantic-heirarchy`
 was called."
-  (with-current-buffer (button-get button 'buffer)
-    (malabar-semantic-heirarchy (button-label button))))
+  (let ((label (button-label button)))
+    (with-current-buffer (button-get button 'buffer)
+      (malabar-semantic-heirarchy label))))
 
 (provide 'malabar-semanticdb)
