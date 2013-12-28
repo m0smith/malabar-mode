@@ -3,7 +3,7 @@
 
 ;;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
 ;;; URL: http://www.github.com/m0smith/malabar-mode
-;;; Version: 1.5.1
+;;; Version: 1.5.3
 ;;; Package-Requires: ((fringe-helper "1.0.1") (cl-lib "0.3"))
 ;;; Keywords: java, maven, language, malabar
 
