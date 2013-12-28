@@ -30,8 +30,10 @@
        (require 'srecode/map)
        (require 'semantic/ia)))
 
+
 (defgroup malabar-mode nil
-  "A better Java mode")
+  "A better Java mode"
+)
 
 (defcustom malabar-mode-key-prefix [?\C-c ?\C-v]
   "The prefix key for malabar-mode commands."
@@ -90,6 +92,7 @@
       (define-key prefix-map [?\C-e] 'malabar-extend-class)
       (define-key prefix-map [?\C-i] 'malabar-implement-interface)
       (define-key prefix-map [?i] 'semantic-ia-describe-class)
+      (define-key prefix-map [?h] 'malabar-semantic-heirarchy)
       (define-key prefix-map [?.]    (if malabar-use-external-cedet
                                          'semantic-ia-complete-symbol-menu
                                        'semantic-ia-complete-symbol))

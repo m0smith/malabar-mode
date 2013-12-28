@@ -25,7 +25,7 @@ public class MvnServerLogger
     extends AbstractLogger
 {
     public MvnServerLogger() {
-        super(Logger.LEVEL_INFO, MvnServer.class.getName());
+        super( Logger.LEVEL_INFO, MvnServer.class.getName());
     }
     
     private void log(String level, String message, Throwable t) {
