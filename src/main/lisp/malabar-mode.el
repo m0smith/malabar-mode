@@ -1,6 +1,4 @@
 ;;; malabar-mode.el --- A better Java mode for Emacs
-;;
-
 ;;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
 ;;; URL: http://www.github.com/m0smith/malabar-mode
 ;;; Version: 1.5.4
