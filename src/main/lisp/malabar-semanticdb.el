@@ -116,4 +116,59 @@ if it gives you trouble.")
     (expand-file-name project-dir)))
 (pushnew 'malabar-semanticdb-root semanticdb-project-root-functions)
 
+;;; See gh-93
+(defun malabar-semantic-heirarchy (typename)
+  "Display classes typename extends and interfaces it implements."
+  ;; @todo - use a fancy completing reader.
+  (interactive "sType Name: ")
+
+  ;; When looking for a tag of any name there are a couple ways to do
+  ;; it.  The simple `semanticdb-find-tag-by-...' are simple, and
+  ;; you need to pass it the exact name you want.
+  ;;
+  ;; The analyzer function `semantic-analyze-tag-name' will take
+  ;; more complex names, such as the cpp symbol foo::bar::baz,
+  ;; and break it up, and dive through the namespaces.
+
+  ;; For some reason, it only uses the classname and not the binary class name.
+  (let ((class (semantic-analyze-find-tag (car (last (split-string typename "[.]")))))
+	(cb (current-buffer)))
+
+    (when (not (semantic-tag-p class))
+      (error "Cannot find class %s" class))
+    (let ((bname  "*Malabar Heirarchy*"))
+      (with-output-to-temp-buffer bname
+	
+	;; There are many semantic-format-tag-* fcns.
+	;; The summarize routine is a fairly generic one.
+	(princ (semantic-format-tag-summarize class))
+	(princ "\n")
+	(princ "\tExtends:\n")
+	(let ((supers (malabar--get-super-class class)))
+	  (dolist (ele supers)
+	    (princ  "\t\t")
+	    (with-current-buffer bname
+	      (let ((button (insert-button ele)))
+		(button-put button 'buffer cb)
+		(button-put button 'action 'malabar-semantic-button-handler)))
+	    (princ "\n")))
+	(princ "\tImplements:\n")
+	(let ((interfaces (malabar--get-interfaces class)))
+	  (dolist (ele interfaces)
+	    (princ  "\t\t")
+	    (with-current-buffer bname
+	      (let ((button (insert-button ele)))
+		(button-put button 'buffer cb)
+		(button-put button 'action 'malabar-semantic-button-handler)))
+	    (princ "\n")))))))
+
+(defun malabar-semantic-button-handler (button)
+  "Handle the button for `malabar-semantic-heirarchy` to be able
+to open referenced classes.  Expects the button property 'buffer
+to hold the original buffer where `malabar-semantic-heirarchy`
+was called."
+  (let ((label (button-label button)))
+    (with-current-buffer (button-get button 'buffer)
+      (malabar-semantic-heirarchy label))))
+
 (provide 'malabar-semanticdb)

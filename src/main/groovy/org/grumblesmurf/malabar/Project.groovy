@@ -24,6 +24,8 @@ import java.util.regex.Matcher;
 
 class Project
 {
+    def LOGGER = new MvnServerLogger();
+
     def compileClasspath;
     def runtimeClasspath;
     def testClasspath;
