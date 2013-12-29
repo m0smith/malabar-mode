@@ -82,7 +82,7 @@ class Compiler
 					     it.getMessage(null));
                     LOGGER.debug(info);
 		    try {                           
-                    	def src = new File(it.source.toUri()).path
+                    	def src = new File(it.source.toUri().toString()).path
 			def start = [src, it.lineNumber].join(":")
                         def message = it.getMessage(null).replace(start + ":", "")
                         println([it.kind, Utils.standardizeSlashes(src), 
