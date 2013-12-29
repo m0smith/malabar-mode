@@ -21,7 +21,7 @@ Since malabar-mode is derived from java-mode, we get some things for free:
 - Movement commands (`C-M-f/-b` is a winner; so is `M-f/-b`, especially
   with `c-subword-mode` turned on)
 
-- Electric punctuation
+- Electric punctuation 
 
 There's lots more; and since this is Emacs, you can turn off or modify
 anything you don't like.
