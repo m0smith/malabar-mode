@@ -32,8 +32,8 @@ class Compiler
 
     Compiler(project) {
         this.project = project
-	this.LOGGER = project.LOGGER;
-	LOGGER.setThreshold(LOGGER.LEVEL_DEBUG);
+        this.LOGGER = project.LOGGER;
+        LOGGER.setThreshold(LOGGER.LEVEL_INFO);
     }
 
     def compile(file) {
@@ -66,13 +66,13 @@ class Compiler
                                   "-Xlint:all", "-Xlint:-serial"],
                                  null, compilationUnits);
             def success = task.call();
-	    LOGGER.debug(String.format("compiler result: %s",success));
-	    LOGGER.debug(String.format("diagnostics: %s",diagnosticCollector.diagnostics));
+            LOGGER.debug(String.format("compiler result: %s",success));
+            LOGGER.debug(String.format("diagnostics: %s",diagnosticCollector.diagnostics));
 
             diagnosticCollector.diagnostics.each {
                 if (it.source) {
-		    def info = String.format("source: %s linenumber: %d, columnNumber: %d strartposition: %d endposition: %d position: %d kind: %s message %s", 
-		                             it.source.getClass(), 
+                    def info = String.format("source: %s linenumber: %d, columnNumber: %d strartposition: %d endposition: %d position: %d kind: %s message %s", 
+                                             it.source.getClass(), 
 					     it.lineNumber,
 					     it.columnNumber,
 					     it.startPosition, 
