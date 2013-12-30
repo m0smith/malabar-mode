@@ -33,7 +33,7 @@ class Compiler
     Compiler(project) {
         this.project = project
         this.LOGGER = project.LOGGER;
-        LOGGER.setThreshold(LOGGER.LEVEL_INFO);
+        //LOGGER.setThreshold(LOGGER.LEVEL_INFO);
     }
 
     def compile(file) {
