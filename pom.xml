@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.software-ninja</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.5.5-SNAPSHOT</version>
+  <version>1.5.5</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
@@ -17,7 +17,6 @@
     <url>https://github.com/m0smith/malabar-mode.git</url>
     <connection>scm:git:git@github.com:m0smith/malabar-mode.git</connection>
     <developerConnection>scm:git:git@github.com:m0smith/malabar-mode.git</developerConnection>
-    <tag>develop</tag>
   </scm>
   <issueManagement>
     <system>GitHub</system>
