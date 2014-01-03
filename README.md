@@ -76,12 +76,12 @@ malabar-mode should work fine with the embedded CEDET.
 
 1. Add the following to your .emacs::
 
-       (require 'cedet)
-       (require 'semantic)
-       (load "semantic/loaddefs.el")
-       (semantic-mode 1);;
-       (require 'malabar-mode)
-       (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))       
+        (require 'cedet)
+        (require 'semantic)
+        (load "semantic/loaddefs.el")
+        (semantic-mode 1);;
+        (require 'malabar-mode)
+        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))       
 
    Alternatively, using Emacs 23.2+ and the embedded CEDET:
    
