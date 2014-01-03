@@ -4,6 +4,8 @@ malabar-mode extends java-mode with hooks into Maven that make
 it easy to compile files on the fly and execute Maven build
 commands.
 
+NOTE:  The java/groovy code has been moved to https://github.com/m0smith/malabar-mode-jar
+
 This is based on a fork of
 [buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
 [espenhw's malabar-mode](https://github.com/espenhw/malabar-mode) which has been merged
