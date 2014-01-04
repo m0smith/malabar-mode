@@ -91,6 +91,37 @@ for the method to override."
    Issue: gh-84"
   t)
 
+
+(defun malabar--override-method-stub (method-tag is-extension)
+  "Create the method body stub.  Method tag is the method to override. 
+
+If is-extension is nil then do not call the the super or a
+delegate.  If it is true, call the super only if the method is
+not abstract.  If it is a string, call same method on that
+variable named.
+ 
+Issue: gh-83"
+  (concat
+   "// TODO: Stub\n"
+   (let* ((call-super (or (stringp is-extension)
+			  (and is-extension
+			       (not (malabar--abstract-p method-tag)))))
+	  (extension-var (if (stringp is-extension) is-extension "super"))
+	  (super-call
+	   (concat extension-var "." (malabar--get-name method-tag)
+		   (malabar--stringify-arguments
+		    (malabar--get-arguments method-tag)))))
+     (if (equal (malabar--get-return-type method-tag) "void")
+	 (if call-super
+	     (concat super-call ";\n")
+	   "")
+       (concat "return "
+	       (if call-super
+                          super-call
+		 (malabar-default-return-value
+		  (malabar--get-return-type method-tag)))
+	       ";\n")))))
+
 (defun malabar--override-method (method-tag overridable-methods
                                             is-extension no-indent-defun)
   "Create an overridden method at the end of the current class"
@@ -100,29 +131,13 @@ for the method to override."
 	      "@Override\n" 
 	    "")
           (malabar-create-method-signature method-tag) " {\n"
-          "// TODO: Stub\n"
-          (let ((call-super (and is-extension
-                                 (not (malabar--abstract-p method-tag))))
-                (super-call
-                 (concat "super." (malabar--get-name method-tag)
-                         (malabar--stringify-arguments
-                          (malabar--get-arguments method-tag)))))
-            (if (equal (malabar--get-return-type method-tag) "void")
-                (if call-super
-                    (concat super-call ";\n")
-                  "")
-              (concat "return "
-                      (if call-super
-                          super-call
-                        (malabar-default-return-value
-                         (malabar--get-return-type method-tag)))
-                      ";\n")))
+	  (malabar--override-method-stub method-tag is-extension)
           "}\n")
     (forward-line -2)
     (unless no-indent-defun
       (c-indent-defun))
     (back-to-indentation)
-    (flet ((find-tag-from-class (name declaring-class tags)
+    (cl-flet ((find-tag-from-class (name declaring-class tags)
                                 (find-if (lambda (tag)
                                            (and (equal (malabar--get-name tag)
                                                        name)
@@ -140,10 +155,15 @@ for the method to override."
                     equals-tag)
                (malabar-override-method equals-tag))))))
 
-(defun malabar-implement-interface (&optional interface implement-keyword)
+
+(defun malabar-implement-interface* (&optional interface implement-keyword is-extension)
   "Adds INTERFACE to the current class's implements clause and
-adds stub implementations of all the interface's methods."
-  (interactive)
+adds stub implementations of all the interface's methods.
+
+IS-EXTENSION can be set to the name of a delegate to call.
+
+Issue: gh-83
+"
   (unless implement-keyword
     (setq implement-keyword "implement"))
   (destructuring-bind (interface qualified-interface interface-info)
@@ -168,9 +188,25 @@ adds stub implementations of all the interface's methods."
       (insert type-parameters))
     (unless (eolp)
       (newline-and-indent))
-    (malabar--override-methods (malabar--get-methods interface-info) nil)
+    (malabar--add-delegate-var qualified-interface is-extension)
+    (malabar--override-methods (malabar--get-methods interface-info) is-extension)
     (malabar--instantiate-type-parameters interface-info)
     (malabar-import-and-unqualify qualified-interface)))
+
+(defun malabar-implement-interface (&optional interface implement-keyword)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods."
+  (interactive)
+  (malabar-implement-interface* interface implement-keyword))
+
+(defun malabar-delegate-interface (delegate &optional interface implement-keyword)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods.
+
+Issue: gh-83"
+  (interactive "sName:")
+  (malabar-implement-interface* interface implement-keyword delegate))
+
 
 (defun malabar--instantiate-type-parameters (tag)
   (let ((type-instances (malabar--query-for-type-parameters tag))
@@ -220,6 +256,16 @@ adds stub implementations of all the interface's methods."
     (search-backward
      (car (last (semantic-tag-type-interfaces (malabar-get-class-tag-at-point)))))
     (goto-char (match-end 0))))
+
+(defun malabar--add-delegate-var (qualified-class is-extension)
+"
+If IS-EXTENSION is a string, insert a field name IS-EXTENSION with type QUALIFIED-CLASS.
+
+Issue: gh-83
+"
+  (when (stringp is-extension)
+    (malabar-goto-start-of-class)
+    (insert qualified-class " " is-extension ";\n")))
 
 (defun malabar-extend-class (&optional class)
   "Alters the class at point to extend CLASS, adding stub
@@ -282,6 +328,7 @@ accessible constructors."
                     (c-indent-defun)
                     (forward-line 2))
                   accessible-constructors)
+	    (malabar--add-delegate-var qualified-class is-extension)
             (malabar--override-methods (malabar--get-abstract-methods class-info) t)
             (malabar--instantiate-type-parameters class-info)
             (malabar-import-and-unqualify qualified-class)))))))
