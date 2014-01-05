@@ -47,6 +47,20 @@
   (let ((class-tag (malabar-get-class-tag-at-point)))
     (goto-char (1- (semantic-tag-end class-tag)))))
 
+
+(defun malabar-first-member-of-class ()
+" Returns the tag for the first member of the class or nil if
+there are no members.
+"
+  (car (semantic-tag-type-members
+	(car (semantic-brute-find-tag-by-class
+	      'type (malabar-semantic-fetch-tags))))))
+
+(defun malabar-goto-tag (tag)
+  "Move point to begining of TAG.  When TAG is nil, do nothing."
+  (when tag
+    (goto-char (semantic-tag-start tag))))
+
 (defun malabar-get-superclass-at-point ()
   (malabar-qualify-class-name-in-buffer (malabar-get-superclass (malabar-get-class-tag-at-point))))
 
@@ -99,7 +113,7 @@
 (defun wisent-malabar-java-setup ()
   ;; HACK: Since we're not loading the old java parser the installer
   ;; function isn't defined; give it a dummy definition
-  (flet ((wisent-java-wy--install-parser () nil)
+  (cl-flet ((wisent-java-wy--install-parser () nil)
          (wisent-java-tags-wy--install-parser () nil)) ;; For Emacs 23.2+
     (wisent-java-default-setup))
   (setq semantic-lex-depth 10)

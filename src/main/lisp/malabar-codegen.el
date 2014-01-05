@@ -264,8 +264,8 @@ If IS-EXTENSION is a string, insert a field name IS-EXTENSION with type QUALIFIE
 Issue: gh-83
 "
   (when (stringp is-extension)
-    (malabar-goto-start-of-class)
-    (insert qualified-class " " is-extension ";\n")))
+    (malabar-goto-tag (malabar-first-member-of-class))
+    (insert "private " qualified-class " " is-extension ";\n")))
 
 (defun malabar-extend-class (&optional class)
   "Alters the class at point to extend CLASS, adding stub
