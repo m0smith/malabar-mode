@@ -57,7 +57,9 @@ there are no members.
 	      'type (malabar-semantic-fetch-tags))))))
 
 (defun malabar-goto-tag (tag)
-  "Move point to begining of TAG.  When TAG is nil, do nothing."
+  "Move point to begining of TAG and return the new point.  
+
+When TAG is nil, point remains unchanged and return nil.  "
   (when tag
     (goto-char (semantic-tag-start tag))))
 
