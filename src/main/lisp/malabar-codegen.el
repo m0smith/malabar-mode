@@ -259,7 +259,7 @@ Issue: gh-83"
 
 (defun malabar--add-delegate-var (qualified-class is-extension)
 "
-If IS-EXTENSION is a string, insert a field name IS-EXTENSION with type QUALIFIED-CLASS.
+If IS-EXTENSION is a string, insert a field name IS-EXTENSION with type QUALIFIED-CLASS.  If not, do nothing and return nil.
 
 Issue: gh-83
 "
