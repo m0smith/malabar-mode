@@ -1,8 +1,8 @@
 ;; malabar-mode.el --- A better Java mode for Emacs
 ;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
 ;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.6-M1
-;; Package-Requires: ((fringe-helper "1.0.1") (cl-lib "0.3"))
+;; Version: 1.6-M2
+;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, language, malabar
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -54,7 +54,7 @@
        (provide 'semantic-lex)))
 
 (require 'wisent-malabar-java-wy)
-(require 'cl)
+(require 'cl-lib)
 (require 'thingatpt)
 (require 'compile)
 (require 'easymenu)
@@ -122,7 +122,7 @@
 (add-hook 'java-mode-hook 'wisent-malabar-java-setup)
 (when (boundp 'semantic-new-buffer-setup-functions)
   (setq semantic-new-buffer-setup-functions
-        (subst 'wisent-malabar-java-setup 'wisent-java-default-setup
+        (cl-subst 'wisent-malabar-java-setup 'wisent-java-default-setup
                semantic-new-buffer-setup-functions)))
 
 (defun malabar-mode-maybe ()
@@ -196,7 +196,7 @@ command performs the following transform:
     (replace-regexp-in-string
      "/" "."
      (substring dir (1+ (length
-                         (find dir source-directories
+                         (cl-find dir source-directories
                                :test #'(lambda (dir src-dir)
                                          (string-starts-with dir src-dir)))))
                 (1- (length dir))))))
@@ -307,7 +307,7 @@ present."
                              nil t)))
           (dolist (block these-blocks)
             (when (semantic-tag-type-members block)
-              (push (remove* 'variable
+              (push (cl-remove 'variable
                              (semantic-tag-type-members block)
                              :test-not #'eql
                              :key #'semantic-tag-class)
