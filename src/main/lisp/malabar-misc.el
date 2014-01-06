@@ -21,6 +21,7 @@
 (require 'malabar-util)
 (require 'malabar-reflection)
 (require 'malabar-import)
+(require 'semantic/wisent/javat-wy)
 
 (defun malabar-qualified-class-name-of-buffer (&optional buffer)
   (let ((class (malabar-unqualified-class-name-of-buffer buffer)))
