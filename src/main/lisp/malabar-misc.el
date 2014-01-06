@@ -117,6 +117,7 @@ When TAG is nil, point remains unchanged and return nil.  "
 (defun wisent-malabar-java-setup ()
   ;; HACK: Since we're not loading the old java parser the installer
   ;; function isn't defined; give it a dummy definition
+  (load "semantic/wisent/javat-wy.elc") ;; gh-101: no idea why require is not working
   (cl-flet ((wisent-java-wy--install-parser () nil)
          (wisent-java-tags-wy--install-parser () nil)) ;; For Emacs 23.2+
     (wisent-java-default-setup))
