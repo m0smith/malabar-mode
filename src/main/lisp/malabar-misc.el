@@ -17,7 +17,7 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'cl)
+(require 'cl-lib)
 (require 'malabar-util)
 (require 'malabar-reflection)
 (require 'malabar-import)
@@ -77,7 +77,7 @@ When TAG is nil, point remains unchanged and return nil.  "
          (mapcar (lambda (arg)
                    (malabar-qualify-class-name-in-buffer (malabar--get-type arg)))
                  (malabar--get-arguments method-tag))))
-    (some (lambda (tag)
+    (cl-some (lambda (tag)
             (and (equal method-name
                         (semantic-tag-name tag))
                  (equal method-argument-types 
@@ -99,7 +99,7 @@ When TAG is nil, point remains unchanged and return nil.  "
                 (loop for member in (semantic-tag-type-members tag)
                       do (semantic-tag-put-attribute
                           member :typemodifiers
-                          (delete-duplicates (cons "public"
+                          (cl-delete-duplicates (cons "public"
                                                    (semantic-tag-modifiers member))
                                              :test #'equal))))
               (when-let (buffer (semantic-tag-buffer tag))
