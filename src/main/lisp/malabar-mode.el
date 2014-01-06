@@ -2,13 +2,15 @@
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
-;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
+;; Author: 
+;;     Espen Wiborg <espenhw@grumblesmurf.org>
+;;     Matthew Smith
 ;; URL: http://www.github.com/m0smith/malabar-mode
 ;; Version: 1.6-M2
 ;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, language, malabar
 
-;;; Licens:e
+;;; License:
 
 ;;
 ;; This program is free software; you can redistribute it and/or
@@ -31,7 +33,10 @@
 
 ;;; Commentary:
 
+;; A Java Major Mode
+;;
 
+;;; Code:
 
 (require 'malabar-variables)
 (cond (malabar-use-external-cedet
