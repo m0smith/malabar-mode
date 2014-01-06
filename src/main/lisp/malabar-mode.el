@@ -1,9 +1,4 @@
 ;;; malabar-mode.el --- A better Java mode for Emacs
-;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
-;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.6-M2
-;; Package-Requires: ((fringe-helper "1.0.1"))
-;; Keywords: java, maven, language, malabar
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
@@ -23,6 +18,13 @@
 ;; 02110-1301 USA.
 ;;
 
+;;; Commentary:
+
+;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
+;; URL: http://www.github.com/m0smith/malabar-mode
+;; Version: 1.6-M2
+;; Package-Requires: ((fringe-helper "1.0.1"))
+;; Keywords: java, maven, language, malabar
 
 
 (require 'malabar-variables)
