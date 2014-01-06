@@ -2,6 +2,15 @@
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
 ;;
+;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
+;; URL: http://www.github.com/m0smith/malabar-mode
+;; Version: 1.6-M2
+;; Package-Requires: ((fringe-helper "1.0.1"))
+;; Keywords: java, maven, language, malabar
+
+;;; Licens:e
+
+;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 2 of the
@@ -18,13 +27,10 @@
 ;; 02110-1301 USA.
 ;;
 
+;; This file is not part of GNU Emacs.
+
 ;;; Commentary:
 
-;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
-;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.6-M2
-;; Package-Requires: ((fringe-helper "1.0.1"))
-;; Keywords: java, maven, language, malabar
 
 
 (require 'malabar-variables)
