@@ -357,7 +357,7 @@ For the full text of the GPL, see <http://www.gnu.org/licenses/gpl2.txt>.
 [CEDET]: http://cedet.sourceforge.net/
 [Groovy]: http://groovy.codehaus.org/
 [Junit]: http://www.junit.org/
-[issue tracker]: http://github.com/dstu/malabar-mode/issues
+[issue tracker]: http://github.com/m0smith/malabar-mode/issues
 [Nikolaj Schumacher]: http://nschum.de/src/emacs/
 [standard Semantic code completion]: http://cedet.sourceforge.net/intellisense.shtml
 [Elvis operator]: http://groovy.codehaus.org/Operators#Operators-ElvisOperator
