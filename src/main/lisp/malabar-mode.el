@@ -375,5 +375,11 @@ membership into account.  This function is much like
   ;; 4) Fancy pulsing.
   (pulse-momentary-highlight-one-line (point)))
 
+(defun malabar-cheatsheet ()
+  "Open the cheat sheet for malabar-mode"
+  (interactive)
+  (find-file-read-only-other-window 
+   (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
+
 (provide 'malabar-mode)
 ;;; malabar-mode.el ends here
