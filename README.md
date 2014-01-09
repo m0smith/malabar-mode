@@ -246,7 +246,7 @@ operator would be.  This expansion is controlled by the variable
 
 Github has excellent support for forking!  Just hit the fork button at
 the top, code and go.  For everyone's convenience, you should probably
-rebase to espenhw/malabar-mode/master every now and then.  :)
+rebase to m0smith/malabar-mode/master every now and then.  :)
 
 If you don't want to go that far, git is, after all, a *distributed*
 VCS.  Just commit to your local repository and then use
