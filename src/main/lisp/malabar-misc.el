@@ -17,10 +17,12 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'cl)
+
+(require 'cl-lib)
 (require 'malabar-util)
 (require 'malabar-reflection)
 (require 'malabar-import)
+(require 'semantic/wisent/javat-wy)
 
 (defun malabar-qualified-class-name-of-buffer (&optional buffer)
   (let ((class (malabar-unqualified-class-name-of-buffer buffer)))
@@ -47,6 +49,22 @@
   (let ((class-tag (malabar-get-class-tag-at-point)))
     (goto-char (1- (semantic-tag-end class-tag)))))
 
+
+(defun malabar-first-member-of-class ()
+" Returns the tag for the first member of the class or nil if
+there are no members.
+"
+  (car (semantic-tag-type-members
+	(car (semantic-brute-find-tag-by-class
+	      'type (malabar-semantic-fetch-tags))))))
+
+(defun malabar-goto-tag (tag)
+  "Move point to begining of TAG and return the new point.  
+
+When TAG is nil, point remains unchanged and return nil.  "
+  (when tag
+    (goto-char (semantic-tag-start tag))))
+
 (defun malabar-get-superclass-at-point ()
   (malabar-qualify-class-name-in-buffer (malabar-get-superclass (malabar-get-class-tag-at-point))))
 
@@ -61,7 +79,7 @@
          (mapcar (lambda (arg)
                    (malabar-qualify-class-name-in-buffer (malabar--get-type arg)))
                  (malabar--get-arguments method-tag))))
-    (some (lambda (tag)
+    (cl-some (lambda (tag)
             (and (equal method-name
                         (semantic-tag-name tag))
                  (equal method-argument-types 
@@ -83,7 +101,7 @@
                 (loop for member in (semantic-tag-type-members tag)
                       do (semantic-tag-put-attribute
                           member :typemodifiers
-                          (delete-duplicates (cons "public"
+                          (cl-delete-duplicates (cons "public"
                                                    (semantic-tag-modifiers member))
                                              :test #'equal))))
               (when-let (buffer (semantic-tag-buffer tag))
@@ -99,7 +117,8 @@
 (defun wisent-malabar-java-setup ()
   ;; HACK: Since we're not loading the old java parser the installer
   ;; function isn't defined; give it a dummy definition
-  (flet ((wisent-java-wy--install-parser () nil)
+  (load "semantic/wisent/javat-wy.elc") ;; gh-101: no idea why require is not working
+  (cl-flet ((wisent-java-wy--install-parser () nil)
          (wisent-java-tags-wy--install-parser () nil)) ;; For Emacs 23.2+
     (wisent-java-default-setup))
   (setq semantic-lex-depth 10)

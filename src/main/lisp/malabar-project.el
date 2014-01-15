@@ -190,4 +190,26 @@ skipping tests."
    (format "Utils.printAsLispList(%s.srcDirectories)"
            (malabar-project-expression project-file))))
 
+(defun malabar-project-logging-debug (&optional buffer)
+"Set the loging level to DEBUG for the project that owns the
+current buffer or BUFFER if it is not nil."
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (malabar-groovy-eval
+     (format "Utils.printAsLisp(%s.compiler.LOGGER.setThreshold(0))"
+	     (malabar-project-expression 
+	      (malabar-find-project-file buffer))))))
+
+
+(defun malabar-project-logging-info (&optional buffer)
+"Set the loging level to INFO for the project that owns current
+buffer or BUFFER if it is not nil."
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (malabar-groovy-eval
+     (format "Utils.printAsLisp(%s.compiler.LOGGER.setThreshold(1))"
+	     (malabar-project-expression 
+	      (malabar-find-project-file buffer))))))
+
+
 (provide 'malabar-project)
