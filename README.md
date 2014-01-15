@@ -246,7 +246,7 @@ operator would be.  This expansion is controlled by the variable
 
 Github has excellent support for forking!  Just hit the fork button at
 the top, code and go.  For everyone's convenience, you should probably
-rebase to espenhw/malabar-mode/master every now and then.  :)
+rebase to m0smith/malabar-mode/master every now and then.  :)
 
 If you don't want to go that far, git is, after all, a *distributed*
 VCS.  Just commit to your local repository and then use
@@ -357,7 +357,7 @@ For the full text of the GPL, see <http://www.gnu.org/licenses/gpl2.txt>.
 [CEDET]: http://cedet.sourceforge.net/
 [Groovy]: http://groovy.codehaus.org/
 [Junit]: http://www.junit.org/
-[issue tracker]: http://github.com/dstu/malabar-mode/issues
+[issue tracker]: http://github.com/m0smith/malabar-mode/issues
 [Nikolaj Schumacher]: http://nschum.de/src/emacs/
 [standard Semantic code completion]: http://cedet.sourceforge.net/intellisense.shtml
 [Elvis operator]: http://groovy.codehaus.org/Operators#Operators-ElvisOperator
