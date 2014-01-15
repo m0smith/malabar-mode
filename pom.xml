@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.software-ninja</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.6-M3</version>
+  <version>1.6-M4</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
@@ -118,7 +118,7 @@
     <dependency>
       <groupId>com.software-ninja</groupId>
       <artifactId>malabar</artifactId>
-      <version>1.5.4</version>
+      <version>1.5.6</version>
     </dependency>
     <dependency>
       <groupId>org.sonatype.aether</groupId>
