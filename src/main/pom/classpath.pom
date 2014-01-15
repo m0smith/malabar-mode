@@ -12,7 +12,7 @@
     <dependency>
       <groupId>com.software-ninja</groupId>
       <artifactId>malabar</artifactId>
-      <version>1.5.6-SNAPSHOT</version>
+      <version>1.5.6</version>
     </dependency>
   </dependencies>
   <build>
