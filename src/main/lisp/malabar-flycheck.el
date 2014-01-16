@@ -27,11 +27,20 @@
 ;; 		    "-cp" (malabar-classpath-test buf)
 ;; 		    (malabar-util-expand-file-name (buffer-file-name buf))))))
 
-
-(flycheck-define-checker malabar-mode-javac
-  "Syntax java code on the fly"
-  :command ("javac"
-	    "-cp" (eval (malabar-classpath-test))
-            (eval (malabar-util-expand-file-name (buffer-file-name))))
-  :error-parser flycheck-parse-checkstyle
-  :modes malabar-mode)
+(eval-after-load 'malabar-mode
+  '(progn
+     (flycheck-define-checker malabar-mode-javac
+       "Syntax java code on the fly"
+       :command ("javac"
+		 "-cp" (eval (malabar-classpath-test))
+		 (eval (malabar-util-expand-file-name (buffer-file-name))))
+       :error-parser flycheck-parse-checkstyle
+       :modes malabar-mode)
+     
+     
+     (defun malabar-flycheck-enable ()
+       (setq flycheck-checker 'malabar-mode-javac)
+       (flycheck-mode 1))
+     
+     (add-hook 'malabar-mode-hook #'malabar-flycheck-enable)))
+  
