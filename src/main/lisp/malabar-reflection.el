@@ -96,8 +96,13 @@ file which is part of the project will work."
     (kill-new rtnval)
     (message "Copied %s" rtnval)
     rtnval))
-	     
-	    
+
+
+(defun malabar-classpath-test (&optional buffer)
+  "Return the test classpath as a string for BUFFER"
+  (interactive)
+  (let ((s  (car (malabar-eval-on-project "testClasspath.asClassPath()" buffer))))
+    (substring s 1 (- (length s) 1))))
 
 
 (defun malabar--get-class-info-from-source (classname buffer)

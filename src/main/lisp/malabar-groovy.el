@@ -350,6 +350,18 @@ for it to come up."
   "Pass STRING to groovysh for evaluation, and read the output for Lisp use."
   (car (read-from-string (car (malabar-groovy-eval string)))))
 
+
+(defun malabar-eval-on-project (command &optional buffer)
+  "Execute COMMAND on the project associated with BUFFER.  If BUFFER is nil, use `current-buffer`"
+  (interactive "sCommand:")
+  (let* ((buf (if buffer (get-buffer buffer) (current-buffer)))
+	 (mbuf (malabar-project buf))
+	 (cmd (format "Utils.printAsLisp(%s.%s)" mbuf command))
+	 (rtnval (malabar-groovy-eval cmd))
+	 )
+    rtnval))
+
+
 (defcustom malabar-groovy-compilation-font-lock-keywords
   '((malabar-groovy-highlight-compilation-message
      (1 '(face nil invisible t) nil t) ;
