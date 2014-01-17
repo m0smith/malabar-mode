@@ -19,6 +19,7 @@
 ;;
 
 (require 'flycheck)
+(require 'dash)
 
 ;; (defun javac ()
 ;;   (let ((buf (current-buffer)))
@@ -27,20 +28,46 @@
 ;; 		    "-cp" (malabar-classpath-test buf)
 ;; 		    (malabar-util-expand-file-name (buffer-file-name buf))))))
 
+
+(defun malabar-flycheck-error-parser (output checker buffer)
+ "Look in OUTPUT for compiler errors.  
+
+Return a list of `flycheck-error`, one for each error returned."
+  (let* ((ss (split-string output "[\n\r]+"))
+	 (sss (-drop-while (lambda (s) (string-match "^\\[.*" s)) ss)))
+    (-filter 'identity
+	    (mapcar (lambda (s) (if (string-match "\\(.*\\):\\([0-9]+\\):.*" (car s))
+				    (flycheck-error-new :line (string-to-number(match-string 2 (car s)))
+							:column nil 
+							:message (mapconcat 'identity s " ")
+							:level 'error)))
+		    (-partition 3 sss)))))
+
+
 (eval-after-load 'malabar-mode
   '(progn
      (flycheck-define-checker malabar-mode-javac
        "Syntax java code on the fly"
        :command ("javac"
+		 "-verbose"
+		 "-d" (eval (malabar-flycheck-target-directory))
 		 "-cp" (eval (malabar-classpath-test))
 		 (eval (malabar-util-expand-file-name (buffer-file-name))))
-       :error-parser flycheck-parse-checkstyle
+       :error-parser malabar-flycheck-error-parser
        :modes malabar-mode)
      
      
      (defun malabar-flycheck-enable ()
+       "Enable flycheck in malabar-mode"
        (setq flycheck-checker 'malabar-mode-javac)
        (flycheck-mode 1))
-     
+
+     (defun malabar-flycheck-target-directory (&optional buffer)
+       "Determine and create the directory to write class files. "
+       (let* ((d (malabar-classes-directory buffer))
+	      (pd (format "%s/%s" (file-name-directory (directory-file-name d)) "flycheck")))
+	 (make-directory pd t)
+	 (malabar-util-expand-file-name pd)))
+          
      (add-hook 'malabar-mode-hook #'malabar-flycheck-enable)))
   
