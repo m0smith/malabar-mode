@@ -29,19 +29,38 @@
 ;; 		    (malabar-util-expand-file-name (buffer-file-name buf))))))
 
 
+
+(defun malabar-flycheck-error-column (lines)
+  "Find the column of the error by looking for the magic caret"
+  (let ((caret-line (-first (lambda (s) (string-match "\\( *\\^\\).*" s)) lines)))
+    (when caret-line (length (match-string 1 caret-line)))))
+    
+
+(defun malabar-flycheck-error-line? (line)
+  "Look for the line that has the error line and message"
+  (string-match "\\(.*\\):\\([0-9]+\\): *\\(.*\\):\\(.*\\)" line))
+
+(defun malabar-flycheck-error-create (lines)
+  "Return the flycheck error"
+  (let* ((first-line (car lines)))
+
+    (if (malabar-flycheck-error-line? first-line)
+	(let ((level (match-string 3 first-line)))
+	  (flycheck-error-new :line (string-to-number (match-string 2 first-line))
+			      :message (concat (match-string 4 first-line) " \n"
+					       (mapconcat 'identity (cdr lines) " \n"))
+			      :level (intern level)
+			      :column (malabar-flycheck-error-column lines))))))
+
 (defun malabar-flycheck-error-parser (output checker buffer)
  "Look in OUTPUT for compiler errors.  
 
 Return a list of `flycheck-error`, one for each error returned."
-  (let* ((ss (split-string output "[\n\r]+"))
-	 (sss (-drop-while (lambda (s) (string-match "^\\[.*" s)) ss)))
-    (-filter 'identity
-	    (mapcar (lambda (s) (if (string-match "\\(.*\\):\\([0-9]+\\):.*" (car s))
-				    (flycheck-error-new :line (string-to-number(match-string 2 (car s)))
-							:column nil 
-							:message (mapconcat 'identity s " ")
-							:level 'error)))
-		    (-partition 3 sss)))))
+ (let* ((ss (split-string output "[\n\r]+"))
+	(sss (-drop-while (lambda (s) (string-match "^\\[.*" s)) ss)))
+   (-filter 'identity
+	    (mapcar 'malabar-flycheck-error-create 
+		    (-partition-by-header 'malabar-flycheck-error-line? sss)))))
 
 
 (eval-after-load 'malabar-mode
