@@ -62,6 +62,7 @@ Return a list of `flycheck-error`, one for each error returned."
 	    (mapcar 'malabar-flycheck-error-create 
 		    (-partition-by-header 'malabar-flycheck-error-line? sss)))))
 
+;; Wait to make sure the dependencies are created
 
 (eval-after-load 'malabar-mode
   '(progn
