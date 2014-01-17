@@ -104,6 +104,12 @@ file which is part of the project will work."
   (let ((s  (car (malabar-eval-on-project "testClasspath.asClassPath()" buffer))))
     (substring s 1 (- (length s) 1))))
 
+(defun malabar-classes-directory (&optional buffer)
+  "Return the test classpath as a string for BUFFER"
+  (interactive)
+  (let ((s  (car (malabar-eval-on-project "classesDirectory" buffer))))
+    (substring s 1 (- (length s) 1))))
+
 
 (defun malabar--get-class-info-from-source (classname buffer)
   (let ((use-dialog-box nil))
