@@ -31,9 +31,9 @@
 
 (defun malabar-flycheck-error-column (lines)
   "Find the column of the error by looking for the magic caret.  Expand tabs to 8 spaces."
-  (let* ((caret-line (-first (lambda (s) (string-match "\\( *\\^\\).*" s)) lines))
+  (let* ((caret-line (-first (lambda (s) (string-match "\\([\t ]*\\^\\).*" s)) lines))
 	 (g1 (when caret-line (match-string 1 caret-line)))
-	 (g2 (when g1 (replace-regexp-in-string "\t" "        " g1))))
+	 (g2 (when g1 (replace-regexp-in-string " " "!" g1))))
     (when  g2 (length g2))))
     
 
