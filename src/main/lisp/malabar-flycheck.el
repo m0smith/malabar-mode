@@ -29,11 +29,13 @@
 ;; 		    (malabar-util-expand-file-name (buffer-file-name buf))))))
 
 
-
+replace-reg
 (defun malabar-flycheck-error-column (lines)
   "Find the column of the error by looking for the magic caret"
-  (let ((caret-line (-first (lambda (s) (string-match "\\( *\\^\\).*" s)) lines)))
-    (when caret-line (length (match-string 1 caret-line)))))
+  (let* ((caret-line (-first (lambda (s) (string-match "\\( *\\^\\).*" s)) lines))
+	 (g1 (match-string 1 caret-line))
+	 (g2 (replace-regexp-in-string "\t" "        " g1)))
+    (when caret-line (length g2))))
     
 
 (defun malabar-flycheck-error-line? (line)
