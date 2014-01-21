@@ -147,7 +147,7 @@ String."
                (concat "\\1" name "\\2"))
       (let ((first-member-tag
              (car (semantic-tag-type-members
-                   (car (semantic-find-nonterminal-by-token
+                   (car (semantic-brute-find-tag-by-class
                          'type (malabar-semantic-fetch-tags)))))))
         (goto-char (semantic-tag-start first-member-tag))
         (forward-line 0)

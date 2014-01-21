@@ -1,11 +1,17 @@
 ;;; malabar-mode.el --- A better Java mode for Emacs
-;;; Author: Espen Wiborg <espenhw@grumblesmurf.org>
-;;; URL: http://www.github.com/m0smith/malabar-mode
-;;; Version: 1.5.4
-;;; Package-Requires: ((fringe-helper "1.0.1") (cl-lib "0.3"))
-;;; Keywords: java, maven, language, malabar
 
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
+;;
+;; Author: 
+;;     Espen Wiborg <espenhw@grumblesmurf.org>
+;;     Matthew Smith
+;; URL: http://www.github.com/m0smith/malabar-mode
+;; Version: 1.6-M4
+;; Package-Requires: ((fringe-helper "1.0.1"))
+;; Keywords: java, maven, language, malabar
+
+;;; License:
+
 ;;
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -23,7 +29,14 @@
 ;; 02110-1301 USA.
 ;;
 
+;; This file is not part of GNU Emacs.
 
+;;; Commentary:
+
+;; A Java Major Mode
+;;
+
+;;; Code:
 
 (require 'malabar-variables)
 (cond (malabar-use-external-cedet
@@ -54,7 +67,7 @@
        (provide 'semantic-lex)))
 
 (require 'wisent-malabar-java-wy)
-(require 'cl)
+(require 'cl-lib)
 (require 'thingatpt)
 (require 'compile)
 (require 'easymenu)
@@ -122,7 +135,7 @@
 (add-hook 'java-mode-hook 'wisent-malabar-java-setup)
 (when (boundp 'semantic-new-buffer-setup-functions)
   (setq semantic-new-buffer-setup-functions
-        (subst 'wisent-malabar-java-setup 'wisent-java-default-setup
+        (cl-subst 'wisent-malabar-java-setup 'wisent-java-default-setup
                semantic-new-buffer-setup-functions)))
 
 (defun malabar-mode-maybe ()
@@ -163,6 +176,14 @@ command performs the following transform:
   (interactive)
   (malabar-compile-file t))
 
+;; see gh-4
+(defun malabar-compile-buffer (&optional buffer silent)
+  "Compiles the current buffer or buffer named BUFFER"
+  (interactive)
+  (let ((buffer (if buffer  (get-buffer buffer) (current-buffer))))
+    (with-current-buffer buffer
+      (malabar-compile-file silent))))
+
 (defun malabar-compile-file (&optional silent)
   "Compiles the current buffer."
   (interactive)
@@ -196,7 +217,7 @@ command performs the following transform:
     (replace-regexp-in-string
      "/" "."
      (substring dir (1+ (length
-                         (find dir source-directories
+                         (cl-find dir source-directories
                                :test #'(lambda (dir src-dir)
                                          (string-starts-with dir src-dir)))))
                 (1- (length dir))))))
@@ -307,7 +328,7 @@ present."
                              nil t)))
           (dolist (block these-blocks)
             (when (semantic-tag-type-members block)
-              (push (remove* 'variable
+              (push (cl-remove 'variable
                              (semantic-tag-type-members block)
                              :test-not #'eql
                              :key #'semantic-tag-class)
@@ -374,6 +395,12 @@ membership into account.  This function is much like
   (switch-to-buffer (current-buffer))
   ;; 4) Fancy pulsing.
   (pulse-momentary-highlight-one-line (point)))
+
+(defun malabar-cheatsheet ()
+  "Open the cheat sheet for malabar-mode"
+  (interactive)
+  (find-file-read-only-other-window 
+   (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
 
 (provide 'malabar-mode)
 ;;; malabar-mode.el ends here

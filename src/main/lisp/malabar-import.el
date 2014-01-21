@@ -296,16 +296,20 @@ same name is already imported."
                 (malabar--type-variable-name-p candidate))
       (malabar-import-and-unqualify candidate))))
 
+;; See gh-107
 (defun malabar-import-one-class (unqualified)
   "Qualifies and adds an import statement for a single type name.
-If UNQUALIFIED is NIL, prompts in the minibuffer."
+If UNQUALIFIED is NIL, prompts in the minibuffer.
+
+If UNQUALIFIED starts with an @, strip it off."
   (interactive (list (read-from-minibuffer "Class: " (thing-at-point 'symbol))))
-  (if (or (malabar-class-defined-in-buffer-p unqualified)
-          (malabar-find-imported-class unqualified))
-      (message "Class %s does not need to be imported" unqualified)
-    (let ((class-to-import (malabar-import-find-import unqualified)))
-      (unless (null class-to-import)
-        (malabar-import-insert-imports (list class-to-import))))))
+  (let ((unqualified (if (string-match "^@.*" unqualified) (substring unqualified 1) unqualified)))
+    (if (or (malabar-class-defined-in-buffer-p unqualified)
+	    (malabar-find-imported-class unqualified))
+	(message "Class %s does not need to be imported" unqualified)
+      (let ((class-to-import (malabar-import-find-import unqualified)))
+	(unless (null class-to-import)
+	  (malabar-import-insert-imports (list class-to-import)))))))
 
 (defun malabar-import-insert-imports (qualified-classes)
   (when qualified-classes
