@@ -176,6 +176,14 @@ command performs the following transform:
   (interactive)
   (malabar-compile-file t))
 
+;; see gh-4
+(defun malabar-compile-buffer (&optional buffer silent)
+  "Compiles the current buffer or buffer named BUFFER"
+  (interactive)
+  (let ((buffer (if buffer  (get-buffer buffer) (current-buffer))))
+    (with-current-buffer buffer
+      (malabar-compile-file silent))))
+
 (defun malabar-compile-file (&optional silent)
   "Compiles the current buffer."
   (interactive)

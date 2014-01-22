@@ -84,6 +84,7 @@
       (define-key prefix-map [?\C-c] 'malabar-compile-file)
       (define-key prefix-map [?\C-g] 'malabar-insert-getset)
       (define-key prefix-map [?t]    'malabar-run-test)
+      (define-key prefix-map [?\?]    'malabar-cheatsheat)
       (define-key prefix-map [?\C-t] 'malabar-run-junit-test)
       (define-key prefix-map [?\M-t] 'malabar-run-all-tests)
       (define-key prefix-map [?\C-z] 'malabar-import-one-class)
