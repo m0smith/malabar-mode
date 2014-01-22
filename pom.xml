@@ -8,7 +8,7 @@
   </parent>
   <groupId>com.software-ninja</groupId>
   <artifactId>malabar</artifactId>
-  <version>1.6-M5</version>
+  <version>1.6-M6</version>
   <name>malabar-mode</name>
   <description>A Maven-enabled Java mode for Emacs</description>
   <inceptionYear>2009</inceptionYear>
