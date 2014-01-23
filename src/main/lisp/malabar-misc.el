@@ -91,7 +91,7 @@ When TAG is nil, point remains unchanged and return nil.  "
           (semantic-tag-type-members class-tag))))
 
 (defun malabar-semantic-fetch-tags ()
-  (unless (semantic-active-p)
+  (unless (semantic-active-p)  
     (semantic-new-buffer-fcn))
   (let ((tags (semantic-fetch-tags)))
     (mapc (lambda (tag)
