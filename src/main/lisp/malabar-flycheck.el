@@ -18,8 +18,8 @@
 ;; 02110-1301 USA.
 ;;
 
-(require 'flycheck)
-(require 'dash)
+;(require 'flycheck)
+;(require 'dash)
 
 ;; (defun javac ()
 ;;   (let ((buf (current-buffer)))
@@ -63,32 +63,28 @@ Return a list of `flycheck-error`, one for each error returned."
 	    (mapcar 'malabar-flycheck-error-create 
 		    (-partition-by-header 'malabar-flycheck-error-line? sss)))))
 
+
 ;; Wait to make sure the dependencies are created
 
-(eval-after-load 'malabar-mode
+(eval-after-load 'flycheck
   '(progn
      (flycheck-define-checker malabar-mode-javac
-       "Syntax java code on the fly"
+       "Syntax java code on the fly.  Unfortunately, with cygwin
+the file name needs to be converted to something windwos
+friendly."
        :command ("javac"
-		 "-verbose"
-		 "-d" (eval (malabar-flycheck-target-directory))
+		 "-d" (eval (malabar-util-expand-file-name 
+			(flycheck-substitute-argument 'temporary-directory nil)))
 		 "-cp" (eval (malabar-classpath-test))
-		 (eval (malabar-util-expand-file-name (buffer-file-name))))
+		 (eval (malabar-util-expand-file-name 
+			(flycheck-substitute-argument 'source nil))))
        :error-parser malabar-flycheck-error-parser
        :modes malabar-mode)
      
      
-     (defun malabar-flycheck-enable ()
-       "Enable flycheck in malabar-mode"
-       (setq flycheck-checker 'malabar-mode-javac)
-       (flycheck-mode 1))
+     (add-to-list 'flycheck-checkers 'malabar-mode-javac)))
 
-     (defun malabar-flycheck-target-directory (&optional buffer)
-       "Determine and create the directory to write class files. "
-       (let* ((d (malabar-classes-directory buffer))
-	      (pd (format "%s/%s" (file-name-directory (directory-file-name d)) "flycheck")))
-	 (make-directory pd t)
-	 (malabar-util-expand-file-name pd)))
-          
-     (add-hook 'malabar-mode-hook #'malabar-flycheck-enable)))
+
+
+
   
