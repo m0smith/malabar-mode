@@ -16,7 +16,7 @@ echo "<h2>Resolved Issues</h2>"
 echo "<ul>"
 test -f "$jsonfile" || ( curl "https://api.github.com/repos/m0smith/malabar-mode/issues?milestone=${milestone}&state=closed" > "$jsonfile" )
 echo "</ul>"
-cat "${jsonfile}" |  ./JSON.sh | awk '/\[[0-9]+\]/{print "<li><a href=" url ">" title "</a></li>"}  /\[[0-9]+,\"title\"\]/ {$1=""; title=$0} /\[[0-9]+,\"url\"\]/ {$1=""; gsub(/[ \t]+/, "", $0); url=$0}'
+cat "${jsonfile}" |  ./JSON.sh | awk '/\[[0-9]+\]/{print "<li><a href=" url ">" title "</a></li>"}  /\[[0-9]+,\"title\"\]/ {$1=""; title=$0} /\[[0-9]+,\"html_url\"\]/ {$1=""; gsub(/[ \t]+/, "", $0); url=$0}'
 
 echo "<h2>Commits</h2>"
 echo "<ul>"
