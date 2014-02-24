@@ -454,6 +454,23 @@ Overrides `semantic-tag-static-p'."
     (include
      (format "import %s%s;" (if (semantic-tag-static-p tag) "static " "") (semantic-tag-name tag)))))
 
+
+(defun malabar-codegen-insert-class-template (&optional buffer)
+  "Insert a public class template into the current buffer based on the name of the buffer."
+  (interactive)
+  (let ((class-name (replace-regexp-in-string ".java$" "" (buffer-name buffer)))
+	(p (point)))
+    (insert (format "\n//\n/**\n*\n*/\n\npublic class %s {\n" class-name ))
+    (save-excursion 
+      (insert (format "\n}\n" ))
+      (indent-region p (point))
+      (let (( edit-point (point)))
+	(goto-char (point-min))
+	(malabar-update-package)
+	(goto-char edit-point)))
+    (indent-according-to-mode)))
+      
+
 (provide 'malabar-codegen)
 
 ;; Local Variables:
