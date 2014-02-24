@@ -101,6 +101,7 @@
      ["Run JUnit test" malabar-run-junit-test]
      ["Run all tests" malabar-run-all-tests])
     ("Source"
+     ["Insert Class Template" malabar-codegen-insert-class-template]
      ["Insert getter/setter" malabar-insert-getset]
      ["Import class" malabar-import-one-class]
      ["Import all classes" malabar-import-all]
