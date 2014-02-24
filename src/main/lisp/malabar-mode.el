@@ -412,5 +412,8 @@ membership into account.  This function is much like
   (find-file-read-only-other-window 
    (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
 
+
+(autoload 'malabar-codegen-insert-class-template "malabar-codegen" t)
+
 (provide 'malabar-mode)
 ;;; malabar-mode.el ends here
