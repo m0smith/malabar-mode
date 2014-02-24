@@ -464,10 +464,7 @@ Overrides `semantic-tag-static-p'."
     (save-excursion 
       (insert (format "\n}\n" ))
       (indent-region p (point))
-      (let (( edit-point (point)))
-	(goto-char (point-min))
-	(malabar-update-package)
-	(goto-char edit-point)))
+      (malabar-update-package))
     (indent-according-to-mode)))
       
 
