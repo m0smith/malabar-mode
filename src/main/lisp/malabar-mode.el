@@ -207,8 +207,17 @@ command performs the following transform:
                 "; ")
      silent)))
 
+
 (defun malabar-compute-package-name (&optional buffer)
-  (let* ((dir (file-name-directory (buffer-file-name buffer)))
+  "Return the package name of the expected buffer, which is based
+  on the directory relative to project source directory.  For example, if the file is
+       src/main/java/com/m0smith/app/Test.java, 
+  this function will  return \"com.m0smith.app\".  
+
+  This function does not really care if the buffer is looking at a java file, but the file must
+  be in the source or test source directory."
+
+  (let* ((dir (malabar-util-groovy-expand-file-name (file-name-directory (buffer-file-name buffer))))
          (project-file (malabar-find-project-file buffer))
          (source-directories (append (malabar-project-source-directories
                                       project-file)
