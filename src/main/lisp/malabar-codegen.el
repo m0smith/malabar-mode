@@ -334,7 +334,7 @@ accessible constructors."
                     (c-indent-defun)
                     (forward-line 2))
                   accessible-constructors)
-	    (malabar--add-delegate-var qualified-class is-extension)
+	    ;;(malabar--add-delegate-var qualified-class is-extension)
             (malabar--override-methods (malabar--get-abstract-methods class-info) t)
             (malabar--instantiate-type-parameters class-info)
             (malabar-import-and-unqualify qualified-class)))))))
