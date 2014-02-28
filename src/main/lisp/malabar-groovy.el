@@ -524,7 +524,7 @@ for it to come up."
             (delq (get-buffer-process malabar-groovy-compile-server-buffer-name)
                   compilation-in-progress))
       (apply #'compilation-handle-exit 'exit
-             (if (equal result "true")
+             (if (equal  (string-trim result) "true")
                  (list 0 "finished\n")
                (list 1 "exited abnormally"))))
     (mapcar #'malabar-groovy--add-compiler-annotation
