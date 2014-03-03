@@ -222,5 +222,10 @@ buffer or BUFFER if it is not nil."
 	     (malabar-project-expression 
 	      (malabar-find-project-file buffer))))))
 
+(defun malabar-project-reset-all-projects() 
+  "Reset the projects and force malabar mode to re-read the pom."
+  (interactive)
+  (malabar-groovy-eval "Projects.resetProjects()"))
+
 
 (provide 'malabar-project)

@@ -101,6 +101,7 @@
      ["Run JUnit test" malabar-run-junit-test]
      ["Run all tests" malabar-run-all-tests])
     ("Source"
+     ["Insert Class Template" malabar-codegen-insert-class-template]
      ["Insert getter/setter" malabar-insert-getset]
      ["Import class" malabar-import-one-class]
      ["Import all classes" malabar-import-all]
@@ -207,8 +208,17 @@ command performs the following transform:
                 "; ")
      silent)))
 
+
 (defun malabar-compute-package-name (&optional buffer)
-  (let* ((dir (file-name-directory (buffer-file-name buffer)))
+  "Return the package name of the expected buffer, which is based
+  on the directory relative to project source directory.  For example, if the file is
+       src/main/java/com/m0smith/app/Test.java, 
+  this function will  return \"com.m0smith.app\".  
+
+  This function does not really care if the buffer is looking at a java file, but the file must
+  be in the source or test source directory."
+
+  (let* ((dir (malabar-util-groovy-expand-file-name (file-name-directory (buffer-file-name buffer))))
          (project-file (malabar-find-project-file buffer))
          (source-directories (append (malabar-project-source-directories
                                       project-file)
@@ -401,6 +411,9 @@ membership into account.  This function is much like
   (interactive)
   (find-file-read-only-other-window 
    (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
+
+
+(autoload 'malabar-codegen-insert-class-template "malabar-codegen" t)
 
 (provide 'malabar-mode)
 ;;; malabar-mode.el ends here

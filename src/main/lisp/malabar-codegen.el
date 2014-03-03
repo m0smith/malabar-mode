@@ -334,7 +334,7 @@ accessible constructors."
                     (c-indent-defun)
                     (forward-line 2))
                   accessible-constructors)
-	    (malabar--add-delegate-var qualified-class is-extension)
+	    ;;(malabar--add-delegate-var qualified-class is-extension)
             (malabar--override-methods (malabar--get-abstract-methods class-info) t)
             (malabar--instantiate-type-parameters class-info)
             (malabar-import-and-unqualify qualified-class)))))))
@@ -453,6 +453,20 @@ Overrides `semantic-tag-static-p'."
          def)))
     (include
      (format "import %s%s;" (if (semantic-tag-static-p tag) "static " "") (semantic-tag-name tag)))))
+
+
+(defun malabar-codegen-insert-class-template (&optional buffer)
+  "Insert a public class template into the current buffer based on the name of the buffer."
+  (interactive)
+  (let ((class-name (replace-regexp-in-string ".java$" "" (buffer-name buffer)))
+	(p (point)))
+    (insert (format "\n//\n/**\n*\n*/\n\npublic class %s {\n" class-name ))
+    (save-excursion 
+      (insert (format "\n}\n" ))
+      (indent-region p (point))
+      (malabar-update-package))
+    (indent-according-to-mode)))
+      
 
 (provide 'malabar-codegen)
 

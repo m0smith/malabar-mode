@@ -1,0 +1,24 @@
+starttag=1.6-M1
+endtag=1.6-M7
+milestone=2
+
+jsonfile="/tmp/${starttag}-${endtag}M${milestone}.json"
+	
+test -d /tmp/JSON.sh || (cd /tmp; wget https://raw2.github.com/dominictarr/JSON.sh/master/JSON.sh)
+chmod +x /tmp/JSON.sh
+
+echo "<h1>Change log</h1>"
+echo "<h2>Resolved Issues</h2>"
+
+
+#curl "https://api.github.com/repos/m0smith/malabar-mode/issues?milestone=${milestone}&state=closed" |
+#     awk -F="[:]" -v RS="[,{}]" '$1~/"title"/ { print NF, "<<" $0 ">>"} $1~/"url"/ {print NF, "{{" $0 "}}"}'
+echo "<ul>"
+test -f "$jsonfile" || ( curl "https://api.github.com/repos/m0smith/malabar-mode/issues?milestone=${milestone}&state=closed" > "$jsonfile" )
+echo "</ul>"
+cat "${jsonfile}" |  ./JSON.sh | awk '/\[[0-9]+\]/{print "<li><a href=" url ">" title "</a></li>"}  /\[[0-9]+,\"title\"\]/ {$1=""; title=$0} /\[[0-9]+,\"html_url\"\]/ {$1=""; gsub(/[ \t]+/, "", $0); url=$0}'
+
+echo "<h2>Commits</h2>"
+echo "<ul>"
+git log ${starttag}...${endtag} --pretty=format:'<li> <a href="http://github.com/m0smith/malabar-mode/commit/%H">view commit &bull;</a> %s</li> ' | grep gh-
+echo "</ul>"
