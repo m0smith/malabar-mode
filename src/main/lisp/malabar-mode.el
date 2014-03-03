@@ -6,7 +6,7 @@
 ;;     Espen Wiborg <espenhw@grumblesmurf.org>
 ;;     Matthew Smith <matt@m0smith.com>
 ;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.6-M8
+;; Version: 1.7.1
 ;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, language, malabar
 
