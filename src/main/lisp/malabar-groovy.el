@@ -451,7 +451,9 @@ for it to come up."
                            'invisible t)))
     ;; Hide some colons
     (mapc (lambda (n)
-            (put-text-property (match-end n) (1+ (match-end n)) 'invisible t))
+	    (let ((end-n (match-end n)))
+	      (when end-n
+		(put-text-property end-n (1+ end-n) 'invisible t))))
           '(4 5 6 7))
     (pushnew (list :class (cond ((match-beginning 1)
                                  'error)
@@ -465,15 +467,16 @@ for it to come up."
                                                    (save-excursion
                                                      (end-of-line)
                                                      (point)))
-                   :position-info
-                   (let ((positions (match-string-no-properties 7)))
-		     (message "#%s" positions)
-                     (mapcar #'1+
-                             (car
-                              (read-from-string
-                               (concat "("
-                                       (replace-regexp-in-string "::" " " positions)
-                                       ")"))))))
+		   :position-info
+		   (when (match-string-no-properties 7)
+		     (let ((positions (match-string-no-properties 7)))
+		       (message "#%s" positions)
+		       (mapcar #'1+
+			       (car
+				(read-from-string
+				 (concat "("
+					 (replace-regexp-in-string "::" " " positions)
+					 ")")))))))
              malabar-groovy--compiler-notes
              :test #'equal)))
 
