@@ -361,6 +361,15 @@ for it to come up."
 	 )
     rtnval))
 
+(defun malabar-groovy-run-main (&optional class args)
+  "Run the main method of the given class
+TODO: args is basically ignored
+TODO: capture stdout and stderr"
+  (interactive)
+  (let ((class (or class (malabar-get-fully-qualified-class-name (current-buffer))))
+	(args (or args "new String[0]")))
+    (malabar-eval-on-project (format "runMain('%s', %s)" class args))))
+
 
 (defcustom malabar-groovy-compilation-font-lock-keywords
   '((malabar-groovy-highlight-compilation-message
