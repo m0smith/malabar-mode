@@ -361,8 +361,8 @@ for it to come up."
 	 )
     rtnval))
 
-(defun malabar-groovy-run-main (&optional class args)
-  "Run the main method of the given class
+(defun malabar-groovy-run-main (&optional class &rest args)
+  "Run the main method of the given class.  `class` is the fully qualified class name and `args` is the strings to pass to main.  
 TODO: args is basically ignored
 TODO: capture stdout and stderr"
   (interactive)
