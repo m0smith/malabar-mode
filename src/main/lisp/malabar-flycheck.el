@@ -77,10 +77,9 @@ friendly."
 			(flycheck-substitute-argument 'temporary-directory nil)))
 		 "-cp" (eval (malabar-classpath-test))
 		 (eval (malabar-util-expand-file-name 
-			(first (flycheck-substitute-argument 'source nil)))
-))
+			(first (flycheck-substitute-argument 'source nil))))
        :error-parser malabar-flycheck-error-parser
-       :modes malabar-mode)
+       :modes malabar-mode))
      
      
      (add-to-list 'flycheck-checkers 'malabar-mode-javac)))
