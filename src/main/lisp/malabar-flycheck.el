@@ -75,7 +75,7 @@ the file name needs to be converted to something windows friendly."
 		 "-d" (eval (malabar-util-expand-file-name 
 			(flycheck-substitute-argument 'temporary-directory nil)))
 		 "-cp" (eval (malabar-classpath-test))
-		 (eval (malabar-util-expand-file-name-th 
+		 (eval (malabar-util-expand-file-name-nth 
 			(flycheck-substitute-argument 'source nil) 1))
        :error-parser malabar-flycheck-error-parser
        :modes malabar-mode))
