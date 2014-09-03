@@ -70,14 +70,13 @@ Return a list of `flycheck-error`, one for each error returned."
   '(progn
      (flycheck-define-checker malabar-mode-javac
        "Syntax java code on the fly.  Unfortunately, with cygwin
-the file name needs to be converted to something windwos
-friendly."
+the file name needs to be converted to something windows friendly."
        :command ("javac"
 		 "-d" (eval (malabar-util-expand-file-name 
 			(flycheck-substitute-argument 'temporary-directory nil)))
 		 "-cp" (eval (malabar-classpath-test))
 		 (eval (malabar-util-expand-file-name 
-			(first (flycheck-substitute-argument 'source nil))))
+			(flycheck-substitute-argument 'source nil) 1))
        :error-parser malabar-flycheck-error-parser
        :modes malabar-mode))
      

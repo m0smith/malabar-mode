@@ -27,6 +27,11 @@
    ;; (message "malabar-util-expand-file-name: %s" rtnval)
     rtnval))
 
+(defun malabar-util-expand-file-name-nth (fs n &optional DEFAULT-DIRECTORY)
+  "Expand a filename.  FS is a list and the filename to expand is the N element."
+  (malabar-util-expand-file-name (nth n fs) DEFAULT-DIRECTORY))
+
+
 (defun malabar-util-groovy-expand-file-name (f &optional DEFAULT-DIRECTORY)
   (let ((rtnval 
 	 (funcall malabar-util-groovy-file-filter
