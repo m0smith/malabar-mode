@@ -1,4 +1,4 @@
-[![Melpa Status](http://melpa.milkbox.net/packages/malabar-mode-badge.svg)](http://melp.mailbox.net/#/malabar-mode)
+[![Melpa Status](http://melpa.milkbox.net/packages/malabar-mode-badge.svg)](http://melpa.mailbox.net/#/malabar-mode)
 # malabar-mode :: A better Java mode for Emacs
 
 
