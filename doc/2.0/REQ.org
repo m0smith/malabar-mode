@@ -1,0 +1,7 @@
+* Requirements for 2.0
+
+** Separate maven from malabar-mode
+
+** hamsters
+
+*** We love them
