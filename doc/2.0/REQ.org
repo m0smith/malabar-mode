@@ -1,11 +1,7 @@
 * Requirements for 2.0
-<<<<<<< HEAD
+
 #+OPTIONS: toc:2   
-=======
 
-#+OPTIONS: toc:2 
-
->>>>>>> 3ab1ef19d5de46bdcbb1edf252a2c9ffa71422d3
 ** Separate maven from malabar-mode
 
 ** hamsters
