@@ -1,4 +1,6 @@
+[![Melpa Status](http://melpa.milkbox.net/packages/malabar-mode-badge.svg)](http://melpa.milkbox.net/#/malabar-mode)
 # malabar-mode :: A better Java mode for Emacs
+
 
 malabar-mode extends java-mode with hooks into Maven that make
 it easy to compile files on the fly and execute Maven build
