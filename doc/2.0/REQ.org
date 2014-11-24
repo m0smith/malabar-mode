@@ -23,4 +23,5 @@ This ends up being much faster than spawning a new mvn process, also not dependa
 Use Groovy as if it were a repl.   This adds a dependency on groovy-mode.
 
 
-
+** flycheck integration using groovy
+Rather than spawn the a separate compile, use the running groovy inferior process
