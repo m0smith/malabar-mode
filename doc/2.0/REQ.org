@@ -4,6 +4,23 @@
 
 ** Separate maven from malabar-mode
 
-** hamsters
+Currently malabar-mode requires a certain version of maven to be install.
 
-*** We love them
+Separate the project management out of malabar-mode.  Instead, provide
+a way to get the following based on the packaging system (maven, groovy, etc)
+
+# classpath
+# source dirs
+# test source dirs
+
+Also, projects need to have 2 classpaths: one for runtime and one for test.
+
+
+** Grok pom.xml using groovy grape
+This ends up being much faster than spawning a new mvn process, also not dependant upon maven.
+
+** Use a groovy REPL
+Use Groovy as if it were a repl.   This adds a dependency on groovy-mode.
+
+
+
