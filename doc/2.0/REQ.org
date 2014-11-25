@@ -25,3 +25,6 @@ Use Groovy as if it were a repl.   This adds a dependency on groovy-mode.
 
 ** flycheck integration using groovy
 Rather than spawn the a separate compile, use the running groovy inferior process
+
+** When opening a new java file, auto-populate with a template
+The template needs to be configurable per project.
