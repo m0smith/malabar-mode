@@ -90,7 +90,7 @@
   "Get the project info for a "
   (interactive "fPOM File:")
   (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
-	 (url (format "http://localhost:4428/pi/?repo=%s&pom=%s" repo pom)))
+	 (url (format "http://localhost:4428/pi/?repo=%s&pom=%s" repo (expand-file-name pom))))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (json-read))))
@@ -98,7 +98,7 @@
 (defun malabar-project-classpath (project-info)
   ""
   (interactive)
-  (cdr (assq 'classpath (assq 'test pi))))
+  (cdr (assq 'classpath (assq 'test project-info))))
 
-(setq pi (malabar-project-info "c:/Users/Smith/projects/malabar-mode-jar/pom.xml"))
+(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
 
