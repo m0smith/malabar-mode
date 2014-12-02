@@ -8,8 +8,10 @@
 * Install emacs package groovy-mode.  Do not use marmalade version as it is old.
 
 * Add to .emacs: 
-(load-file "~/emacs/cedet-bzr/cedet-devel-load.el")
-(load-file "~/projects/malabar-mode/src/main/lisp/new/malabar-mode.el")
+
+    (load-file "~/emacs/cedet-bzr/cedet-devel-load.el")
+    (load-file "~/projects/malabar-mode/src/main/lisp/new/malabar-mode.el")
 
 * in emacs (malabar-run-groovy)
 * Edit a java file in a maven2 project
+  
