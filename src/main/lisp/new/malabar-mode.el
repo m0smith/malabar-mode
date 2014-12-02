@@ -39,6 +39,25 @@
 ;;; Code:
 
 (require 'groovy-mode)
+(require 'semantic/db-javap)
+
+
+;; 
+;; init
+;;
+
+(setq ede-maven2-execute-mvn-to-get-classpath nil)
+
+(semantic-mode 1)
+(global-ede-mode 1)
+
+;;
+;; Groovy
+;;
+
+(defun malabar-run-groovy ()
+  (interactive)
+  (run-groovy "C:/Users/lpmsmith/.gvm/groovy/2.3.7/bin/groovysh -Dhttp.proxyHost=proxy.ihc.com -Dhttp.proxyPort=8080 -Dgroovy.grape.report.downloads=true -Djava.net.useSystemProxies=true"))
 
 
 (defun malabar-groovy-send-string (str)
@@ -73,10 +92,50 @@
   (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.1-SNAPSHOT']]")
   (malabar-groovy-send-string "groovy.grape.Grape.grab(classLoader: classLoader, grapez)")
   (malabar-groovy-send-string "classLoader.loadClass('com.software_ninja.malabar.Malabar').newInstance().startCL(classLoader); }; malabar();"))
-;;  (malabar-groovy-send-string "this.getClass().classLoader.rootLoader.addURL(new File(\"C:/Users/Smith/.m2/repository/com/software-ninja/malabar/2.0.0-SNAPSHOT/malabar-2.0.0-SNAPSHOT.jar\").toURL());")
-;;  (malabar-groovy-send-string "new com.software_ninja.malabar.Malabar().start();"))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+
+
+;;
+;; EDE
+;;
+
+(defun malabar-maven2-load (dir &optional rootproj)
+  "Return a Maven Project object if there is a match.
+Return nil if there isn't one.
+Argument DIR is the directory it is created for.
+ROOTPROJ is nil, since there is only one project."
+  (or (ede-files-find-existing dir ede-maven2-project-list)
+      ;; Doesn't already exist, so lets make one.
+       (let ((this
+             (ede-maven2-project "Malabar Maven"
+                                 :name "Malabar maven dir" ; TODO: make fancy name from dir here.
+                                 :directory dir
+                                 :file (expand-file-name "pom.xml" dir)
+				 :current-target "package"
+				 :classpath (mapcar 'identity (malabar-project-classpath (malabar-project-info (expand-file-name "pom.xml" dir))))
+                                 )))
+         (ede-add-project-to-global-list this)
+         ;; TODO: the above seems to be done somewhere else, maybe ede-load-project-file
+         ;; this seems to lead to multiple copies of project objects in ede-projects
+	 ;; TODO: call rescan project to setup all data
+	 (message "%s" this)
+	 this)))
+
+
+(ede-add-project-autoload
+ (ede-project-autoload "malabar-maven2"
+		       :name "MALABAR MAVEN2"
+		       :file 'ede/maven2
+		       :proj-file "pom.xml"
+		       :proj-root 'ede-maven2-project-root
+		       :load-type 'malabar-maven2-load
+		       :class-sym 'ede-maven2-project
+		       :new-p nil
+		       :safe-p t
+		       )
+ 'unique)
+
     
 ;;; Project
 
@@ -100,5 +159,5 @@
   (interactive)
   (cdr (assq 'classpath (assq 'test project-info))))
 
-(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
+;;(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
 
