@@ -89,9 +89,9 @@
   (interactive)
   (message "Calling hook")
   (malabar-groovy-send-string "def malabar = { classLoader = new groovy.lang.GroovyClassLoader();")
-  (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.1-SNAPSHOT']]")
+  (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.3']]")
   (malabar-groovy-send-string "groovy.grape.Grape.grab(classLoader: classLoader, grapez)")
-  (malabar-groovy-send-string "classLoader.loadClass('com.software_ninja.malabar.Malabar').newInstance().startCL(classLoader); }; malabar();"))
+  (malabar-groovy-send-string "classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; malabar();"))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
 
