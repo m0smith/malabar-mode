@@ -87,7 +87,7 @@
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
-  (message "Calling hook")
+  (message "Starting malabar server")
   (malabar-groovy-send-string "def malabar = { classLoader = new groovy.lang.GroovyClassLoader();")
   (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.3']]")
   (malabar-groovy-send-string "groovy.grape.Grape.grab(classLoader: classLoader, grapez)")
