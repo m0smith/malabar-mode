@@ -343,6 +343,7 @@ keybindings.  Changing this variable is at your own risk."
   :lighter " JVM"
   :keymap malabar-mode-map)
 
+(provide 'malabar-mode)
 
 ;;(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
 
