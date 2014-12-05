@@ -42,18 +42,18 @@
 (require 'semantic/db-javap)
 
 
-;; 
-;; init
-;;
+;;; 
+;;; init
+;;;
 
 (setq ede-maven2-execute-mvn-to-get-classpath nil)
 
 (semantic-mode 1)
 (global-ede-mode 1)
 
-;;
-;; Groovy
-;;
+;;;
+;;; Groovy
+;;;
 
 
 (defun malabar-run-groovy ()
@@ -103,6 +103,19 @@
   (mapcar (lambda (p) (malabar-groovy-send-string 
 		       (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" (expand-file-name p)))) (malabar-project-classpath 
 		     (malabar-project-info pom repo))))
+
+(defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer
+      (let ((pom (format "%spom.xml" (ede-find-project-root "pom.xml"))))
+	(malabar-groovy-send-classpath pom repo)))))
+
+(defun malabar-groovy-send-buffer (&optional buffer)
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer
+      (groovy-send-region-and-go (point-min) (point-max)))))
   
 ;;;
 ;;; flycheck
@@ -205,8 +218,9 @@ ROOTPROJ is nil, since there is only one project."
 		       )
  'unique)
 
-    
+;;;    
 ;;; Project
+;;;
 
 (require 'json)
 
@@ -238,6 +252,97 @@ ROOTPROJ is nil, since there is only one project."
   ""
   (interactive)
   (cdr (assq 'classpath (assq 'test project-info))))
+
+;;;
+;;; MODE
+;;;
+
+(defun malabar-version (&optional show-version)
+  "Get the Malabar version as string.
+
+If called interactively or if SHOW-VERSION is non-nil, show the
+version in the echo area and the messages buffer.
+
+The returned string includes both, the version from package.el
+and the library version, if both a present and different.
+
+If the version number could not be determined, signal an error,
+if called interactively, or if SHOW-VERSION is non-nil, otherwise
+just return nil."
+  (interactive (list t))
+  (let ((version (pkg-info-version-info 'malabar)))
+    (when show-version
+      (message "Malabar version: %s" version))
+    version))
+
+
+(defvar malabar-command-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c") 'malabar-groovy-send-buffer)
+    (define-key map (kbd "C-s") 'malabar-groovy-send-classpath-of-buffer)
+    (define-key map "V" 'malabar-version)
+    map)
+  "Keymap of Malabar interactive commands.")
+
+
+(defvar malabar-mode-menu-map
+  (easy-menu-create-menu
+   "JVM"
+   '(["Enable JVM Support" malabar-mode
+      :style toggle :selected malabar-mode
+      :enable  malabar-mode ]
+     ["Send classpath" malabar-groovy-send-classpath-of-buffer malabar-mode]
+     ["Send buffer" malabar-groovy-send-buffer malabar-mode]
+     "---"
+     ["Show Malabar version" malabar-version t]))
+
+  "Menu of `malabar-mode'.")
+
+(easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
+
+
+(defcustom malabar-keymap-prefix (kbd "C-c J")
+  "Prefix for key bindings of Malabar.
+
+Changing this variable outside Customize does not have any
+effect.  To change the keymap prefix from Lisp, you need to
+explicitly re-define the prefix key:
+
+    (define-key malabar-mode-map malabar-keymap-prefix nil)
+    (setq malabar-keymap-prefix (kbd \"C-c f\"))
+    (define-key malabar-mode-map malabar-keymap-prefix
+                malabar-command-map)
+
+Please note that Malabar's manual documents the default
+keybindings.  Changing this variable is at your own risk."
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string
+  :risky t
+  :set
+  (lambda (variable key)
+    (when (and (boundp variable) (boundp 'malabar-mode-map))
+      (define-key malabar-mode-map (symbol-value variable) nil)
+      (define-key malabar-mode-map key malabar-command-map))
+    (set-default variable key)))
+
+(defvar malabar-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map malabar-keymap-prefix malabar-command-map)
+    ;; We place the menu under a custom menu key.  Since this menu key is not
+    ;; present in the menu of the global map, no top-level menu entry is added
+    ;; to the global menu bar.  However, it still appears on the mode line
+    ;; lighter.
+    (define-key map [menu-bar malabar] malabar-mode-menu-map)
+    map)
+  "Keymap of `malabar-mode'.")
+
+
+(define-minor-mode malabar-mode
+  "Support and integeration for JVM languages"
+  :lighter " JVM"
+  :keymap malabar-mode-map)
+
 
 ;;(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
 
