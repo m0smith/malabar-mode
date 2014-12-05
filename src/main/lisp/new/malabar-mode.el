@@ -55,9 +55,11 @@
 ;; Groovy
 ;;
 
+
 (defun malabar-run-groovy ()
   (interactive)
-  (run-groovy "C:/Users/lpmsmith/.gvm/groovy/2.3.7/bin/groovysh -Dhttp.proxyHost=proxy.ihc.com -Dhttp.proxyPort=8080 -Dgroovy.grape.report.downloads=true -Djava.net.useSystemProxies=true"))
+  (run-groovy (format "%s %s" (expand-file-name "~/.gvm/groovy/2.3.7/bin/groovysh")
+		      " -Dhttp.proxyHost=proxy.ihc.com -Dhttp.proxyPort=8080 -Dgroovy.grape.report.downloads=true -Djava.net.useSystemProxies=true")))
 
 
 (defun malabar-groovy-send-string (str)
@@ -89,12 +91,72 @@
   (interactive)
   (message "Starting malabar server")
   (malabar-groovy-send-string "def malabar = { classLoader = new groovy.lang.GroovyClassLoader();")
-  (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.3']]")
+  (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.4-SNAPSHOT']]")
   (malabar-groovy-send-string "groovy.grape.Grape.grab(classLoader: classLoader, grapez)")
   (malabar-groovy-send-string "classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; malabar();"))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
 
+;;;
+;;; flycheck
+;;;
+
+(require 'flycheck)
+
+
+(defadvice flycheck-start-command-checker (around flycheck-start-using-function act)
+  "Put some nice docs here"
+  (message "CHECKER: %s CALLBACK %s" checker callback)
+  (let ((func (get checker 'flycheck-command-function)))
+    (if func
+	(apply func checker callback (flycheck-checker-substituted-arguments checker))
+      ad-do-it)))
+
+
+(defadvice flycheck-interrupt-command-checker (around flycheck-check-process-first-malabar act)
+  (when process
+      ad-do-it))
+
+(defun malabar-flycheck-command ( checker callback source source-original)
+  ""
+  (let* ((pom (ede-find-project-root "pom.xml"))
+	 (pom-path (format "%spom.xml" pom)))
+    (message "command args:%s %s %s %s" (current-buffer) pom-path  source source-original)
+    (let ((output (malabar-parse-script-raw pom-path source)))
+      (message "parsed: %s" output)
+      (flycheck-finish-checker-process checker 0 flycheck-temporaries output callback))))
+
+
+(defun malabar-flycheck-error-new (checker error-info)
+  ;;(message "error-info %s" error-info)
+  (flycheck-error-new
+   :buffer (current-buffer)
+   :checker checker
+   :filename (cdr (assq 'sourceLocator error-info))
+   :line (cdr (assq     'line error-info))
+   :column (cdr (assq   'startColumn error-info))
+   :message (cdr (assq  'message error-info))
+   :level 'error))
+
+   
+
+(defun malabar-flycheck-error-parser (output checker buffer)
+  "Parse errors in result"
+  (let ((rtnval (mapcar (lambda (e) (malabar-flycheck-error-new checker e)) (json-read-from-string output))))
+    ;(flycheck-safe-delete-temporaries)
+    rtnval))
+	
+
+(flycheck-define-checker jvm-mode-malabar
+  ""
+       :command ("echo" source source-original ) ;; use a real command
+       :modes (java-mode groovy-mode)
+       :error-parser malabar-flycheck-error-parser
+)
+
+(put 'jvm-mode-malabar 'flycheck-command-function 'malabar-flycheck-command)
+(add-to-list 'flycheck-checkers 'jvm-mode-malabar)
+(message "%s" (symbol-plist 'jvm-mode-malabar))
 
 ;;
 ;; EDE
@@ -144,6 +206,17 @@ ROOTPROJ is nil, since there is only one project."
 (defvar url-http-end-of-headers)
 
 
+
+(defun malabar-parse-script-raw (pom script &optional repo)
+  "Parse the SCRIPT "
+  (interactive "fPOM File:\nfJava File:")
+  (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
+	 (url (format "http://localhost:4428/parse/?repo=%s&pom=%s&script=%s" repo (expand-file-name pom) (expand-file-name script))))
+    (message "URL %s" url)
+    (with-current-buffer (url-retrieve-synchronously url)
+      (message "parse buffer %s" (current-buffer))
+      (goto-char url-http-end-of-headers)
+      (buffer-substring (point) (point-max)))))
 
 (defun malabar-project-info (pom &optional repo)
   "Get the project info for a "
