@@ -337,7 +337,7 @@ keybindings.  Changing this variable is at your own risk."
     map)
   "Keymap of `malabar-mode'.")
 
-
+;;;###autoload
 (define-minor-mode malabar-mode
   "Support and integeration for JVM languages"
   :lighter " JVM"
