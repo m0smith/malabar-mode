@@ -26,10 +26,11 @@ Use Groovy as if it were a repl.   This adds a dependency on groovy-mode.
 
 ** flycheck integration using groovy
 Rather than spawn the a separate compile, use the running groovy inferior process
+** Implement all the features of the old version as a minor-mode
+** Easily add classpath to groovysh
 
 ** When opening a new java file, auto-populate with a template
 The template needs to be configurable per project.
-** Easily add classpath to groovysh
 ** Run an application (main)
 ** Run a unit test
 

@@ -97,6 +97,13 @@
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
 
+(defun malabar-groovy-send-classpath  (pom &optional repo)
+  "Add the classpath for POM to the runnning *groovy*."
+  (interactive "fPOM File:")
+  (mapcar (lambda (p) (malabar-groovy-send-string 
+		       (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" (expand-file-name p)))) (malabar-project-classpath 
+		     (malabar-project-info pom repo))))
+  
 ;;;
 ;;; flycheck
 ;;;
