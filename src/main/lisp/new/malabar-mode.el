@@ -90,18 +90,26 @@
   "Called when the inferior groovy is started"
   (interactive)
   (message "Starting malabar server")
-  (malabar-groovy-send-string "def malabar = { classLoader = new groovy.lang.GroovyClassLoader();")
-  (malabar-groovy-send-string "Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.4-SNAPSHOT']]")
-  (malabar-groovy-send-string "groovy.grape.Grape.grab(classLoader: classLoader, grapez)")
-  (malabar-groovy-send-string "classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; malabar();"))
+  (malabar-groovy-send-string "
+     malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
+         Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.4-SNAPSHOT']]; 
+         groovy.grape.Grape.grab(classLoader: classLoader, grapez);
+         classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; 
+     malabar();"))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+
+(defun malabar-groovy-send-classpath-element  (element)
+  "Send a JAR, ZIP or DIR to the classpath of the running *groovy*"
+  (interactive "fJAR, ZIP or DIR:")
+  (malabar-groovy-send-string 
+   (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" 
+	   (expand-file-name element))))
 
 (defun malabar-groovy-send-classpath  (pom &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
   (interactive "fPOM File:")
-  (mapcar (lambda (p) (malabar-groovy-send-string 
-		       (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" (expand-file-name p)))) (malabar-project-classpath 
+  (mapcar 'malabar-groovy-send-classpath-element (malabar-project-classpath 
 		     (malabar-project-info pom repo))))
 
 (defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
@@ -278,8 +286,13 @@ just return nil."
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
+    (define-key map [?p] 'ede-compile-target)
+    (define-key map [?i] 'semantic-ia-describe-class)
+    (define-key map [?\C-p] 'ede-edit-file-target)
+
     (define-key map (kbd "C-c") 'malabar-groovy-send-buffer)
-    (define-key map (kbd "C-s") 'malabar-groovy-send-classpath-of-buffer)
+    (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
+    (define-key map "S" 'malabar-groovy-send-classpath-element)
     (define-key map "V" 'malabar-version)
     map)
   "Keymap of Malabar interactive commands.")
@@ -292,6 +305,7 @@ just return nil."
       :style toggle :selected malabar-mode
       :enable  malabar-mode ]
      ["Send classpath" malabar-groovy-send-classpath-of-buffer malabar-mode]
+     ["Send classpath element" malabar-groovy-send-classpath-element malabar-mode]
      ["Send buffer" malabar-groovy-send-buffer malabar-mode]
      "---"
      ["Show Malabar version" malabar-version t]))
@@ -301,7 +315,7 @@ just return nil."
 (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
 
 
-(defcustom malabar-keymap-prefix (kbd "C-c J")
+(defcustom malabar-keymap-prefix (kbd "C-c C-v")
   "Prefix for key bindings of Malabar.
 
 Changing this variable outside Customize does not have any
