@@ -261,6 +261,29 @@ ROOTPROJ is nil, since there is only one project."
   (interactive)
   (cdr (assq 'classpath (assq 'test project-info))))
 
+
+;;;
+;;; Reflection
+;;;
+
+(defun malabar-get-tag-name (tag-class &optional buffer)
+  (let* ((buffer (or buffer (current-buffer)))
+	 (tag (car (semantic-find-tags-by-class tag-class buffer))))
+    (when tag
+      (semantic-tag-name tag))))
+
+
+(defun malabar-get-fully-qualified-class-name (&optional buffer)
+  (format "%s.%s" (malabar-get-tag-name 'package buffer)
+	  (malabar-get-tag-name 'type buffer)))
+
+(defun malabar-fully-qualified-class-name-kill-ring-save (&optional buffer)
+  (interactive)
+  (let ((s (malabar-get-fully-qualified-class-name buffer)))
+    (kill-new s)
+    (message "Copied %s" s)))
+
+
 ;;;
 ;;; MODE
 ;;;
@@ -288,6 +311,10 @@ just return nil."
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
     (define-key map [?i] 'semantic-ia-describe-class)
+
+    (define-key map [?\C-.] 'semantic-ia-complete-symbol)   
+    (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
+
     (define-key map [?\C-p] 'ede-edit-file-target)
 
     (define-key map (kbd "C-c") 'malabar-groovy-send-buffer)
