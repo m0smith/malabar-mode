@@ -266,6 +266,12 @@ ROOTPROJ is nil, since there is only one project."
 ;;; Reflection
 ;;;
 
+
+(defun malabar-where (name)
+  (interactive "sClass:")
+  (let ((fr (semanticdb-find-tags-by-name-regexp name)))
+    (caar fr)))
+
 (defun malabar-get-tag-name (tag-class &optional buffer)
   (let* ((buffer (or buffer (current-buffer)))
 	 (tag (car (semantic-find-tags-by-class tag-class buffer))))
@@ -310,14 +316,35 @@ just return nil."
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
-    (define-key map [?i] 'semantic-ia-describe-class)
+    ;; (define-key map [?\C-b] 'malabar-install-project)
+    ;; (define-key map [?\C-c] 'malabar-compile-file)
+    ;; (define-key map [?\C-g] 'malabar-insert-getset)
+    ;; (define-key map [?t]    'malabar-run-test)
+    ;; (define-key map [?\?]   'malabar-cheatsheat)
+    ;; (define-key map [?\C-t] 'malabar-run-junit-test)
+    ;; (define-key map [?\M-t] 'malabar-run-all-tests)
+    ;; (define-key map [?\C-z] 'malabar-import-one-class)
+    ;; (define-key map [?z]    'malabar-import-all)
+    ;; (define-key map [?\C-o] 'malabar-override-method)
+    ;; (define-key map [?\C-e] 'malabar-extend-class)
+    ;; (define-key map [?\C-i] 'malabar-implement-interface)
 
+    (define-key map [?i] 'semantic-ia-describe-class)
+    ;; (define-key map [?h] 'malabar-semantic-heirarchy)
+    ;; (define-key map [?.] (if malabar-use-external-cedet
+    ;; 				       'semantic-ia-complete-symbol-menu
+    ;; 				     'semantic-ia-complete-symbol))
     (define-key map [?\C-.] 'semantic-ia-complete-symbol)   
     (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
-
+    ;;  (define-key map [?w] 'malabar-which) 
     (define-key map [?\C-p] 'ede-edit-file-target)
-
-    (define-key map (kbd "C-c") 'malabar-groovy-send-buffer)
+      ;; (define-key map [?\C-y] 'malabar-jump-to-thing)
+    ;;   (define-key map [?\C-r] malabar-refactor-map)
+    ;;   (define-key map malabar-mode-key-prefix prefix-map))
+    ;; (define-key map "\M-n" 'next-error)
+    ;; (define-key map "\M-p" 'previous-error)
+    ;; (define-key map ":" 'malabar-electric-colon)
+    (define-key map (kbd "C-k") 'malabar-groovy-send-buffer)
     (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
     (define-key map "S" 'malabar-groovy-send-classpath-element)
     (define-key map "V" 'malabar-version)
