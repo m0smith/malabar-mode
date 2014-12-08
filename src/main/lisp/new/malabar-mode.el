@@ -202,7 +202,7 @@ ROOTPROJ is nil, since there is only one project."
                                  :name "Malabar maven dir" ; TODO: make fancy name from dir here.
                                  :directory dir
                                  :file (expand-file-name "pom.xml" dir)
-				 :current-target "package"
+				 :current-target "install"
 				 :classpath (mapcar 'identity (malabar-project-classpath (malabar-project-info (expand-file-name "pom.xml" dir))))
                                  )))
          (ede-add-project-to-global-list this)
@@ -239,8 +239,11 @@ ROOTPROJ is nil, since there is only one project."
 (defun malabar-parse-script-raw (pom script &optional repo)
   "Parse the SCRIPT "
   (interactive "fPOM File:\nfJava File:")
-  (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
-	 (url (format "http://localhost:4428/parse/?repo=%s&pm=%s&script=%s" repo (expand-file-name pom) (expand-file-name script))))
+  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
+	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s" 
+		      malabar-server-host
+		      malabar-server-port
+		      repo (expand-file-name pom) (expand-file-name script))))
     (message "URL %s" url)
     (with-current-buffer (url-retrieve-synchronously url)
       (message "parse buffer %s" (current-buffer))
@@ -250,8 +253,11 @@ ROOTPROJ is nil, since there is only one project."
 (defun malabar-project-info (pom &optional repo)
   "Get the project info for a "
   (interactive "fPOM File:")
-  (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
-	 (url (format "http://localhost:4428/pi/?repo=%s&pm=%s" repo (expand-file-name pom))))
+  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
+	 (url (format "http://%s:%s/pi/?repo=%s&pm=%s" 
+		      malabar-server-host
+		      malabar-server-port
+		      repo (expand-file-name pom))))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (json-read))))
@@ -291,6 +297,68 @@ ROOTPROJ is nil, since there is only one project."
 
 
 ;;;
+;;; TEST
+;;;
+
+
+(define-derived-mode malabar-unittest-list-mode tabulated-list-mode "malabar-mode" 
+  "Used by `malabar-test-run' to show the test failures"
+  (setq tabulated-list-format [("Desc" 60 t)
+                               ("Msg" 12 nil)
+			       ("Header" 12 nil)])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Desc" nil))
+  (tabulated-list-init-header))
+
+(defun print-current-line-id ()
+  (interactive)
+   (message (concat "current line ID is: " (tabulated-list-get-id))))
+
+(defun malabar-unittest-list (results)
+  (interactive)
+  (let ((results (mapcar (lambda (r) (list (elt r 0)  r)) results)))
+    (if (= (length results) 0)
+	(message "Success")
+      (pop-to-buffer "*Malabar Test Results*" nil)
+      (malabar-unittest-list-mode)
+      (setq tabulated-list-entries results)
+      (tabulated-list-print t))))
+
+
+(defun malabar-run-test (use-method &optional buffer repo pom )
+  "Runs the current buffer as a unit test, using jUnit.  
+
+   USE-METHOD: if USE-METHOD is non-nil or With a  prefix arg, 
+               ask for a name of a method in and only run that unit test
+
+   BUFFER: the buffer or default to (current-buffer)
+
+   REPO:   the maven repo dir default=malabar-package-maven-repo
+
+   pom:    the dir to the pom file.  Default: search up the file tree for a pom.xml"
+
+  (interactive "P\n")
+  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
+	 (buffer (or buffer (current-buffer)))
+	 (script (buffer-file-name buffer))
+	 (pom (or pom (format "%spom.xml" (ede-find-project-root "pom.xml"))))
+	 (method (if use-method (format "&method=%s" (read-string "Method Name:")) ""))
+	 (url (format "http://%s:%s/test/?repo=%s&pm=%s&script=%s%s" 
+		      malabar-server-host
+		      malabar-server-port
+		      repo 
+		      (expand-file-name pom) 
+		      (expand-file-name script)
+		      method)))
+    (save-some-buffers)
+    (with-current-buffer (url-retrieve-synchronously url)
+      (goto-char url-http-end-of-headers)
+      (malabar-unittest-list (json-read)))))
+    
+	
+	
+
+;;;
 ;;; MODE
 ;;;
 
@@ -319,7 +387,7 @@ just return nil."
     ;; (define-key map [?\C-b] 'malabar-install-project)
     ;; (define-key map [?\C-c] 'malabar-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
-    ;; (define-key map [?t]    'malabar-run-test)
+    (define-key map [?t]    'malabar-run-test)
     ;; (define-key map [?\?]   'malabar-cheatsheat)
     ;; (define-key map [?\C-t] 'malabar-run-junit-test)
     ;; (define-key map [?\M-t] 'malabar-run-all-tests)
@@ -393,6 +461,26 @@ keybindings.  Changing this variable is at your own risk."
       (define-key malabar-mode-map (symbol-value variable) nil)
       (define-key malabar-mode-map key malabar-command-map))
     (set-default variable key)))
+
+(defcustom malabar-server-host "localhost"
+  "The host where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-server-port "4428"
+  "The port where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-package-maven-repo "~/.m2/repository"
+  "Where to find the maven repo"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+
 
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
