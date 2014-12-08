@@ -240,7 +240,7 @@ ROOTPROJ is nil, since there is only one project."
   "Parse the SCRIPT "
   (interactive "fPOM File:\nfJava File:")
   (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
-	 (url (format "http://localhost:4428/parse/?repo=%s&pom=%s&script=%s" repo (expand-file-name pom) (expand-file-name script))))
+	 (url (format "http://localhost:4428/parse/?repo=%s&pm=%s&script=%s" repo (expand-file-name pom) (expand-file-name script))))
     (message "URL %s" url)
     (with-current-buffer (url-retrieve-synchronously url)
       (message "parse buffer %s" (current-buffer))
@@ -251,7 +251,7 @@ ROOTPROJ is nil, since there is only one project."
   "Get the project info for a "
   (interactive "fPOM File:")
   (let* ((repo (or repo (expand-file-name "~/.m2/repository")))
-	 (url (format "http://localhost:4428/pi/?repo=%s&pom=%s" repo (expand-file-name pom))))
+	 (url (format "http://localhost:4428/pi/?repo=%s&pm=%s" repo (expand-file-name pom))))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (json-read))))
