@@ -40,7 +40,7 @@
 
 (require 'groovy-mode)
 (require 'semantic/db-javap)
-
+(require 'dash)
 
 ;;; 
 ;;; init
@@ -300,6 +300,40 @@ ROOTPROJ is nil, since there is only one project."
 ;;; TEST
 ;;;
 
+(defvar malabar-java-stack-trace-dirs (list "src/main/java" "src/main/groovy" "src/test/java""src/test/groovy"))
+
+(defun malabar-java-stack-trace-best-filename (package2 file)
+  (interactive "sPackage:\nsFile:")
+  (let* ((root (ede-find-project-root "pom.xml"))
+	 (files (-filter 'file-exists-p 
+			 (mapcar (lambda (dir) 
+				   (concat root dir "/"
+					   package2 "/"
+					   file)) malabar-java-stack-trace-dirs))))
+    (if (> (length files) 0)
+	(first files)
+      (concat root (first malabar-java-stack-trace-dirs) "/" package2 "/" file))))
+      
+	 
+(defun malabar-java-stack-trace-regexp-to-filename ()
+  "Generates a relative filename from java-stack-trace regexp match data."
+  (let* ((root (ede-find-project-root "pom.xml"))
+	 (package (match-string 1))
+	 (package2 (replace-regexp-in-string "\\." "/" package))
+	 (class (match-string 2))
+	 (method (match-string 3))
+	 (file (match-string 4))
+	 (line (match-string 5)))
+    (malabar-java-stack-trace-best-filename package2 file)))
+	 
+
+(add-to-list 'compilation-error-regexp-alist 'malabar-java-stack-trace)
+(add-to-list 'compilation-error-regexp-alist-alist
+	     '(malabar-java-stack-trace .
+				("^[[:space:]]at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
+				 malabar-java-stack-trace-regexp-to-filename 5)))
+
+
 
 (define-derived-mode malabar-unittest-list-mode tabulated-list-mode "malabar-mode" 
   "Used by `malabar-test-run' to show the test failures"
@@ -314,9 +348,19 @@ ROOTPROJ is nil, since there is only one project."
   (interactive)
    (message (concat "current line ID is: " (tabulated-list-get-id))))
 
+(defun malabar-unittest-show-stacktrace (button)
+  (let* ((entry (tabulated-list-get-entry))
+	 (trace (elt entry 3)))
+    (pop-to-buffer "*Malabar Trace*" nil)
+    (insert trace)
+    (compilation-mode)))
+
+
 (defun malabar-unittest-list (results)
   (interactive)
-  (let ((results (mapcar (lambda (r) (list (elt r 0)  r)) results)))
+  (let ((results (mapcar (lambda (r) (let (( id (elt r 0))) 
+				       (aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
+				       (list id  r))) results)))
     (if (= (length results) 0)
 	(message "Success")
       (pop-to-buffer "*Malabar Test Results*" nil)
