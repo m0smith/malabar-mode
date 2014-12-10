@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; malabar-mode.el --- A better Java mode for Emacs
 
 ;; Copyright (c) Matthew O. Smith <matt@m0smith.com>
@@ -131,36 +132,38 @@
 
 (require 'flycheck)
 
+(defun malabar-flycheck-command ( checker cback )
+  "Use flycheck to search the current buffer for compiler errrors."
+  (if (not (comint-check-proc "*groovy*"))
+      (funcall cback 'finished nil)
+    (let* ((pom (ede-find-project-root "pom.xml"))
+	   (pom-path (format "%spom.xml" pom))
+	   (buffer (current-buffer))
+	   (script (if (buffer-modified-p) (buffer-file-name) (buffer-file-name))))
+      
+      (malabar-parse-script-raw
+       (lambda (status)
+	 (message "%s %s %s" status (current-buffer) url-http-end-of-headers)
+	 (condition-case err
+	     (progn
+	       (goto-char url-http-end-of-headers)
+	       (let ((error-list (malabar-flycheck-error-parser (json-read) checker buffer)))
+		 (message "ERROR LIST:%s" error-list)
+		 (with-current-buffer buffer
+		   (funcall cback 'finished error-list))))
+	   (error (let ((msg (error-message-string err)))
+		    (message "flycheck error: %s" msg)
+		    (funcall cback 'errored msg)))))
+       pom-path script))))
 
-(defadvice flycheck-start-command-checker (around flycheck-start-using-function act)
-  "Put some nice docs here"
-  (message "CHECKER: %s CALLBACK %s" checker callback)
-  (let ((func (get checker 'flycheck-command-function)))
-    (if func
-	(apply func checker callback (flycheck-checker-substituted-arguments checker))
-      ad-do-it)))
 
 
-(defadvice flycheck-interrupt-command-checker (around flycheck-check-process-first-malabar act)
-  (when process
-      ad-do-it))
 
-(defun malabar-flycheck-command ( checker callback source source-original)
-  ""
-  (let* ((pom (ede-find-project-root "pom.xml"))
-	 (pom-path (format "%spom.xml" pom)))
-    (message "command args:%s %s %s %s" (current-buffer) pom-path  source source-original)
-    (let ((output (malabar-parse-script-raw pom-path source)))
-      (message "parsed: %s" output)
-      (flycheck-finish-checker-process checker 0 flycheck-temporaries output callback))))
-
-
-(defun malabar-flycheck-error-new (checker error-info)
-  ;;(message "error-info %s" error-info)
+(defun malabar-flycheck-error-new (checker error-info buffer)
   (flycheck-error-new
-   :buffer (current-buffer)
+   :buffer buffer
    :checker checker
-   :filename (cdr (assq 'sourceLocator error-info))
+   :filename (buffer-file-name buffer)
    :line (cdr (assq     'line error-info))
    :column (cdr (assq   'startColumn error-info))
    :message (cdr (assq  'message error-info))
@@ -169,22 +172,23 @@
    
 
 (defun malabar-flycheck-error-parser (output checker buffer)
-  "Parse errors in result"
-  (let ((rtnval (mapcar (lambda (e) (malabar-flycheck-error-new checker e)) (json-read-from-string output))))
-    ;(flycheck-safe-delete-temporaries)
+  "Parse errors in OUTPUT which is a JSON array"
+  (let ((rtnval (mapcar (lambda (e)
+			  (malabar-flycheck-error-new checker e buffer))
+			output)))
     rtnval))
 	
 
-(flycheck-define-checker jvm-mode-malabar
-  ""
-       :command ("echo" source source-original ) ;; use a real command
-       :modes (java-mode groovy-mode)
-       :error-parser malabar-flycheck-error-parser
+(flycheck-define-generic-checker 'jvm-mode-malabar
+  "Integrate flycheck with the malabar JVM service."
+  :start #'malabar-flycheck-command
+  :modes '(java-mode groovy-mode)
 )
 
-(put 'jvm-mode-malabar 'flycheck-command-function 'malabar-flycheck-command)
 (add-to-list 'flycheck-checkers 'jvm-mode-malabar)
-(message "%s" (symbol-plist 'jvm-mode-malabar))
+
+(add-hook 'groovy-mode-hook 'flycheck-mode)
+(add-hook 'java-mode-hook   'flycheck-mode)
 
 ;;
 ;; EDE
@@ -236,19 +240,19 @@ ROOTPROJ is nil, since there is only one project."
 
 
 
-(defun malabar-parse-script-raw (pom script &optional repo)
-  "Parse the SCRIPT "
+(defun malabar-parse-script-raw (callback pom script &optional repo)
+  "Parse the SCRIPT and call CALLBACK with the results buffer"
   (interactive "fPOM File:\nfJava File:")
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s" 
 		      malabar-server-host
 		      malabar-server-port
 		      repo (expand-file-name pom) (expand-file-name script))))
-    (message "URL %s" url)
-    (with-current-buffer (url-retrieve-synchronously url)
-      (message "parse buffer %s" (current-buffer))
-      (goto-char url-http-end-of-headers)
-      (buffer-substring (point) (point-max)))))
+    ;(message "URL %s" url)
+    (url-retrieve url callback)))
+
+
+
 
 (defun malabar-project-info (pom &optional repo)
   "Get the project info for a "
@@ -542,6 +546,10 @@ keybindings.  Changing this variable is at your own risk."
   "Support and integeration for JVM languages"
   :lighter " JVM"
   :keymap malabar-mode-map)
+
+(add-hook 'groovy-mode-hook 'malabar-mode)
+(add-hook 'java-mode-hook   'malabar-mode)
+
 
 (provide 'malabar-mode)
 
