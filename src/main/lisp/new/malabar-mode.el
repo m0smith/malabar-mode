@@ -242,8 +242,6 @@ restart the *groovy* process to see changes to effect"
 
 (add-to-list 'flycheck-checkers 'jvm-mode-malabar)
 
-(add-hook 'groovy-mode-hook 'flycheck-mode)
-(add-hook 'java-mode-hook   'flycheck-mode)
 
 ;;
 ;; EDE
@@ -524,9 +522,15 @@ ROOTPROJ is nil, since there is only one project."
 
 (defun malabar-unittest-list (results buffer)
   (interactive)
-  (let ((results (mapcar (lambda (r) (let (( id (elt r 0))) 
-				       (aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
-				       (list id  r))) results)))
+  (let ((results (mapcar (lambda (r) 
+			   (let (( id (elt r 0))
+				 ( msg (elt r 1))
+				 ( exmsg (elt r 2))
+				 ( trace (elt r 2)))
+			     (when (null msg) (aset r 1 ""))
+			     (when (null exmsg) (aset r 2 ""))
+			     (aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
+			     (list id  r))) results)))
     (if (= (length results) 0)
 	(message "Success")
       (with-current-buffer buffer
