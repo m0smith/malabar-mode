@@ -89,6 +89,13 @@ keybindings.  Changing this variable is at your own risk."
   :package-version '(malabar . "2.0")
   :type 'string)
 
+(defcustom malabar-package-additional-classpath '( "build/classes/main" "build/classes/test" )
+  "JARS and DIRS relative to the package root to add to the
+classpath.  These are added to every project.  May need to
+restart the *groovy* process to see changes to effect"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type '(repeat (string :tag "Jar/Zip/Dir")))
 
 
 ;;; 
@@ -138,6 +145,7 @@ keybindings.  Changing this variable is at your own risk."
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
+  (compilation-minor-mode)
   (message "Starting malabar server")
   (malabar-groovy-send-string "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
@@ -245,7 +253,8 @@ keybindings.  Changing this variable is at your own risk."
   (interactive "fPOM:")
   (let ((pi (malabar-project-info pom-file)))
     (-filter 'file-exists-p 
-	     (apply #'append 
+	     (apply #'append
+		    (malabar-project-additional-classpath)
 		    (malabar-project-resources pi 'test)
 		    (malabar-project-resources pi 'runtime)
 		    (malabar-project-sources pi 'test)
@@ -301,6 +310,33 @@ ROOTPROJ is nil, since there is only one project."
 (defvar url-http-end-of-headers)
 
 
+(defun malabar-url-http-post (url args)
+  "Send ARGS to URL as a POST request."
+  (let ((url-request-method "POST")
+	(url-request-extra-headers
+	 '(("Content-Type" . "application/x-www-form-urlencoded")))
+	(url-request-data
+	 (mapconcat (lambda (arg)
+		      (concat (url-hexify-string (car arg))
+			      "="
+			      (url-hexify-string (cdr arg))))
+		    args
+		    "&")))
+    (url-retrieve url 'malabar-kill-url-buffer)))
+
+(defun malabar-kill-url-buffer (status)
+  "Kill the buffer returned by `url-retrieve'."
+  (kill-buffer (current-buffer)))
+
+(defun malabar-post-additional-classpath ()
+  (interactive)
+  (let ((url (format "http://%s:%s/add/"
+		     malabar-server-host
+		     malabar-server-port)))
+    (malabar-url-http-post url (list
+				(cons "pm"        malabar-mode-project-file)
+				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
+
 
 (defun malabar-parse-script-raw (callback pom script &optional repo)
   "Parse the SCRIPT and call CALLBACK with the results buffer"
@@ -348,6 +384,14 @@ ROOTPROJ is nil, since there is only one project."
     "SCOPE is either 'test or 'runtime"
   (interactive)
   (mapcar 'identity (cdr (assq 'elements (assq scope project-info)))))
+
+(defun malabar-project-additional-classpath ()
+  (interactive)
+  "Returns a list of classpath elements outside the normal
+  project control.  See `malabar-package-additional-classpath'"
+  (-filter 'file-exists-p
+	  (mapcar (lambda (p) (concat malabar-mode-project-dir p))
+		  malabar-package-additional-classpath)))
 
 
 ;;;
@@ -420,6 +464,7 @@ ROOTPROJ is nil, since there is only one project."
 				 malabar-java-stack-trace-regexp-to-filename 5)))
 
 (defun malabar-project-copy-buffer-locals ( src-buffer)
+  (interactive "bSource Buffer:")
   (let ((target-buffer (current-buffer)))
     (with-current-buffer src-buffer
       (let ((name malabar-mode-project-name)
@@ -623,13 +668,18 @@ just return nil."
   "Support and integeration for JVM languages"
   :lighter " JVM"
   :keymap malabar-mode-map
+
+  
   (make-variable-buffer-local 'malabar-mode-project-file)
   (make-variable-buffer-local 'malabar-mode-project-dir)
   (make-variable-buffer-local 'malabar-mode-project-name)
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
-    (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir)))))
+    (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
+
+  (malabar-post-additional-classpath))
+
 
 
 (add-hook 'groovy-mode-hook 'malabar-mode)
