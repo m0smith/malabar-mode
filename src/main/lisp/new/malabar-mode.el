@@ -43,6 +43,54 @@
 (require 'semantic/db-javap)
 (require 'dash)
 
+;;;
+;;; Variables
+
+(defcustom malabar-keymap-prefix (kbd "C-c C-v")
+  "Prefix for key bindings of Malabar.
+
+Changing this variable outside Customize does not have any
+effect.  To change the keymap prefix from Lisp, you need to
+explicitly re-define the prefix key:
+
+    (define-key malabar-mode-map malabar-keymap-prefix nil)
+    (setq malabar-keymap-prefix (kbd \"C-c f\"))
+    (define-key malabar-mode-map malabar-keymap-prefix
+                malabar-command-map)
+
+Please note that Malabar's manual documents the default
+keybindings.  Changing this variable is at your own risk."
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string
+  :risky t
+  :set
+  (lambda (variable key)
+    (when (and (boundp variable) (boundp 'malabar-mode-map))
+      (define-key malabar-mode-map (symbol-value variable) nil)
+      (define-key malabar-mode-map key malabar-command-map))
+    (set-default variable key)))
+
+(defcustom malabar-server-host "localhost"
+  "The host where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-server-port "4428"
+  "The port where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-package-maven-repo "~/.m2/repository"
+  "Where to find the maven repo"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+
+
 ;;; 
 ;;; init
 ;;;
@@ -117,7 +165,7 @@
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
-      (let ((pom (format "%spom.xml" (ede-find-project-root "pom.xml"))))
+      (let ((pom malabar-mode-project-file))
 	(malabar-groovy-send-classpath pom repo)))))
 
 (defun malabar-groovy-send-buffer (&optional buffer)
@@ -136,19 +184,18 @@
   "Use flycheck to search the current buffer for compiler errrors."
   (if (not (comint-check-proc "*groovy*"))
       (funcall cback 'finished nil)
-    (let* ((pom (ede-find-project-root "pom.xml"))
-	   (pom-path (format "%spom.xml" pom))
+    (let* ((pom-path malabar-mode-project-file)
 	   (buffer (current-buffer))
 	   (script (if (buffer-modified-p) (buffer-file-name) (buffer-file-name))))
       
       (malabar-parse-script-raw
        (lambda (status)
-	 (message "%s %s %s" status (current-buffer) url-http-end-of-headers)
+	 ;(message "%s %s %s" status (current-buffer) url-http-end-of-headers)
 	 (condition-case err
 	     (progn
 	       (goto-char url-http-end-of-headers)
 	       (let ((error-list (malabar-flycheck-error-parser (json-read) checker buffer)))
-		 (message "ERROR LIST:%s" error-list)
+		 ;(message "ERROR LIST:%s" error-list)
 		 (with-current-buffer buffer
 		   (funcall cback 'finished error-list))))
 	   (error (let ((msg (error-message-string err)))
@@ -194,6 +241,21 @@
 ;; EDE
 ;;
 
+(defun malabar-maven2-extract-classpath (pom-file)
+  (interactive "fPOM:")
+  (let ((pi (malabar-project-info pom-file)))
+    (-filter 'file-exists-p 
+	     (apply #'append 
+		    (malabar-project-resources pi 'test)
+		    (malabar-project-resources pi 'runtime)
+		    (malabar-project-sources pi 'test)
+		    (malabar-project-sources pi 'runtime)
+		    (malabar-project-elements pi 'test)
+		    (malabar-project-elements pi 'runtime)
+		    (malabar-project-classpath pi' test)
+		    nil))))
+
+
 (defun malabar-maven2-load (dir &optional rootproj)
   "Return a Maven Project object if there is a match.
 Return nil if there isn't one.
@@ -207,7 +269,7 @@ ROOTPROJ is nil, since there is only one project."
                                  :directory dir
                                  :file (expand-file-name "pom.xml" dir)
 				 :current-target "install"
-				 :classpath (mapcar 'identity (malabar-project-classpath (malabar-project-info (expand-file-name "pom.xml" dir))))
+				 :classpath (malabar-maven2-extract-classpath (expand-file-name "pom.xml" dir))
                                  )))
          (ede-add-project-to-global-list this)
          ;; TODO: the above seems to be done somewhere else, maybe ede-load-project-file
@@ -266,10 +328,26 @@ ROOTPROJ is nil, since there is only one project."
       (goto-char url-http-end-of-headers)
       (json-read))))
 
-(defun malabar-project-classpath (project-info)
-  ""
+(defun malabar-project-classpath (project-info scope)
+  "SCOPE is either 'test or 'runtime"
   (interactive)
-  (cdr (assq 'classpath (assq 'test project-info))))
+  (mapcar 'identity (cdr (assq 'classpath (assq scope project-info)))))
+
+(defun malabar-project-resources (project-info scope)
+    "SCOPE is either 'test or 'runtime"
+  (interactive)
+  (mapcar (lambda (r) (cdr (assq 'directory r)))
+	  (cdr (assq 'resources (assq scope project-info)))))
+
+(defun malabar-project-sources (project-info scope)
+    "SCOPE is either 'test or 'runtime"
+  (interactive)
+  (mapcar 'identity (cdr (assq 'sources (assq scope project-info)))))
+
+(defun malabar-project-elements (project-info scope)
+    "SCOPE is either 'test or 'runtime"
+  (interactive)
+  (mapcar 'identity (cdr (assq 'elements (assq scope project-info)))))
 
 
 ;;;
@@ -308,20 +386,24 @@ ROOTPROJ is nil, since there is only one project."
 
 (defun malabar-java-stack-trace-best-filename (package2 file)
   (interactive "sPackage:\nsFile:")
-  (let* ((root (ede-find-project-root "pom.xml"))
+  (let* ((root malabar-mode-project-dir)
 	 (files (-filter 'file-exists-p 
 			 (mapcar (lambda (dir) 
-				   (concat root dir "/"
-					   package2 "/"
-					   file)) malabar-java-stack-trace-dirs))))
+				   (let ((rtnval (concat root dir "/"
+							 package2 "/"
+							 file)))
+				     (message "POSSIBLE FILE: %s %s %s" (current-buffer) root rtnval)
+				     rtnval))
+				 malabar-java-stack-trace-dirs))))
+    (message "FILES++ :%s" files)
     (if (> (length files) 0)
-	(first files)
-      (concat root (first malabar-java-stack-trace-dirs) "/" package2 "/" file))))
+	(elt files 0)
+      (concat root (elt malabar-java-stack-trace-dirs  0) "/" package2 "/" file))))
       
 	 
 (defun malabar-java-stack-trace-regexp-to-filename ()
   "Generates a relative filename from java-stack-trace regexp match data."
-  (let* ((root (ede-find-project-root "pom.xml"))
+  (let* ((root malabar-mode-project-dir)
 	 (package (match-string 1))
 	 (package2 (replace-regexp-in-string "\\." "/" package))
 	 (class (match-string 2))
@@ -337,13 +419,44 @@ ROOTPROJ is nil, since there is only one project."
 				("^[[:space:]]at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
 				 malabar-java-stack-trace-regexp-to-filename 5)))
 
+(defun malabar-project-copy-buffer-locals ( src-buffer)
+  (let ((target-buffer (current-buffer)))
+    (with-current-buffer src-buffer
+      (let ((name malabar-mode-project-name)
+	    (dir malabar-mode-project-dir)
+	    (file malabar-mode-project-file))
+	(with-current-buffer target-buffer
+	  (setq malabar-mode-project-dir dir)
+	  (setq malabar-mode-project-file file)
+	  (setq malabar-mode-project-name name))))))
 
+(defun malabar-stack-trace-buffer ( &optional buffer)
+  ""
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer
+      (let ((beg (region-beginning))
+	    (end (region-end))
+	    (active (region-active-p)))
+
+	
+	(with-current-buffer (pop-to-buffer (format "*Malabar Stack Trace<%s>*" malabar-mode-project-name))
+	  (malabar-project-copy-buffer-locals buffer)
+	  (compilation-mode)
+	  (malabar-project-copy-buffer-locals buffer)
+	  (setq inhibit-read-only t)
+	  (when active
+	    (let ((start (point-max)))
+	    (goto-char start)
+	    (insert-buffer-substring buffer beg end)
+	    (goto-char start))))))))
+	  
 
 (define-derived-mode malabar-unittest-list-mode tabulated-list-mode "malabar-mode" 
   "Used by `malabar-test-run' to show the test failures"
-  (setq tabulated-list-format [("Desc" 60 t)
-                               ("Msg" 12 nil)
-			       ("Header" 12 nil)])
+  (setq tabulated-list-format [("Desc" 50 t)
+                               ("Msg" 80 nil)
+			       ])
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key (cons "Desc" nil))
   (tabulated-list-init-header))
@@ -353,24 +466,30 @@ ROOTPROJ is nil, since there is only one project."
    (message (concat "current line ID is: " (tabulated-list-get-id))))
 
 (defun malabar-unittest-show-stacktrace (button)
-  (let* ((entry (tabulated-list-get-entry))
+  (let* ((buffer (current-buffer))
+	 (entry (tabulated-list-get-entry))
 	 (trace (elt entry 3)))
-    (pop-to-buffer "*Malabar Trace*" nil)
+    (pop-to-buffer (format "*Malabar Trace<%s>*" (tabulated-list-get-id)) nil)
     (insert trace)
-    (compilation-mode)))
+    (malabar-project-copy-buffer-locals buffer)
+    (compilation-mode)
+    (malabar-project-copy-buffer-locals buffer)
+    (goto-char (point-min))))
 
 
-(defun malabar-unittest-list (results)
+(defun malabar-unittest-list (results buffer)
   (interactive)
   (let ((results (mapcar (lambda (r) (let (( id (elt r 0))) 
 				       (aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
 				       (list id  r))) results)))
     (if (= (length results) 0)
 	(message "Success")
-      (pop-to-buffer "*Malabar Test Results*" nil)
-      (malabar-unittest-list-mode)
-      (setq tabulated-list-entries results)
-      (tabulated-list-print t))))
+      (with-current-buffer buffer
+	(pop-to-buffer (format "*Malabar Test Results<%s>*" malabar-mode-project-name) nil)
+	(malabar-unittest-list-mode)
+	(malabar-project-copy-buffer-locals buffer)
+	(setq tabulated-list-entries results)
+	(tabulated-list-print t)))))
 
 
 (defun malabar-run-test (use-method &optional buffer repo pom )
@@ -389,7 +508,7 @@ ROOTPROJ is nil, since there is only one project."
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
-	 (pom (or pom (format "%spom.xml" (ede-find-project-root "pom.xml"))))
+	 (pom (or pom malabar-mode-project-file))
 	 (method (if use-method (format "&method=%s" (read-string "Method Name:")) ""))
 	 (url (format "http://%s:%s/test/?repo=%s&pm=%s&script=%s%s" 
 		      malabar-server-host
@@ -401,7 +520,7 @@ ROOTPROJ is nil, since there is only one project."
     (save-some-buffers)
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
-      (malabar-unittest-list (json-read)))))
+      (malabar-unittest-list (json-read) buffer))))
     
 	
 	
@@ -461,6 +580,7 @@ just return nil."
     ;; (define-key map "\M-p" 'previous-error)
     ;; (define-key map ":" 'malabar-electric-colon)
     (define-key map (kbd "C-k") 'malabar-groovy-send-buffer)
+    (define-key map (kbd "C-#") 'malabar-stack-trace-buffer)
     (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
     (define-key map "S" 'malabar-groovy-send-classpath-element)
     (define-key map "V" 'malabar-version)
@@ -485,49 +605,6 @@ just return nil."
 (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
 
 
-(defcustom malabar-keymap-prefix (kbd "C-c C-v")
-  "Prefix for key bindings of Malabar.
-
-Changing this variable outside Customize does not have any
-effect.  To change the keymap prefix from Lisp, you need to
-explicitly re-define the prefix key:
-
-    (define-key malabar-mode-map malabar-keymap-prefix nil)
-    (setq malabar-keymap-prefix (kbd \"C-c f\"))
-    (define-key malabar-mode-map malabar-keymap-prefix
-                malabar-command-map)
-
-Please note that Malabar's manual documents the default
-keybindings.  Changing this variable is at your own risk."
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string
-  :risky t
-  :set
-  (lambda (variable key)
-    (when (and (boundp variable) (boundp 'malabar-mode-map))
-      (define-key malabar-mode-map (symbol-value variable) nil)
-      (define-key malabar-mode-map key malabar-command-map))
-    (set-default variable key)))
-
-(defcustom malabar-server-host "localhost"
-  "The host where the server is running"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
-(defcustom malabar-server-port "4428"
-  "The port where the server is running"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
-(defcustom malabar-package-maven-repo "~/.m2/repository"
-  "Where to find the maven repo"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
 
 
 (defvar malabar-mode-map
@@ -545,7 +622,15 @@ keybindings.  Changing this variable is at your own risk."
 (define-minor-mode malabar-mode
   "Support and integeration for JVM languages"
   :lighter " JVM"
-  :keymap malabar-mode-map)
+  :keymap malabar-mode-map
+  (make-variable-buffer-local 'malabar-mode-project-file)
+  (make-variable-buffer-local 'malabar-mode-project-dir)
+  (make-variable-buffer-local 'malabar-mode-project-name)
+  (let ((project-dir (ede-find-project-root "pom.xml")))
+    (setq malabar-mode-project-dir project-dir )
+    (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
+    (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir)))))
+
 
 (add-hook 'groovy-mode-hook 'malabar-mode)
 (add-hook 'java-mode-hook   'malabar-mode)
