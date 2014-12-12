@@ -97,6 +97,40 @@ restart the *groovy* process to see changes to effect"
   :package-version '(malabar . "2.0")
   :type '(repeat (string :tag "Jar/Zip/Dir")))
 
+(defcustom malabar-hide-non-local-source-buffers t
+  "Whether to hide source buffers loaded from outside the current
+project from the buffer list (by prefixing the buffer name with a
+space).
+
+A value of t means always hide.
+A value of nil means never hide."
+  :group 'malabar
+  :type '(choice (const :tag "Hide" t)
+                 (const :tag "Don't hide" nil)))
+
+(defcustom malabar-extra-source-locations nil
+  "List of extra source locations.
+Each location may be a directory or a JAR/ZIP file.  Malabar-mode
+will look for the source code of a Java class in these locations
+if the class is not otherwise resolvable."
+  :group 'malabar
+  :type '(repeat (file :tag "Path")))
+
+(defcustom malabar-load-source-from-sibling-projects t
+  "Whether to load source from sibling projects.
+Note that this will not work reliably with a 'flat' project
+layout."
+  :group 'malabar
+  :type '(choice (const :tag "Load from siblings" t)
+                 (const :tag "Don't load from siblings" nil)))
+
+
+
+(defvar malabar-compilation-project-file nil)
+(defvar malabar-mode-project-dir nil)
+(defvar malabar-mode-project-file nil)
+(defvar malabar-mode-project-name nil)
+(defvar malabar-groovy-compilation-buffer-name nil)
 
 ;;; 
 ;;; init
@@ -166,7 +200,7 @@ restart the *groovy* process to see changes to effect"
 (defun malabar-groovy-send-classpath  (pom &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
   (interactive "fPOM File:")
-  (mapcar 'malabar-groovy-send-classpath-element (malabar-project-classpath 
+  (mapcar 'malabar-groovy-send-classpath-element (malabar-project-classpath-list 
 		     (malabar-project-info pom repo))))
 
 (defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
@@ -181,7 +215,35 @@ restart the *groovy* process to see changes to effect"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
       (groovy-send-region-and-go (point-min) (point-max)))))
+
+;;;
+;;;  Service
+;;;
+
+(defun malabar-service-call (service args-plist &optional buffer)
+  "SERVICE is a known service to the malabat server 
+
+   ARGS-PLIST is a list of '(key val key val ...). If pm is not
+  in the list, is is pulled from buffer.  Skip entries with a nil key or value"
   
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((args-alist (-partition-all 2 args-plist))
+	   (args-alist (-filter (lambda (c) (and (not (null (car c))) (not (null (cadr c))))) args-alist))
+	   (args-alist (if (assoc "pm" args-alist) args-alist (append args-alist `(("pm" ,malabar-mode-project-file)))))
+	   (args (mapconcat (lambda (c) (concat (car c) "=" (cadr c))) args-alist "&"))
+	   (url (format "http://%s:%s/%s/?%s"
+			malabar-server-host
+			malabar-server-port
+			service
+			args)))
+      (with-current-buffer (url-retrieve-synchronously url)
+	(goto-char url-http-end-of-headers)
+	(let ((rtnval (json-read)))
+	  (kill-buffer (current-buffer))
+	  rtnval)))))
+    
+
+
 ;;;
 ;;; flycheck
 ;;;
@@ -260,7 +322,7 @@ restart the *groovy* process to see changes to effect"
 		    (malabar-project-sources pi 'runtime)
 		    (malabar-project-elements pi 'test)
 		    (malabar-project-elements pi 'runtime)
-		    (malabar-project-classpath pi' test)
+		    (malabar-project-classpath-list pi 'test)
 		    nil))))
 
 
@@ -351,19 +413,9 @@ ROOTPROJ is nil, since there is only one project."
 
 
 
-(defun malabar-project-info (pom &optional repo)
-  "Get the project info for a "
-  (interactive "fPOM File:")
-  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
-	 (url (format "http://%s:%s/pi/?repo=%s&pm=%s" 
-		      malabar-server-host
-		      malabar-server-port
-		      repo (expand-file-name pom))))
-    (with-current-buffer (url-retrieve-synchronously url)
-      (goto-char url-http-end-of-headers)
-      (json-read))))
 
-(defun malabar-project-classpath (project-info scope)
+
+(defun malabar-project-classpath-list (project-info scope)
   "SCOPE is either 'test or 'runtime"
   (interactive)
   (mapcar 'identity (cdr (assq 'classpath (assq scope project-info)))))
@@ -613,19 +665,14 @@ was called."
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
-	 (pom (or pom malabar-mode-project-file))
-	 (method (if use-method (format "&method=%s" (read-string "Method Name:")) ""))
-	 (url (format "http://%s:%s/test/?repo=%s&pm=%s&script=%s%s" 
-		      malabar-server-host
-		      malabar-server-port
-		      repo 
-		      (expand-file-name pom) 
-		      (expand-file-name script)
-		      method)))
-    (save-some-buffers)
-    (with-current-buffer (url-retrieve-synchronously url)
-      (goto-char url-http-end-of-headers)
-      (malabar-unittest-list (json-read) buffer))))
+	 (pom (or pom malabar-mode-project-file)))
+	 
+    (malabar-unittest-list (malabar-service-call "test"
+						 (list "repo"   repo
+						       "pm"     (expand-file-name pom)
+						       "script" (expand-file-name script)
+						       "method" (if use-method (read-string "Method Name:") nil)))
+			   buffer)))
     
 	
 	
@@ -728,11 +775,6 @@ just return nil."
   "Support and integeration for JVM languages"
   :lighter " JVM"
   :keymap malabar-mode-map
-
-  
-  (make-variable-buffer-local 'malabar-mode-project-file)
-  (make-variable-buffer-local 'malabar-mode-project-dir)
-  (make-variable-buffer-local 'malabar-mode-project-name)
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
@@ -740,6 +782,9 @@ just return nil."
 
   (malabar-post-additional-classpath))
 
+(make-variable-buffer-local 'malabar-mode-project-file)
+(make-variable-buffer-local 'malabar-mode-project-dir)
+(make-variable-buffer-local 'malabar-mode-project-name)
 
 
 (add-hook 'groovy-mode-hook 'malabar-mode)

@@ -17,11 +17,11 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'cl)
+(eval-when-compile (require 'cl))
 (require 'compile)
-(require 'malabar-project)
-(require 'malabar-groovy)
-(require 'malabar-util)
+;(require 'malabar-project)
+;(require 'malabar-groovy)
+;(require 'malabar-util)
 
 (require 'arc-mode)
 
