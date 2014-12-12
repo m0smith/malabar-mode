@@ -98,6 +98,12 @@ restart the *groovy* process to see changes to effect"
   :type '(repeat (string :tag "Jar/Zip/Dir")))
 
 
+(defcustom malabar-install-directory
+  (file-name-as-directory (file-name-directory load-file-name))
+  "The directory where malabar-mode was installed"
+  :group 'malabar
+  :type 'directory)
+
 ;;; 
 ;;; init
 ;;;
@@ -145,7 +151,6 @@ restart the *groovy* process to see changes to effect"
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
-  (compilation-minor-mode)
   (message "Starting malabar server")
   (malabar-groovy-send-string "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
@@ -652,6 +657,12 @@ just return nil."
       (message "Malabar version: %s" version))
     version))
 
+(defun malabar-cheatsheet ()
+  "Open the cheat sheet for malabar-mode"
+  (interactive)
+  (find-file-read-only-other-window 
+   (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
+
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
@@ -660,7 +671,7 @@ just return nil."
     ;; (define-key map [?\C-c] 'malabar-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
     (define-key map [?t]    'malabar-run-test)
-    ;; (define-key map [?\?]   'malabar-cheatsheat)
+    (define-key map [?\?]   'malabar-cheatsheet)
     ;; (define-key map [?\C-t] 'malabar-run-junit-test)
     ;; (define-key map [?\M-t] 'malabar-run-all-tests)
     ;; (define-key map [?\C-z] 'malabar-import-one-class)
