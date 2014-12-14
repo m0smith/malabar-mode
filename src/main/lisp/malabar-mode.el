@@ -41,100 +41,17 @@
 
 (require 'groovy-mode)
 (require 'semantic/db-javap)
-(require 'dash)
-
-;;;
-;;; Variables
-
-(defcustom malabar-keymap-prefix (kbd "C-c C-v")
-  "Prefix for key bindings of Malabar.
-
-Changing this variable outside Customize does not have any
-effect.  To change the keymap prefix from Lisp, you need to
-explicitly re-define the prefix key:
-
-    (define-key malabar-mode-map malabar-keymap-prefix nil)
-    (setq malabar-keymap-prefix (kbd \"C-c f\"))
-    (define-key malabar-mode-map malabar-keymap-prefix
-                malabar-command-map)
-
-Please note that Malabar's manual documents the default
-keybindings.  Changing this variable is at your own risk."
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string
-  :risky t
-  :set
-  (lambda (variable key)
-    (when (and (boundp variable) (boundp 'malabar-mode-map))
-      (define-key malabar-mode-map (symbol-value variable) nil)
-      (define-key malabar-mode-map key malabar-command-map))
-    (set-default variable key)))
-
-(defcustom malabar-server-host "localhost"
-  "The host where the server is running"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
-(defcustom malabar-server-port "4428"
-  "The port where the server is running"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
-(defcustom malabar-package-maven-repo "~/.m2/repository"
-  "Where to find the maven repo"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type 'string)
-
-(defcustom malabar-package-additional-classpath '( "build/classes/main" "build/classes/test" )
-  "JARS and DIRS relative to the package root to add to the
-classpath.  These are added to every project.  May need to
-restart the *groovy* process to see changes to effect"
-  :group 'malabar
-  :package-version '(malabar . "2.0")
-  :type '(repeat (string :tag "Jar/Zip/Dir")))
-
-(defcustom malabar-hide-non-local-source-buffers t
-  "Whether to hide source buffers loaded from outside the current
-project from the buffer list (by prefixing the buffer name with a
-space).
-
-A value of t means always hide.
-A value of nil means never hide."
-  :group 'malabar
-  :type '(choice (const :tag "Hide" t)
-                 (const :tag "Don't hide" nil)))
-
-(defcustom malabar-extra-source-locations nil
-  "List of extra source locations.
-Each location may be a directory or a JAR/ZIP file.  Malabar-mode
-will look for the source code of a Java class in these locations
-if the class is not otherwise resolvable."
-  :group 'malabar
-  :type '(repeat (file :tag "Path")))
-
-(defcustom malabar-load-source-from-sibling-projects t
-  "Whether to load source from sibling projects.
-Note that this will not work reliably with a 'flat' project
-layout."
-  :group 'malabar
-  :type '(choice (const :tag "Load from siblings" t)
-                 (const :tag "Don't load from siblings" nil)))
 
 
-
-(defvar malabar-compilation-project-file nil)
-(defvar malabar-mode-project-dir nil)
-(defvar malabar-mode-project-file nil)
-(defvar malabar-mode-project-name nil)
-(defvar malabar-groovy-compilation-buffer-name nil)
+(require 'malabar-variables)
+(require 'malabar-project)
 
 ;;; 
 ;;; init
 ;;;
+
+(defvar url-http-end-of-headers)
+
 
 (setq ede-maven2-execute-mvn-to-get-classpath nil)
 
@@ -179,7 +96,6 @@ layout."
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
-  (compilation-minor-mode)
   (message "Starting malabar server")
   (malabar-groovy-send-string "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
@@ -200,8 +116,8 @@ layout."
 (defun malabar-groovy-send-classpath  (pom &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
   (interactive "fPOM File:")
-  (mapcar 'malabar-groovy-send-classpath-element (malabar-project-classpath-list 
-		     (malabar-project-info pom repo))))
+  (mapcar 'malabar-groovy-send-classpath-element 
+	  (malabar-project-classpath-list (malabar-project-info pom repo) 'test)))
 
 (defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
   (interactive)
@@ -241,7 +157,6 @@ layout."
 	(let ((rtnval (json-read)))
 	  (kill-buffer (current-buffer))
 	  rtnval)))))
-    
 
 
 ;;;
@@ -259,7 +174,7 @@ layout."
 	   (script (if (buffer-modified-p) (buffer-file-name) (buffer-file-name))))
       
       (malabar-parse-script-raw
-       (lambda (status)
+       (lambda (_status)
 	 ;(message "%s %s %s" status (current-buffer) url-http-end-of-headers)
 	 (condition-case err
 	     (progn
@@ -326,7 +241,7 @@ layout."
 		    nil))))
 
 
-(defun malabar-maven2-load (dir &optional rootproj)
+(defun malabar-maven2-load (dir &optional _rootproj)
   "Return a Maven Project object if there is a match.
 Return nil if there isn't one.
 Argument DIR is the directory it is created for.
@@ -385,7 +300,7 @@ ROOTPROJ is nil, since there is only one project."
 		    "&")))
     (url-retrieve url 'malabar-kill-url-buffer)))
 
-(defun malabar-kill-url-buffer (status)
+(defun malabar-kill-url-buffer (_status)
   "Kill the buffer returned by `url-retrieve'."
   (kill-buffer (current-buffer)))
 
@@ -415,34 +330,6 @@ ROOTPROJ is nil, since there is only one project."
 
 
 
-(defun malabar-project-classpath-list (project-info scope)
-  "SCOPE is either 'test or 'runtime"
-  (interactive)
-  (mapcar 'identity (cdr (assq 'classpath (assq scope project-info)))))
-
-(defun malabar-project-resources (project-info scope)
-    "SCOPE is either 'test or 'runtime"
-  (interactive)
-  (mapcar (lambda (r) (cdr (assq 'directory r)))
-	  (cdr (assq 'resources (assq scope project-info)))))
-
-(defun malabar-project-sources (project-info scope)
-    "SCOPE is either 'test or 'runtime"
-  (interactive)
-  (mapcar 'identity (cdr (assq 'sources (assq scope project-info)))))
-
-(defun malabar-project-elements (project-info scope)
-    "SCOPE is either 'test or 'runtime"
-  (interactive)
-  (mapcar 'identity (cdr (assq 'elements (assq scope project-info)))))
-
-(defun malabar-project-additional-classpath ()
-  (interactive)
-  "Returns a list of classpath elements outside the normal
-  project control.  See `malabar-package-additional-classpath'"
-  (-filter 'file-exists-p
-	  (mapcar (lambda (p) (concat malabar-mode-project-dir p))
-		  malabar-package-additional-classpath)))
 
 
 ;;;
@@ -553,13 +440,13 @@ was called."
 	 
 (defun malabar-java-stack-trace-regexp-to-filename ()
   "Generates a relative filename from java-stack-trace regexp match data."
-  (let* ((root malabar-mode-project-dir)
-	 (package (match-string 1))
+  (let* ((package (match-string 1))
 	 (package2 (replace-regexp-in-string "\\." "/" package))
-	 (class (match-string 2))
-	 (method (match-string 3))
+	 ;(class (match-string 2))
+	 ;(method (match-string 3))
 	 (file (match-string 4))
-	 (line (match-string 5)))
+	 ;(line (match-string 5))
+	 )
     (malabar-java-stack-trace-best-filename package2 file)))
 	 
 
@@ -616,7 +503,7 @@ was called."
   (interactive)
    (message (concat "current line ID is: " (tabulated-list-get-id))))
 
-(defun malabar-unittest-show-stacktrace (button)
+(defun malabar-unittest-show-stacktrace (_button)
   (let* ((buffer (current-buffer))
 	 (entry (tabulated-list-get-entry))
 	 (trace (elt entry 3)))
@@ -634,7 +521,8 @@ was called."
 			   (let (( id (elt r 0))
 				 ( msg (elt r 1))
 				 ( exmsg (elt r 2))
-				 ( trace (elt r 2)))
+				 ;( trace (elt r 2))
+				 )
 			     (when (null msg) (aset r 1 ""))
 			     (when (null exmsg) (aset r 2 ""))
 			     (aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
@@ -699,6 +587,13 @@ just return nil."
       (message "Malabar version: %s" version))
     version))
 
+(defun malabar-cheatsheet ()
+  "Open the cheat sheet for malabar-mode"
+  (interactive)
+  (find-file-read-only-other-window
+   (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
+
+
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
@@ -707,7 +602,7 @@ just return nil."
     ;; (define-key map [?\C-c] 'malabar-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
     (define-key map [?t]    'malabar-run-test)
-    ;; (define-key map [?\?]   'malabar-cheatsheat)
+    (define-key map [?\?]   'malabar-cheatsheet)
     ;; (define-key map [?\C-t] 'malabar-run-junit-test)
     ;; (define-key map [?\M-t] 'malabar-run-all-tests)
     ;; (define-key map [?\C-z] 'malabar-import-one-class)

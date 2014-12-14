@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; malabar-reflection.el --- Reflection handling for malabar-mode
 ;;
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -23,7 +24,7 @@
 ;(require 'malabar-groovy)
 (require 'malabar-util)
 
-;(require 'arc-mode)
+(require 'arc-mode)
 
 (defvar malabar-java-primitive-types-with-defaults
   '(("byte" . "0")
@@ -116,7 +117,7 @@
 	(project-info (malabar-project-info (malabar-find-project-file buffer))))
     (-when-let (source-buffer (or (malabar--load-local-source classname project-info)
 				  (and malabar-load-source-from-sibling-projects
-				       (malabar--load-sibling-source classname project-info))
+				       (malabar--load-sibling-source buffer classname project-info ))
                                  (malabar--load-archived-source classname buffer)
                                  (malabar--load-extra-source classname)))
       (-when-let (tag (malabar--get-class-info-from-buffer source-buffer))
@@ -142,11 +143,11 @@ corresponding source file, if it exists in the current project"
     (or (find-buffer-visiting file)            
         (find-file-noselect file))))
 
-(defun malabar--load-sibling-source (classname project-info)
+(defun malabar--load-sibling-source (buffer classname project-info)
   "Look for CLASSNAME as org.apache.log4j.Logger' in a sibling
 project.  A sibling is a different module of this same project
 defined by having a parent pom."
-  (some (lambda (project)
+  (some (lambda (_project)
 	  (malabar--load-project-source classname project-info))
 	(malabar--sibling-projects (malabar-find-project-file buffer))))
 
