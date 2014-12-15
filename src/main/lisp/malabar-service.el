@@ -35,6 +35,9 @@
 
    ARGS-PLIST is a list of '(key val key val ...). If pm is not
   in the list, is is pulled from buffer.  Skip entries with a nil key or value"
+  (setq url-request-method "GET"
+	url-request-extra-headers nil
+	url-request-data nil)
   
   (with-current-buffer (or buffer (current-buffer))
     (let* ((args-alist (-partition-all 2 args-plist))
