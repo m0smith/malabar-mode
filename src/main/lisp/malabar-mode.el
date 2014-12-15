@@ -102,12 +102,13 @@
   (interactive)
   (message "Starting malabar server")
   (setq malabar-mode-post-groovy-to-be-called t)
-  (malabar-groovy-send-string "
+  (malabar-groovy-send-string 
+   (format "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
-         Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.4-SNAPSHOT']]; 
+         Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'%s']]; 
          groovy.grape.Grape.grab(classLoader: classLoader, grapez);
          classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; 
-     malabar();"))
+     malabar();" malabar-server-jar-version)))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
 

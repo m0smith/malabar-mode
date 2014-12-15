@@ -47,6 +47,11 @@ keybindings.  Changing this variable is at your own risk."
       (define-key malabar-mode-map key malabar-command-map))
     (set-default variable key)))
 
+(defcustom malabar-server-jar-version "2.0.4"
+  "The version of the malabar-mode-jar to fetch when starting"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
 
 (defcustom malabar-server-host "localhost"
