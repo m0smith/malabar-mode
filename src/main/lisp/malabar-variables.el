@@ -22,6 +22,14 @@
 ;;;
 ;;; Variables
 
+;;; Customization
+(defgroup malabar nil
+  "Modern JVM Integration for GNU Emacs."
+  :prefix "malabar-"
+  :group 'tools
+  :link '(url-link :tag "Github" "https://github.com/m0smith/malabar-mode/"))
+
+
 (defcustom malabar-keymap-prefix (kbd "C-c C-v")
   "Prefix for key bindings of Malabar.
 

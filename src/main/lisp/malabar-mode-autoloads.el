@@ -4,7 +4,7 @@
 
 
 ;;;### (autoloads (malabar-mode) "malabar-mode" "malabar-mode.el"
-;;;;;;  (21645 57832 0 0))
+;;;;;;  (21647 188 0 0))
 ;;; Generated autoloads from malabar-mode.el
 
 (autoload 'malabar-mode "malabar-mode" "\
@@ -15,7 +15,7 @@ Support and integeration for JVM languages
 ;;;***
 
 ;;;### (autoloads (malabar-project-sources malabar-project-resources)
-;;;;;;  "malabar-project" "malabar-project.el" (21645 56235 0 0))
+;;;;;;  "malabar-project" "malabar-project.el" (21646 28243 0 0))
 ;;; Generated autoloads from malabar-project.el
 
 (autoload 'malabar-project-resources "malabar-project" "\
@@ -30,9 +30,23 @@ SCOPE is either 'test or 'runtime
 
 ;;;***
 
-;;;### (autoloads nil nil ("malabar-reflection.el" "malabar-semanticdb.el"
-;;;;;;  "malabar-util.el" "malabar-variables.el") (21645 59257 250000
-;;;;;;  0))
+;;;### (autoloads (malabar-service-call) "malabar-service" "malabar-service.el"
+;;;;;;  (21647 600 0 0))
+;;; Generated autoloads from malabar-service.el
+
+(autoload 'malabar-service-call "malabar-service" "\
+SERVICE is a known service to the malabat server 
+
+   ARGS-PLIST is a list of '(key val key val ...). If pm is not
+  in the list, is is pulled from buffer.  Skip entries with a nil key or value
+
+\(fn SERVICE ARGS-PLIST &optional BUFFER)" nil nil)
+
+;;;***
+
+;;;### (autoloads nil nil ("malabar-import.el" "malabar-reflection.el"
+;;;;;;  "malabar-semanticdb.el" "malabar-util.el" "malabar-variables.el")
+;;;;;;  (21647 633 181000 0))
 
 ;;;***
 

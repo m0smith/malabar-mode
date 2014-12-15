@@ -41,12 +41,13 @@
 (eval-when-compile (require 'cl))
 (require 'groovy-mode)
 (require 'semantic/db-javap)
-
+(require 'url-vars)
 
 (require 'malabar-variables)
 (require 'malabar-project)
 (require 'malabar-reflection)
-
+(require 'malabar-service)
+(require 'malabar-mode-autoloads)
 
 
 ;;; 
@@ -279,17 +280,15 @@ ROOTPROJ is nil, since there is only one project."
 
 (defun malabar-url-http-post (url args)
   "Send ARGS to URL as a POST request."
-  (let ((url-request-method "POST")
-	(url-request-extra-headers
-	 '(("Content-Type" . "application/x-www-form-urlencoded")))
-	(url-request-data
-	 (mapconcat (lambda (arg)
-		      (concat (url-hexify-string (car arg))
-			      "="
-			      (url-hexify-string (cdr arg))))
-		    args
-		    "&")))
-    (url-retrieve url 'malabar-kill-url-buffer)))
+  (setq url-request-method "POST"
+	url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))
+	url-request-data (mapconcat (lambda (arg)
+				      (concat (url-hexify-string (car arg))
+					      "="
+					      (url-hexify-string (cdr arg))))
+				    args
+				    "&"))
+    (url-retrieve url 'malabar-kill-url-buffer))
 
 (defun malabar-kill-url-buffer (_status)
   "Kill the buffer returned by `url-retrieve'."
