@@ -17,8 +17,8 @@
 ;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;; 02110-1301 USA.
 ;;
-(require 'malabar-variables)
-(require 'malabar-groovy)
+;(require 'malabar-variables)
+;(require 'malabar-groovy)
 (require 'malabar-util)
 
 (defun malabar-setup-compilation-buffer (&optional for-files)

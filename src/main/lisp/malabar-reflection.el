@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; malabar-reflection.el --- Reflection handling for malabar-mode
 ;;
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -21,7 +22,8 @@
 (require 'compile)
 ;(require 'malabar-project)
 ;(require 'malabar-groovy)
-;(require 'malabar-util)
+(require 'malabar-import)
+(require 'malabar-util)
 
 (require 'arc-mode)
 
@@ -45,15 +47,15 @@
 (defun malabar--parametrized-type-p (class)
   (position ?< class))
 
-(defun malabar--raw-type (class)
-  (malabar--array-element-type
-   (substring class 0 (malabar--parametrized-type-p class))))
-
 (defun malabar--array-type-p (class)
   (position ?\[ class))
 
 (defun malabar--array-element-type (class)
   (substring class 0 (malabar--array-type-p class)))
+
+(defun malabar--raw-type (class)
+  (malabar--array-element-type
+   (substring class 0 (malabar--parametrized-type-p class))))
 
 (defun malabar-qualify-class-name-in-buffer (class &optional buffer)
   (cond ((malabar--type-variable-name-p class)
@@ -76,70 +78,83 @@
                  (concat (or package "") "." class)))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
-  (setq buffer (or buffer (current-buffer)))
-  (unless (consp classname)
-    (or (malabar--get-class-info-from-source classname buffer)
-        (malabar-groovy-eval-and-lispeval
-         (format "%s.getClassInfo('%s')"
-                 (malabar-project-classpath buffer)
-                 classname)))))
-
-(defun malabar-which (classname &optional buffer)
-  "Find which JAR or DIRECTORY has classname in the project which
-manages buffer.  Buffer need not be visiting a java file.  Any
-file which is part of the project will work."
-  (interactive "sClassname:\nbBuffer:")
-  (let* ((buf (or (get-buffer buffer) (current-buffer)))
-	 (mbuf (malabar-project buf))
-	 (cmd (format "%s.whichAsLisp( '%s' )" mbuf classname))
-	 (rtnval (malabar-groovy-eval-and-lispeval cmd)))
-    (kill-new rtnval)
-    (message "Copied %s" rtnval)
-    rtnval))
+  (with-current-buffer (or buffer (current-buffer))
+    (unless (consp classname)
+      (or (malabar--get-class-info-from-source classname buffer)
+	  (let* ((repo  (expand-file-name malabar-package-maven-repo)))
+	    (malabar-service-call "tags" (list "repo" repo "pm" (expand-file-name malabar-mode-project-file)
+					       "class" classname)))))))
 
 
-(defun malabar-classpath-test (&optional buffer)
-  "Return the test classpath as a string for BUFFER"
-  (interactive)
-  (let ((s  (car (malabar-eval-on-project "testClasspath.asClassPath()" buffer))))
-    (substring s 1 (- (length s) 1))))
+;; (defun malabar-which (classname &optional buffer)
+;;   "Find which JAR or DIRECTORY has classname in the project which
+;; manages buffer.  Buffer need not be visiting a java file.  Any
+;; file which is part of the project will work."
+;;   (interactive "sClassname:\nbBuffer:")
+;;   (let* ((buf (or (get-buffer buffer) (current-buffer)))
+;; 	 (mbuf (malabar-project buf))
+;; 	 (cmd (format "%s.whichAsLisp( '%s' )" mbuf classname))
+;; 	 (rtnval (malabar-groovy-eval-and-lispeval cmd)))
+;;     (kill-new rtnval)
+;;     (message "Copied %s" rtnval)
+;;     rtnval))
 
-(defun malabar-classes-directory (&optional buffer)
-  "Return the test classpath as a string for BUFFER"
-  (interactive)
-  (let ((s  (car (malabar-eval-on-project "classesDirectory" buffer))))
-    (substring s 1 (- (length s) 1))))
+
+;; (defun malabar-classpath-test (&optional buffer)
+;;   "Return the test classpath as a string for BUFFER"
+;;   (interactive)
+;;   (let ((s  (car (malabar-eval-on-project "testClasspath.asClassPath()" buffer))))
+;;     (substring s 1 (- (length s) 1))))
+
+;; (defun malabar-classes-directory (&optional buffer)
+;;   "Return the test classpath as a string for BUFFER"
+;;   (interactive)
+;;   (let ((s  (car (malabar-eval-on-project "classesDirectory" buffer))))
+;;     (substring s 1 (- (length s) 1))))
 
 
 (defun malabar--get-class-info-from-source (classname buffer)
-  (let ((use-dialog-box nil))
-    (when-let (source-buffer (or (malabar--load-local-source classname buffer)
-                                 (and malabar-load-source-from-sibling-projects
-                                      (malabar--load-sibling-source classname buffer))
+  (let ((use-dialog-box nil)
+	(project-info (malabar-project-info (malabar-find-project-file buffer))))
+    (-when-let (source-buffer (or (malabar--load-local-source classname project-info)
+				  (and malabar-load-source-from-sibling-projects
+				       (malabar--load-sibling-source buffer classname project-info ))
                                  (malabar--load-archived-source classname buffer)
                                  (malabar--load-extra-source classname)))
-      (when-let (tag (malabar--get-class-info-from-buffer source-buffer))
+      (-when-let (tag (malabar--get-class-info-from-buffer source-buffer))
         (malabar--class-info-set-from-source tag)))))
 
-(defun malabar--load-local-source (classname buffer)
-  ;; First, try resolving in local project
-  (malabar--load-project-source classname (malabar-find-project-file buffer)))
+(defun malabar-project-info (pom &optional repo)
+  "Get the project info for a project file"
+  (interactive "fPOM File:")
+  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo))))
+	 (malabar-service-call "pi" (list "repo" repo "pm" (expand-file-name pom)))))
 
-(defun malabar--load-project-source (classname project-file)
-  (when-let (file (malabar-project-locate (malabar-class-name-to-filename classname)
-                                          project-file))
+
+(defun malabar--load-local-source (classname project-info)
+  ;; First, try resolving in local project
+  (malabar--load-project-source classname project-info))
+
+(defun malabar--load-project-source (classname project-info)
+  "Take a CLASSNAME like 'org.apache.log4j.Logger' and open the
+corresponding source file, if it exists in the current project"
+  (-when-let (file (malabar-project-locate (malabar-class-name-to-filename classname)
+                                          project-info))
     ;; Defined in this project
     (or (find-buffer-visiting file)            
         (find-file-noselect file))))
 
-(defun malabar--load-sibling-source (classname buffer)
-  (some (lambda (project)
-          (malabar--load-project-source classname project))
-        (malabar--sibling-projects (malabar-find-project-file buffer))))
+(defun malabar--load-sibling-source (buffer classname project-info)
+  "Look for CLASSNAME as org.apache.log4j.Logger' in a sibling
+project.  A sibling is a different module of this same project
+defined by having a parent pom."
+  (some (lambda (_project)
+	  (malabar--load-project-source classname project-info))
+	(malabar--sibling-projects (malabar-find-project-file buffer))))
 
 (defun malabar--load-archived-source (classname buffer)
   ;; Not defined here
-  (when-let (source-jar (malabar--get-source-jar classname buffer))
+  (-when-let (source-jar (malabar--get-source-jar classname buffer))
     (let ((buffer-name
            (malabar--archived-source-buffer-name classname source-jar)))
       (or (get-buffer buffer-name)
@@ -170,6 +185,37 @@ file which is part of the project will work."
           (mapcar (lambda (p)
                     (expand-file-name (substitute-in-file-name p)))
                   malabar-extra-source-locations))))
+
+(defun malabar-semantic-fetch-tags ()
+  (unless (semantic-active-p)  
+    (semantic-new-buffer-fcn))
+  (let ((tags (semantic-fetch-tags)))
+    (mapc (lambda (tag)
+            (when (semantic-tag-of-class-p tag 'type)
+              (when (equal (semantic-tag-type tag) "interface")
+                ;; All interface members are public
+                (loop for member in (semantic-tag-type-members tag)
+                      do (semantic-tag-put-attribute
+                          member :typemodifiers
+                          (cl-delete-duplicates (cons "public"
+                                                   (semantic-tag-modifiers member))
+                                             :test #'equal))))
+              (-when-let (buffer (semantic-tag-buffer tag))
+                (semantic-tag-put-attribute
+                 tag :superclasses
+                 (mapcar (lambda (c)
+                           (malabar-qualify-class-name-in-buffer (malabar--raw-type c)
+                                                                 buffer))
+                         (semantic-tag-type-superclasses tag))))))
+          tags)
+    tags))
+
+
+(defun malabar-get-class-tag-at-point ()
+  (malabar-semantic-fetch-tags)
+  (or (semantic-current-tag-of-class 'type)
+      (car (semantic-find-tags-by-class 'type (current-buffer)))))
+
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
   ;; TODO:  This won't work for inner classes
@@ -204,10 +250,12 @@ file which is part of the project will work."
   (semantic-tag-put-attribute tag :malabar-from-source t))
 
 (define-cached-function malabar--get-source-jar (classname buffer)
-  (malabar-groovy-eval-and-lispeval
-   (format "%s.sourceJarForClass('%s')"
-           (malabar-project buffer)
-           classname)))
+  (malabar-reflection-which classname buffer))
+
+  ;; (malabar-groovy-eval-and-lispeval
+  ;;  (format "%s.sourceJarForClass('%s')"
+  ;;          (malabar-project buffer)
+  ;;          classname)))
 
 (defun malabar--get-name (tag)
   (semantic-tag-name tag))
@@ -301,7 +349,7 @@ file which is part of the project will work."
                   (incf counter))))))
 
 (defun malabar--cleaned-modifiers (tag)
-  (remove 'native (remove 'abstract (malabar--get-modifiers spec))))
+  (remove 'native (remove 'abstract (malabar--get-modifiers tag))))
 
 (defun malabar-create-simplified-signature (tag)
   "Creates a readable signature suitable for
@@ -347,7 +395,7 @@ e.g. `malabar-choose'."
 (defun malabar-create-method-signature (tag)
   "Creates a method signature for insertion in a class file."
   (concat (malabar--method-signature-modifiers tag) " "
-          (when-let (tp (malabar--get-type-parameters tag))
+          (-when-let (tp (malabar--get-type-parameters tag))
             (concat tp " "))
           (malabar--method-signature-type tag) " "
           (semantic-tag-name tag) "("
@@ -376,10 +424,30 @@ e.g. `malabar-choose'."
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
 (define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
-  (malabar-groovy-eval-and-lispeval
-   (format "%s.getClasses('%s')"
-           (malabar-project-classpath (or buffer (current-buffer)))
-           unqualified)))
+  "A list of all matching classes or nil"
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
+							      "repo"(expand-file-name malabar-package-maven-repo)
+							      "pattern" (format "[.]%s$" unqualified)
+							      "isClass" "true"
+							      "useRegex" "true"
+							      "max" "100")
+					     buffer)))
+      (mapcar (lambda (e) (cdr (assoc 'key e))) result-array))))
+
+(define-cached-function malabar-reflection-which (unqualified &optional buffer)
+  "The first matching class or nil"
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
+								"repo"(expand-file-name malabar-package-maven-repo)
+								"pattern" unqualified
+								"isClass" "true"
+								"useRegex" "false"
+								"max" "1")
+					       buffer))
+	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
+	   (value (cdr (assoc 'value result-alist))))
+      value)))
 
 (defun malabar--get-type-tag (typename &optional buffer)
   (malabar-get-class-info typename buffer))
