@@ -428,9 +428,9 @@ e.g. `malabar-choose'."
   (with-current-buffer (or buffer (current-buffer))
     (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
 							      "repo"(expand-file-name malabar-package-maven-repo)
-							      "pattern" unqualified
+							      "pattern" (format "[.]%s$" unqualified)
 							      "isClass" "true"
-							      "useRegex" "false"
+							      "useRegex" "true"
 							      "max" "100")
 					     buffer)))
       (mapcar (lambda (e) (cdr (assoc 'key e))) result-array))))
