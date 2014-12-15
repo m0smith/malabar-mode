@@ -241,8 +241,8 @@ in the list."
 
 (defun malabar-import-find-import (unqualified)
   (-when-let (possible-classes
-             (remove-duplicates (sort (remove-if #'malabar-import-exclude
-                                                 (malabar-qualify-class-name unqualified))
+             (remove-duplicates (sort (-remove #'malabar-import-exclude
+						  (malabar-qualify-class-name unqualified))
                                       #'malabar-import-sort-by-precedence)
                                 :test #'equal))
     (if (= 1 (length possible-classes))

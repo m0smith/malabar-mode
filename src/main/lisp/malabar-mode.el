@@ -38,14 +38,14 @@
 ;;
 
 ;;; Code:
-
+(eval-when-compile (require 'cl))
 (require 'groovy-mode)
 (require 'semantic/db-javap)
 
 
 (require 'malabar-variables)
 (require 'malabar-project)
-(require 'malabar-relfection)
+(require 'malabar-reflection)
 
 
 
@@ -110,6 +110,16 @@
      malabar();"))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+
+
+(defun malabar-mode-load-class (&optional buffer)
+  "Load the file pointed to by BUFFER (default current-buffer) into the running *groovy*"
+  (interactive)
+  (with-current-buffer (or buffer (current-buffer))
+    (let ((name (cl-gensym)))
+      (malabar-groovy-send-string 
+       (format "%s = { def cl = this.getClass().classLoader; cl.clearCache(); def cls = cl.parseClass(new File('%s')); cl.setClassCacheEntry(cls); cls};%s();" name (buffer-file-name) name))
+      (switch-to-groovy t))))
 
 (defun malabar-groovy-send-classpath-element  (element)
   "Send a JAR, ZIP or DIR to the classpath of the running *groovy*"
@@ -568,9 +578,9 @@ just return nil."
   (find-file-read-only-other-window
    (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
 
-(defun malabar-which (class-name &option buffer)
+(defun malabar-which (class-name &optional buffer)
   (interactive "sClass:")
-  (malabar-reflection-which class-name buffer))
+  (message "%s" (malabar-reflection-which class-name buffer)))
 
 
 (defvar malabar-command-map
@@ -583,8 +593,8 @@ just return nil."
     (define-key map [?\?]   'malabar-cheatsheet)
     ;; (define-key map [?\C-t] 'malabar-run-junit-test)
     ;; (define-key map [?\M-t] 'malabar-run-all-tests)
-    ;; (define-key map [?\C-z] 'malabar-import-one-class)
-    ;; (define-key map [?z]    'malabar-import-all)
+    (define-key map [?\C-z] 'malabar-import-one-class)
+    (define-key map [?z]    'malabar-import-all)
     ;; (define-key map [?\C-o] 'malabar-override-method)
     ;; (define-key map [?\C-e] 'malabar-extend-class)
     ;; (define-key map [?\C-i] 'malabar-implement-interface)
@@ -608,6 +618,7 @@ just return nil."
     (define-key map (kbd "C-#") 'malabar-stack-trace-buffer)
     (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
     (define-key map "S" 'malabar-groovy-send-classpath-element)
+    (define-key map "l" 'malabar-mode-load-class)
     (define-key map "V" 'malabar-version)
     map)
   "Keymap of Malabar interactive commands.")

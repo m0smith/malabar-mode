@@ -78,13 +78,13 @@
                  (concat (or package "") "." class)))))))
 
 (define-cached-function malabar-get-class-info (classname &optional buffer)
-  (setq buffer (or buffer (current-buffer)))
-  (unless (consp classname)
-    (or (malabar--get-class-info-from-source classname buffer)
-        (malabar-groovy-eval-and-lispeval
-         (format "%s.getClassInfo('%s')"
-                 (malabar-project-classpath buffer)
-                 classname)))))
+  (with-current-buffer (or buffer (current-buffer))
+    (unless (consp classname)
+      (or (malabar--get-class-info-from-source classname buffer)
+	  (let* ((repo  (expand-file-name malabar-package-maven-repo)))
+	    (malabar-service-call "tags" (list "repo" repo "pm" (expand-file-name malabar-mode-project-file)
+					       "class" classname)))))))
+
 
 ;; (defun malabar-which (classname &optional buffer)
 ;;   "Find which JAR or DIRECTORY has classname in the project which
@@ -424,18 +424,16 @@ e.g. `malabar-choose'."
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
 (define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
-  "The first matching class or nil"
+  "A list of all matching classes or nil"
   (with-current-buffer (or buffer (current-buffer))
     (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
 							      "repo"(expand-file-name malabar-package-maven-repo)
 							      "pattern" unqualified
 							      "isClass" "true"
 							      "useRegex" "false"
-							      "max" "1")
-					     buffer))
-	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
-	   (value (cdr (assoc 'key result-alist))))
-      value)))
+							      "max" "100")
+					     buffer)))
+      (mapcar (lambda (e) (cdr (assoc 'key e))) result-array))))
 
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"
