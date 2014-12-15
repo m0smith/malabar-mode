@@ -185,10 +185,6 @@ return the corresponding cdr."
     (kill-new s)
     (message "Copied %s" s)))
 
-;; (defun malabar-get-class-tag-at-point ()
-;;   (malabar-semantic-fetch-tags)
-;;   (or (semantic-current-tag-of-class 'type)
-;;       (car (semantic-find-tags-by-class 'type (current-buffer)))))
 
 (defun malabar--conditional-replace (regexp replacement start end predicate)
   "Replaces REGEXP with REPLACEMENT from START to END, but only

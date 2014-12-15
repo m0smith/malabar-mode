@@ -73,12 +73,14 @@
   (interactive)
   (mapcar 'identity (cdr (assq 'classpath (assq scope project-info)))))
 
+;;;###autoload
 (defun malabar-project-resources (project-info scope)
     "SCOPE is either 'test or 'runtime"
   (interactive)
   (mapcar (lambda (r) (cdr (assq 'directory r)))
 	  (cdr (assq 'resources (assq scope project-info)))))
 
+;;;###autoload
 (defun malabar-project-sources (project-info scope)
     "SCOPE is either 'test or 'runtime"
   (interactive)
@@ -321,3 +323,20 @@ skipping tests."
 ;; Local variables:
 ;; byte-compile-warnings: (not cl-functions)
 ;; End:
+
+;;;### (autoloads nil nil ("malabar-reflection.el" "malabar-semanticdb.el"
+;;;;;;  "malabar-util.el" "malabar-variables.el") (21645 56234 944000
+;;;;;;  0))
+
+;;;***
+
+;;;### (autoloads (malabar-mode) "malabar-mode" "malabar-mode.el"
+;;;;;;  (21645 56155 0 0))
+;;; Generated autoloads from malabar-mode.el
+
+(autoload 'malabar-mode "malabar-mode" "\
+Support and integeration for JVM languages
+
+\(fn &optional ARG)" t nil)
+
+;;;***

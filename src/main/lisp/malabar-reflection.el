@@ -22,6 +22,7 @@
 (require 'compile)
 ;(require 'malabar-project)
 ;(require 'malabar-groovy)
+(require 'malabar-import)
 (require 'malabar-util)
 
 (require 'arc-mode)
@@ -184,6 +185,37 @@ defined by having a parent pom."
           (mapcar (lambda (p)
                     (expand-file-name (substitute-in-file-name p)))
                   malabar-extra-source-locations))))
+
+(defun malabar-semantic-fetch-tags ()
+  (unless (semantic-active-p)  
+    (semantic-new-buffer-fcn))
+  (let ((tags (semantic-fetch-tags)))
+    (mapc (lambda (tag)
+            (when (semantic-tag-of-class-p tag 'type)
+              (when (equal (semantic-tag-type tag) "interface")
+                ;; All interface members are public
+                (loop for member in (semantic-tag-type-members tag)
+                      do (semantic-tag-put-attribute
+                          member :typemodifiers
+                          (cl-delete-duplicates (cons "public"
+                                                   (semantic-tag-modifiers member))
+                                             :test #'equal))))
+              (-when-let (buffer (semantic-tag-buffer tag))
+                (semantic-tag-put-attribute
+                 tag :superclasses
+                 (mapcar (lambda (c)
+                           (malabar-qualify-class-name-in-buffer (malabar--raw-type c)
+                                                                 buffer))
+                         (semantic-tag-type-superclasses tag))))))
+          tags)
+    tags))
+
+
+(defun malabar-get-class-tag-at-point ()
+  (malabar-semantic-fetch-tags)
+  (or (semantic-current-tag-of-class 'type)
+      (car (semantic-find-tags-by-class 'type (current-buffer)))))
+
   
 (defun malabar--load-source-from-zip (classname archive buffer-name)
   ;; TODO:  This won't work for inner classes
@@ -218,10 +250,12 @@ defined by having a parent pom."
   (semantic-tag-put-attribute tag :malabar-from-source t))
 
 (define-cached-function malabar--get-source-jar (classname buffer)
-  (malabar-groovy-eval-and-lispeval
-   (format "%s.sourceJarForClass('%s')"
-           (malabar-project buffer)
-           classname)))
+  (malabar-reflection-which classname buffer))
+
+  ;; (malabar-groovy-eval-and-lispeval
+  ;;  (format "%s.sourceJarForClass('%s')"
+  ;;          (malabar-project buffer)
+  ;;          classname)))
 
 (defun malabar--get-name (tag)
   (semantic-tag-name tag))
@@ -390,10 +424,32 @@ e.g. `malabar-choose'."
       (equal (malabar-get-package-name) (malabar-get-package-of qualified-class))))
 
 (define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
-  (malabar-groovy-eval-and-lispeval
-   (format "%s.getClasses('%s')"
-           (malabar-project-classpath (or buffer (current-buffer)))
-           unqualified)))
+  "The first matching class or nil"
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
+							      "repo"(expand-file-name malabar-package-maven-repo)
+							      "pattern" unqualified
+							      "isClass" "true"
+							      "useRegex" "false"
+							      "max" "1")
+					     buffer))
+	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
+	   (value (cdr (assoc 'key result-alist))))
+      value)))
+
+(define-cached-function malabar-reflection-which (unqualified &optional buffer)
+  "The first matching class or nil"
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
+								"repo"(expand-file-name malabar-package-maven-repo)
+								"pattern" unqualified
+								"isClass" "true"
+								"useRegex" "false"
+								"max" "1")
+					       buffer))
+	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
+	   (value (cdr (assoc 'value result-alist))))
+      value)))
 
 (defun malabar--get-type-tag (typename &optional buffer)
   (malabar-get-class-info typename buffer))

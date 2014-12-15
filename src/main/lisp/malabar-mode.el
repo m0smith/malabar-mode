@@ -45,6 +45,9 @@
 
 (require 'malabar-variables)
 (require 'malabar-project)
+(require 'malabar-relfection)
+
+
 
 ;;; 
 ;;; init
@@ -91,12 +94,14 @@
       )
     )))
 
+(defvar malabar-mode-post-groovy-to-be-called nil)
 
 
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
   (message "Starting malabar server")
+  (setq malabar-mode-post-groovy-to-be-called t)
   (malabar-groovy-send-string "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
          Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'2.0.4-SNAPSHOT']]; 
@@ -132,31 +137,6 @@
     (with-current-buffer buffer
       (groovy-send-region-and-go (point-min) (point-max)))))
 
-;;;
-;;;  Service
-;;;
-
-(defun malabar-service-call (service args-plist &optional buffer)
-  "SERVICE is a known service to the malabat server 
-
-   ARGS-PLIST is a list of '(key val key val ...). If pm is not
-  in the list, is is pulled from buffer.  Skip entries with a nil key or value"
-  
-  (with-current-buffer (or buffer (current-buffer))
-    (let* ((args-alist (-partition-all 2 args-plist))
-	   (args-alist (-filter (lambda (c) (and (not (null (car c))) (not (null (cadr c))))) args-alist))
-	   (args-alist (if (assoc "pm" args-alist) args-alist (append args-alist `(("pm" ,malabar-mode-project-file)))))
-	   (args (mapconcat (lambda (c) (concat (car c) "=" (cadr c))) args-alist "&"))
-	   (url (format "http://%s:%s/%s/?%s"
-			malabar-server-host
-			malabar-server-port
-			service
-			args)))
-      (with-current-buffer (url-retrieve-synchronously url)
-	(goto-char url-http-end-of-headers)
-	(let ((rtnval (json-read)))
-	  (kill-buffer (current-buffer))
-	  rtnval)))))
 
 
 ;;;
@@ -306,12 +286,14 @@ ROOTPROJ is nil, since there is only one project."
 
 (defun malabar-post-additional-classpath ()
   (interactive)
-  (let ((url (format "http://%s:%s/add/"
-		     malabar-server-host
-		     malabar-server-port)))
-    (malabar-url-http-post url (list
-				(cons "pm"        malabar-mode-project-file)
-				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
+  (when malabar-mode-post-groovy-to-be-called
+    (setq malabar-mode-post-groovy-to-be-called nil)
+    (let ((url (format "http://%s:%s/add/"
+		       malabar-server-host
+		       malabar-server-port)))
+      (malabar-url-http-post url (list
+				  (cons "pm"        malabar-mode-project-file)
+				  (cons "relative"  (json-encode malabar-package-additional-classpath)))))))
 
 
 (defun malabar-parse-script-raw (callback pom script &optional repo)
@@ -324,13 +306,6 @@ ROOTPROJ is nil, since there is only one project."
 		      repo (expand-file-name pom) (expand-file-name script))))
     ;(message "URL %s" url)
     (url-retrieve url callback)))
-
-
-
-
-
-
-
 
 ;;;
 ;;; Reflection
@@ -593,6 +568,9 @@ just return nil."
   (find-file-read-only-other-window
    (expand-file-name (concat malabar-install-directory "malabar-cheatsheet.org"))))
 
+(defun malabar-which (class-name &option buffer)
+  (interactive "sClass:")
+  (malabar-reflection-which class-name buffer))
 
 
 (defvar malabar-command-map
@@ -618,7 +596,7 @@ just return nil."
     ;; 				     'semantic-ia-complete-symbol))
     (define-key map [?\C-.] 'semantic-ia-complete-symbol)   
     (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
-    ;;  (define-key map [?w] 'malabar-which) 
+    (define-key map [?w] 'malabar-which) 
     (define-key map [?\C-p] 'ede-edit-file-target)
       ;; (define-key map [?\C-y] 'malabar-jump-to-thing)
     ;;   (define-key map [?\C-r] malabar-refactor-map)
@@ -687,6 +665,4 @@ just return nil."
 
 
 (provide 'malabar-mode)
-
-;;(setq project-info (malabar-project-info "~/projects/malabar-mode-jar/pom.xml"))
 
