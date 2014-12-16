@@ -458,11 +458,9 @@ was called."
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
-      (let ((beg (region-beginning))
-	    (end (region-end))
-	    (active (region-active-p)))
-
-	
+      (let* ((active (region-active-p))
+	     (beg (if active (region-beginning)))
+	     (end (if active (region-end))))
 	(with-current-buffer (pop-to-buffer (format "*Malabar Stack Trace<%s>*" malabar-mode-project-name))
 	  (malabar-project-copy-buffer-locals buffer)
 	  (compilation-mode)
@@ -470,9 +468,9 @@ was called."
 	  (setq inhibit-read-only t)
 	  (when active
 	    (let ((start (point-max)))
-	    (goto-char start)
-	    (insert-buffer-substring buffer beg end)
-	    (goto-char start))))))))
+	      (goto-char start)
+	      (insert-buffer-substring buffer beg end)
+	      (goto-char start))))))))
 	  
 
 (define-derived-mode malabar-unittest-list-mode tabulated-list-mode "malabar-mode" 

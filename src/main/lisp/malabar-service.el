@@ -20,6 +20,8 @@
 
 ;(require 'malabar-groovy)
 
+(require 'url-vars)
+(require 'url-dav)
 (require 'malabar-util)
 (require 'malabar-variables)
 (eval-when-compile (require 'cl))
