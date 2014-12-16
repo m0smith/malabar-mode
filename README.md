@@ -139,10 +139,79 @@ development now targets Emacs 24.
 
 Update:  malabar-mode now has a menu.  Yay!
 
+## Java
+
+### What's working
+
+- flycheck integration is working except for the few edge cases where the groovy parser differs from th ejava parser
+
+- cedet integration for java, not working for groovy yet
+
+- unit testing a class or method
+
 Here is a list of available interactive commands, with default
 keybindings where applicable:
 
 <dl>
+
+<dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
+<dd>Runs the unit tests in the current class.  With a prefix args, ask for a method name and only run that test</dd>
+
+<dt>semantic-ia-describe-class <span class="classifier">(C-c C-v i)</span></dt>
+<dd>Show the public variables and methods on a class</dd>
+
+<dt>malabar-semantic-heirarchy <span class="classifier">(C-c C-v h)</span></dt>
+<dd>Show super classes and interfaces implemented by a class</dd>
+
+<dt>malabar-fully-qualified-class-name-kill-ring-save <span class="classifier">(C-c C-v *)</span></dt>
+<dd>Copy the fully qualifed classname of the current buffer to the kill ring</dd>
+
+<dt>malabar-which <span class="classifier">(C-c C-v w)</span></dt>
+<dd>Returns the jar containing the speficied class</dd>
+
+<dt>malabar-import-all <span class="classifier">(C-c C-v z)</span></dt>
+<dd>Adds import statements for all unqualified classes in the buffer, as
+  if by performing <code>malabar-import-one-class</code> on each.</dd>
+  
+<dt>malabar-import-one-class <span class="classifier">(C-c C-v C-z)</span></dt>
+<dd><p>Adds an import statement for a single unqualified class (defaults to
+  the symbol at point).  If more than one class matches the
+  unqualified name you will be asked which class to import.</p>
+
+  <p>The variable <code>malabar-import-excluded-classes-regexp-list</code>
+  contains a list of regular expressions; if one of these matches the
+  qualified class name, the class will be excluded from import.  The
+  default value excludes classes from <code>java.lang</code>, JRE internal
+  classes and inner classes.</p></dd>
+</dl>
+
+<dt>ede-edit-file-target <span class="classifier">(C-c C-v C-p)</span></dt>
+<dd>Visit the project file, that is the closest file named <code>pom.xml</code>
+  searching upwards in the directory structure.</dd>
+
+<dt>malabar-groovy-send-buffer <span class="classifier">(C-c C-v C-k)</span></dt>
+<dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-mode-load-class</code></dd>
+
+<dt>malabar-stack-trace-buffer <span class="classifier">(C-c C-v C-#)</span></dt>
+<dd>Create a new stack trace buffer and optional copy the current region into it.  A stack trace buffer parses the stack trace and allows jumping directly to the error in the source file.  The stack trace buffer will parse whatever stack trace is pasted into it</dd>
+
+<dt>malabar-groovy-send-classpath-of-buffer <span class="classifier">(C-c C-v s)</span></dt>
+<dd>For use with <code>malabar-groovy-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
+
+<dt>malabar-groovy-send-classpath-element <span class="classifier">(C-c C-v s)</span></dt>
+<dd>Add a jar, zip or directory to the running groovy buffer</dd>
+
+In addition, [standard Semantic code completion][] is available; trigger
+this however you wish.  By default, `semantic-ia-complete-symbol` is
+bound to `C-c C-v C-.` and `semantic-ia-complete-symbol-menu` is
+bound to `C-c C-v .`.
+
+### Still needing attention
+
+The following are either not in 2.0 yet or are only partially working.  If you use any of these regularly, please use the [issue tracker][] to let me know.  Those missing features that have issues added will be given higher priority.  Otherwise, they will be added back in random order.
+
+<dl>
+
 <dt>malabar-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
 <dd>Compiles the current file.</dd>
 
@@ -166,20 +235,6 @@ keybindings where applicable:
   interface's methods and adds the interface to the class's implements
   clause.</dd>
   
-<dt>malabar-import-all <span class="classifier">(C-c C-v z)</span></dt>
-<dd>Adds import statements for all unqualified classes in the buffer, as
-  if by performing <code>malabar-import-one-class</code> on each.</dd>
-  
-<dt>malabar-import-one-class <span class="classifier">(C-c C-v C-z)</span></dt>
-<dd><p>Adds an import statement for a single unqualified class (defaults to
-  the symbol at point).  If more than one class matches the
-  unqualified name you will be asked which class to import.</p>
-
-  <p>The variable <code>malabar-import-excluded-classes-regexp-list</code>
-  contains a list of regular expressions; if one of these matches the
-  qualified class name, the class will be excluded from import.  The
-  default value excludes classes from <code>java.lang</code>, JRE internal
-  classes and inner classes.</p></dd>
   
 <dt>malabar-run-maven-command</dt>
 <dd>Prompts for and executes an (almost) arbitrary Maven command line.
@@ -227,9 +282,6 @@ keybindings where applicable:
 
   <p>If the current buffer looks like a test class, this command does nothing.</p></dd>
   
-<dt>malabar-visit-project-file <span class="classifier">(C-c C-v C-p)</span></dt>
-<dd>Visit the project file, that is the closest file named <code>pom.xml</code>
-  searching upwards in the directory structure.</dd>
   
 <dt>malabar-jump-to-thing <span class="classifier">(C-c C-v C-y)</span></dt>
 <dd>Jumps to the definition of the 'thing' at point. More technically,
@@ -245,10 +297,6 @@ keybindings where applicable:
   prefix arg will prompt for the scope.</dd>
 </dl>
 
-In addition, [standard Semantic code completion][] is available; trigger
-this however you wish.  By default, `semantic-ia-complete-symbol` is
-bound to `C-c C-v C-.` and `semantic-ia-complete-symbol-menu` is
-bound to `C-c C-v .`.
 
 ## Abbrevs
 
@@ -365,7 +413,7 @@ Try
 
 # Boring legal stuff
 
-malabar-mode is copyright (c) 2009-2010 Espen Wiborg <espenhw@grumblesmurf.org>
+malabar-mode is copyright (c) 2009-2014 Matthew O. Smith <matt@m0smith.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
