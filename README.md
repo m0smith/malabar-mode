@@ -154,26 +154,26 @@ keybindings where applicable:
 
 <dl>
 
-<dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
+<dt><b>malabar-run-test</b> <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the unit tests in the current class.  With a prefix args, ask for a method name and only run that test</dd>
 
-<dt>semantic-ia-describe-class <span class="classifier">(C-c C-v i)</span></dt>
+<dt><b>semantic-ia-describe-class</b> <span class="classifier">(C-c C-v i)</span></dt>
 <dd>Show the public variables and methods on a class</dd>
 
-<dt>malabar-semantic-heirarchy <span class="classifier">(C-c C-v h)</span></dt>
+<dt><b>malabar-semantic-heirarchy</b> <span class="classifier">(C-c C-v h)</span></dt>
 <dd>Show super classes and interfaces implemented by a class</dd>
 
-<dt>malabar-fully-qualified-class-name-kill-ring-save <span class="classifier">(C-c C-v *)</span></dt>
+<dt><b>malabar-fully-qualified-class-name-kill-ring-save</b> <span class="classifier">(C-c C-v *)</span></dt>
 <dd>Copy the fully qualifed classname of the current buffer to the kill ring</dd>
 
-<dt>malabar-which <span class="classifier">(C-c C-v w)</span></dt>
+<dt><b>malabar-which</b> <span class="classifier">(C-c C-v w)</span></dt>
 <dd>Returns the jar containing the speficied class</dd>
 
-<dt>malabar-import-all <span class="classifier">(C-c C-v z)</span></dt>
+<dt><b>malabar-import-all</b> <span class="classifier">(C-c C-v z)</span></dt>
 <dd>Adds import statements for all unqualified classes in the buffer, as
   if by performing <code>malabar-import-one-class</code> on each.</dd>
   
-<dt>malabar-import-one-class <span class="classifier">(C-c C-v C-z)</span></dt>
+<dt><b>malabar-import-one-class</b> <span class="classifier">(C-c C-v C-z)</span></dt>
 <dd><p>Adds an import statement for a single unqualified class (defaults to
   the symbol at point).  If more than one class matches the
   unqualified name you will be asked which class to import.</p>
@@ -185,20 +185,20 @@ keybindings where applicable:
   classes and inner classes.</p></dd>
 </dl>
 
-<dt>ede-edit-file-target <span class="classifier">(C-c C-v C-p)</span></dt>
+<dt><b>ede-edit-file-target</b> <span class="classifier">(C-c C-v C-p)</span></dt>
 <dd>Visit the project file, that is the closest file named <code>pom.xml</code>
   searching upwards in the directory structure.</dd>
 
-<dt>malabar-groovy-send-buffer <span class="classifier">(C-c C-v C-k)</span></dt>
+<dt><b>malabar-groovy-send-buffer</b> <span class="classifier">(C-c C-v C-k)</span></dt>
 <dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-mode-load-class</code></dd>
 
-<dt>malabar-stack-trace-buffer <span class="classifier">(C-c C-v C-#)</span></dt>
+<dt><b>malabar-stack-trace-buffer</b> <span class="classifier">(C-c C-v C-#)</span></dt>
 <dd>Create a new stack trace buffer and optional copy the current region into it.  A stack trace buffer parses the stack trace and allows jumping directly to the error in the source file.  The stack trace buffer will parse whatever stack trace is pasted into it</dd>
 
-<dt>malabar-groovy-send-classpath-of-buffer <span class="classifier">(C-c C-v s)</span></dt>
+<dt><b>malabar-groovy-send-classpath-of-buffer</b> <span class="classifier">(C-c C-v s)</span></dt>
 <dd>For use with <code>malabar-groovy-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
 
-<dt>malabar-groovy-send-classpath-element <span class="classifier">(C-c C-v s)</span></dt>
+<dt><b>malabar-groovy-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
 <dd>Add a jar, zip or directory to the running groovy buffer</dd>
 
 In addition, [standard Semantic code completion][] is available; trigger
