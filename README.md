@@ -4,7 +4,7 @@
 EMACS integration with the JVM.
 
 
-malabar-mode is a monir-mode with hooks into Maven that make
+malabar-mode is a monir-mode with hooks into Maven that makes
 it easy to compile files on the fly and execute Maven build
 commands.
 
@@ -13,14 +13,13 @@ NOTE:  The java/groovy code has been moved to https://github.com/m0smith/malabar
 This is based on a fork of
 [buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
 [espenhw's malabar-mode](https://github.com/espenhw/malabar-mode) which has been merged
-back into the master branch. Development of malabar-mode has restarted. This is an attempt to keep
-it up to date and develop at a modest pace.
+back into the master branch. Development of malabar-mode has restarted. This is an attempt to keep it up to date and develop at a modest pace.
 
 You may want to skip to [Installation](#Installation).
 
 ## What malabar-mode offers
 
-Since malabar-mode is derived from java-mode, we get some things for free:
+Since malabar-mode can be used from both java-mode and groovy-mode, we get some things for free:
 
 - Syntax highlighting
 
@@ -34,8 +33,8 @@ anything you don't like.
 
 ### But there is more:
 
-- Tight integration with [Maven][]. If
-  you're not using Maven, you should not consider malabar-mode.
+- Tight integration with [Maven][]. If you're not using Maven, you
+  should not consider malabar-mode for now.  Adding [gradle support](https://github.com/m0smith/malabar-mode-jar/issues/18) is pending.
 
 - A [Groovy][] console for rapid prototyping and exploratory programming
 
@@ -47,12 +46,63 @@ anything you don't like.
 - Extend class / implement interface / override method helpers
 
 - Simplistic refactorings
+
 - See the [Cheat Sheet](src/main/lisp/malabar-cheatsheet.org "Malabar Mode Cheat Sheet")
 
 and more.
 
 <a name="Installation" />
 # Installation
+
+## 2.x
+
+There has been a lot of work to rewrite malabar-mode to make it easier to maintain, install and develop.  It is currently in a beta stage.  Once it has some time to mature, it will be put back into MELPA.  Until then, the installation is manual:
+
+- Install groovy (2.3.7 or later).  Ubunutu has a real old version.  Use GVM to install http://gvmtool.net/
+
+- Install gradle
+
+- Clone https://github.com/m0smith/malabar-mode/tree/develop
+
+```
+	git clone https://github.com/m0smith/malabar-mode.git
+	git checkout develop
+```
+
+- Clone https://github.com/alexott/cedet/tree/devel 
+
+```
+    git clone https://github.com/alexott/cedet.git
+	make all
+```
+
+- Install emacs package groovy-mode.  Do not use marmalade version as it is old.
+
+- Add to .emacs: 
+
+
+```
+
+	(load-file "~/projecrs/cedet/cedet-devel-load.el")
+	(add-to-list 'load-path "~/projects/malabar-mode/src/main/lisp")
+
+	(load "malabar-mode")
+
+	(eval-after-load 'inf-groovy
+		(add-hook 'inf-groovy-load-hook 'flycheck-mode))
+	(eval-after-load 'java-mode
+		(add-hook 'java-mode-hook   'flycheck-mode))
+
+```
+
+- in emacs (malabar-run-groovy) or C-u M-x run-groovy - you may need to enter the path to groovysh, especially on Windows
+- Edit a java/groovy file in a maven2 project
+- In the buffer run flycheck-mode and malabar-mode to enable the features
+  
+
+## 1.x installation
+
+**NOTE 1.x is no longer supported and no more development will happen on this branch**
 
 The malabar-mode package is now part of
 [MELPA](http://melpa.milkbox.net/) thanks to this
@@ -65,9 +115,9 @@ you’ve added MELPA to your package archives.
 
 ## Prerequisites
 
-### Maven
+### Groovy
 
-The first time malabar-mode runs it will need to have the mvn executable in the `exec-path` and access to maven central in order to load its dependencies.  Also, starting the first time can take a long time as it downloads needed jars.
+Version 2.3.7 or beyond
 
 ### Emacs
 
@@ -76,32 +126,8 @@ development now targets Emacs 24.
 
 ### CEDET
 
-A relatively recent [CEDET][] is needed in your Emacs
-environment. If you have a version of Emacs 23.2 or later,
-malabar-mode should work fine with the embedded CEDET.
 
-1. Add the following to your .emacs::
-
-        (require 'cedet)
-        (require 'semantic)
-        (load "semantic/loaddefs.el")
-        (semantic-mode 1);;
-        (require 'malabar-mode)
-        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))       
-
-   Alternatively, using Emacs 23.2+ and the embedded CEDET:
-   
-        ;; Or enable more if you wish
-        (setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
-                                          global-semanticdb-minor-mode
-                                          global-semantic-idle-summary-mode
-                                          global-semantic-mru-bookmark-mode))
-        (semantic-mode 1)
-        (require 'malabar-mode)
-        (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
-        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
-
-2. (optional) If you want to mimic the IDEish compile-on-save
+1. (optional) If you want to mimic the IDEish compile-on-save
    behaviour, add the following as well::
 
         (add-hook 'malabar-mode-hook
