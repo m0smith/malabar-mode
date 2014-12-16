@@ -253,7 +253,8 @@ skipping tests."
            parsed-command)))
 
 (defun malabar-project-test-source-directories (project-info)
-  "Return as a list all the source classpath elements.  Includes the both runtime and test source, resource and dependencies"
+  "Return as a list all the source classpath elements.  Includes
+the both runtime and test source, resource and dependencies"
   (-filter 'file-exists-p 
 	   (apply #'append
 		  (malabar-project-additional-classpath)

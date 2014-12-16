@@ -44,6 +44,7 @@
 (require 'url-vars)
 
 (require 'malabar-variables)
+(require 'malabar-abbrevs)
 (require 'malabar-project)
 (require 'malabar-reflection)
 (require 'malabar-service)
@@ -135,6 +136,20 @@
   (interactive "fPOM File:")
   (mapcar 'malabar-groovy-send-classpath-element 
 	  (malabar-project-classpath-list (malabar-project-info pom repo) 'test)))
+
+(defun malabar-groovy-classpath-string  (pom &optional repo)
+  "Add the classpath for POM to the runnning *groovy*."
+  (interactive "fPOM File:")
+  (mapconcat 'identity (malabar-project-test-source-directories (malabar-project-info pom repo))
+	     path-separator))
+
+
+(defun malabar-groovy-classpath-string-of-buffer  ( &optional buffer repo)
+  (interactive)
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer
+      (let ((pom malabar-mode-project-file))
+	(malabar-groovy-classpath-string pom repo)))))
 
 (defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
   (interactive)
@@ -547,6 +562,13 @@ was called."
     
 	
 	
+(defun malabar-jdb ()
+  "Start the JDB debugger for the class in the current buffer.
+The current buffer must have a java file with a main method"
+  (interactive)
+  (let ((classpath (malabar-groovy-classpath-string-of-buffer))
+	(classname (malabar-get-fully-qualified-class-name)))
+    (jdb (format "%s -classpath%s %s" gud-jdb-command-name classpath classname))))
 
 ;;;
 ;;; MODE
@@ -618,6 +640,7 @@ just return nil."
     (define-key map "S" 'malabar-groovy-send-classpath-element)
     (define-key map "l" 'malabar-mode-load-class)
     (define-key map "V" 'malabar-version)
+    (define-key map "D" 'malabar-jdb)
     map)
   "Keymap of Malabar interactive commands.")
 
@@ -661,7 +684,7 @@ just return nil."
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
     (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
-
+  (malabar-abbrevs-setup)
   (malabar-post-additional-classpath))
 
 (make-variable-buffer-local 'malabar-mode-project-file)

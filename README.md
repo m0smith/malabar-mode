@@ -40,6 +40,8 @@ anything you don't like.
 
 - [JUnit][] integration, both for running tests standalone and through Maven
 
+- Debugger integration with EMACS built in GUD
+
 - Import help; import one class or all needed classes in the buffer
   (with prompting if the class name is ambiguous)
 
@@ -200,6 +202,9 @@ keybindings where applicable:
 
 <dt><b>malabar-groovy-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
 <dd>Add a jar, zip or directory to the running groovy buffer</dd>
+
+<dt><b>malabar-jdb</b> <span class="classifier">(C-c C-v J)</span></dt>
+<dd>Start the JDB debugger on the current class.</dd>
 
 In addition, [standard Semantic code completion][] is available; trigger
 this however you wish.  By default, `semantic-ia-complete-symbol` is

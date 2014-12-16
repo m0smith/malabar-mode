@@ -126,6 +126,30 @@ layout."
 
 
 
+(defcustom malabar-case-fixed-abbrevs
+  '(("pu" "public")
+    ("pri" "private")
+    ("pro" "protected")
+    ("st" "static")
+    ("vo" "void")
+    ("ab" "abstract")
+    ("bo" "boolean")
+    ("cl" "class")
+    ("impl" "implements")
+    ("ext" "extends")
+    ("pa" "package")
+    ("re" "return")
+    ("sysout" malabar-abbrevs-sysout)
+    ("main" malabar-abbrevs-main)
+    ("#Test" malabar-abbrevs-create-test))
+  "The list of abbrevs which should be recognized only in the
+specified case."
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type '(alist :key-type string :value-type (group (choice string
+                                                            function))))
+
+
 (defvar malabar-compilation-project-file nil)
 (defvar malabar-mode-project-dir nil)
 (defvar malabar-mode-project-file nil)
