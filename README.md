@@ -206,6 +206,11 @@ keybindings where applicable:
 <dt><b>malabar-jdb</b> <span class="classifier">(C-c C-v J)</span></dt>
 <dd>Start the JDB debugger on the current class.</dd>
 
+<dt>malabar-update-package</dt>
+<dd>Updates the package statement of the current buffer to match its place
+  in the source directory.</dd>
+  
+
 In addition, [standard Semantic code completion][] is available; trigger
 this however you wish.  By default, `semantic-ia-complete-symbol` is
 bound to `C-c C-v C-.` and `semantic-ia-complete-symbol-menu` is
@@ -270,10 +275,6 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 <dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the corresponding test to this buffer using Maven (<code>mvn test -Dtest=classname</code>)</dd>
 
-<dt>malabar-update-package</dt>
-<dd>Updates the package statement of the current buffer to match its place
-  in the source directory.</dd>
-  
 <dt>malabar-visit-corresponding-test</dt>
 <dd><p>Visits the corresponding test class; that is, the file in the
   parallel src/test/java hierarchy that matches the class in the
