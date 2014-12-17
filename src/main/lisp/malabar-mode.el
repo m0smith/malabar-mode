@@ -570,6 +570,58 @@ The current buffer must have a java file with a main method"
 	(classname (malabar-get-fully-qualified-class-name)))
     (jdb (format "%s -classpath%s %s" gud-jdb-command-name classpath classname))))
 
+(defun malabar-compute-package-name (&optional buffer)
+  "Return the package name of the expected buffer, which is based
+  on the directory relative to project source directory.  For example, if the file is
+       src/main/java/com/m0smith/app/Test.java, 
+  this function will  return \"com.m0smith.app\".  
+
+  This function does not really care if the buffer is looking at a java file, but the file must
+  be in the source or test source directory."
+
+  (let* ((dir (expand-file-name (file-name-directory (buffer-file-name buffer))))
+         (project-file (malabar-find-project-file buffer))
+	 (project-info (malabar-project-info project-file))
+         (source-directories (append (malabar-project-source-directories
+                                      project-info)
+                                     (malabar-project-test-source-directories
+                                      project-info))))
+    (replace-regexp-in-string
+     "/" "."
+     (substring dir (1+ (length
+                         (cl-find dir source-directories
+                               :test #'(lambda (dir src-dir)
+                                         (string-starts-with dir (expand-file-name src-dir))))))
+                (1- (length dir))))))
+
+
+(defun malabar-update-package ()
+  "Updates the package statement in the current buffer to match
+the class's location in the file system, adding one if it is not
+present."
+  (interactive)
+  (let ((computed-package (malabar-compute-package-name (current-buffer)))
+        (actual-package (malabar-get-package-name (current-buffer))))
+    (unless (equal computed-package actual-package)
+      (let ((package-tag (malabar-get-package-tag (current-buffer))))
+        (save-excursion
+          (if (null package-tag)
+              (progn (goto-char (point-min))
+                     (malabar-forward-comment)
+                     (unless (eolp)
+                       (insert "\n\n")
+                       (forward-line -2)))
+            (goto-char (semantic-tag-start package-tag))
+            (zap-to-char 1 ?\;))
+          (insert "package " computed-package ";")
+          ;; Work around a bug in semantic
+          (semantic-parse-tree-set-needs-rebuild))))))
+
+(defun malabar-forward-comment ()
+  (c-forward-single-comment)
+  (unless (bolp)
+    (forward-line 1)))
+
 ;;;
 ;;; MODE
 ;;;
