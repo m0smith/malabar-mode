@@ -38,7 +38,9 @@
 ;;
 
 ;;; Code:
-(eval-when-compile (require 'cl))
+(eval-when-compile 
+  (require 'cl)
+  (require 'gud))
 (require 'groovy-mode)
 (require 'semantic/db-javap)
 (require 'url-vars)
@@ -976,6 +978,31 @@ just return nil."
   (interactive "sClass:")
   (message "%s" (malabar-reflection-which class-name buffer)))
 
+(defun malabar-electric-colon (arg)
+  "Acts as `c-electric-colon'.
+
+In addition, if `malabar-electric-elvis-p' is non-nil, the colon is
+not inside a literal and a prefix ARG hasn't been supplied, the
+command performs the following transform:
+
+'foo ?:' => 'foo != null ? foo :'."
+  (interactive "*P")
+  (let ((looking-at-elvis-p (char-equal (char-before (point)) ??)))
+    (c-electric-colon arg)
+    (when (and malabar-electric-elvis-p
+               looking-at-elvis-p
+               c-electric-flag
+               (not (c-save-buffer-state () (c-in-literal)))
+               (not arg))
+      (let ((end (point)))
+        (forward-sexp -1)
+        (while (not (eql (char-syntax (char-before (point))) ?\s))
+          (forward-sexp -1))
+        (let ((value (string-trim (buffer-substring-no-properties (point) (- end 2)))))
+          (forward-char (length value))
+          (delete-char (- end (point)))
+          (insert " != null ? " value " :"))))))
+
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
@@ -1007,7 +1034,7 @@ just return nil."
     ;;   (define-key map malabar-mode-key-prefix prefix-map))
     ;; (define-key map "\M-n" 'next-error)
     ;; (define-key map "\M-p" 'previous-error)
-    ;; (define-key map ":" 'malabar-electric-colon)
+    (define-key map ":" 'malabar-electric-colon)
     (define-key map (kbd "C-k") 'malabar-groovy-send-buffer)
     (define-key map (kbd "C-#") 'malabar-stack-trace-buffer)
     (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
@@ -1041,6 +1068,7 @@ just return nil."
 (defvar malabar-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map malabar-keymap-prefix malabar-command-map)
+    (define-key map ":" 'malabar-electric-colon)
     ;; We place the menu under a custom menu key.  Since this menu key is not
     ;; present in the menu of the global map, no top-level menu entry is added
     ;; to the global menu bar.  However, it still appears on the mode line

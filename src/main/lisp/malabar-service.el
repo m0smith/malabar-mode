@@ -65,10 +65,12 @@
 	(setq json-array-type (or array-type 'vector)
 	      json-object-type (or object-type 'alist))
 	
-	(when readtable (setq json-readtable-old json-readtable json-readtable readtable))
-	(let (
+	(let ((json-readtable-old (when readtable 
+				    (let ((r json-readtable))
+				      (setq json-readtable readtable) 
+				      r)))
 	      (rtnval (json-read)))
-	  ;;(kill-buffer (current-buffer))
+	  (kill-buffer (current-buffer))
 	  (when readtable (setq json-readtable json-readtable-old))
 	  rtnval)))))
 

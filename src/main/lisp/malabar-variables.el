@@ -149,6 +149,14 @@ specified case."
   :type '(alist :key-type string :value-type (group (choice string
                                                             function))))
 
+(defcustom malabar-electric-elvis-p t
+  "Whether inserting a colon should electrically expand the Elvis
+operator ('?:').
+
+See `malabar-electric-colon'."
+  :group 'malabar
+  :type '(boolean))
+
 
 (defvar malabar-compilation-project-file nil)
 (defvar malabar-mode-project-dir nil)
