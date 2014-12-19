@@ -522,6 +522,8 @@ was called."
 	 (entry (tabulated-list-get-entry))
 	 (trace (elt entry 3)))
     (pop-to-buffer (format "*Malabar Trace<%s>*" (tabulated-list-get-id)) nil)
+    (setq inhibit-read-only t)
+    (erase-buffer)
     (insert trace)
     (malabar-project-copy-buffer-locals buffer)
     (compilation-mode)
@@ -1056,8 +1058,9 @@ just return nil."
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
     (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
-  (malabar-abbrevs-setup)
-  (malabar-post-additional-classpath))
+  
+  (malabar-post-additional-classpath)
+  (malabar-abbrevs-setup))
 
 (make-variable-buffer-local 'malabar-mode-project-file)
 (make-variable-buffer-local 'malabar-mode-project-dir)
