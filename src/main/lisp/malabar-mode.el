@@ -165,6 +165,22 @@
       (groovy-send-region-and-go (point-min) (point-max)))))
 
 
+;;;
+;;; JSON
+;;;
+
+(defun malabar-json-read-string ()
+    "Read the JSON string at point.
+
+If the string starts with a :, intern the result.
+
+See `json-read-string'"
+
+    (let ((rtnval (json-read-string)))
+      (if (eq ?: (string-to-char rtnval))
+	  (intern rtnval)
+	rtnval)))
+
 
 ;;;
 ;;; flycheck
@@ -622,6 +638,310 @@ present."
   (unless (bolp)
     (forward-line 1)))
 
+(defun malabar-prompt-for-and-qualify-class (prompt &optional class)
+  (let* ((class (or class
+                    (read-from-minibuffer prompt)))
+         (qualified-class (or (malabar-import-find-import class)
+                              (malabar-qualify-class-name-in-buffer class)))
+         (class-info (malabar-get-class-info qualified-class)))
+    (list class qualified-class class-info)))
+
+(defun malabar-goto-start-of-class ()
+  "Move point the start of the class definition"
+  (let ((class-tag (malabar-get-class-tag-at-point)))
+    (goto-char (semantic-tag-start class-tag))))
+
+(defun malabar-goto-end-of-class ()
+  "Move point to the end of the class definition, that is, the
+closing curly brace on the class"
+  (let ((class-tag (malabar-get-class-tag-at-point)))
+    (goto-char (1- (semantic-tag-end class-tag)))))
+
+(defun malabar--implement-interface-move-to-insertion-point ()
+  (malabar-goto-start-of-class)
+  (skip-chars-forward "^{")
+  (when (semantic-tag-type-interfaces (malabar-get-class-tag-at-point))
+    (search-backward
+     (car (last (semantic-tag-type-interfaces (malabar-get-class-tag-at-point)))))
+    (goto-char (match-end 0))))
+
+
+(defun malabar-first-member-of-class ()
+" Returns the tag for the first member of the class or nil if
+there are no members.
+"
+  (car (semantic-tag-type-members
+	(car (semantic-brute-find-tag-by-class
+	      'type (malabar-semantic-fetch-tags))))))
+
+(defun malabar-goto-tag (tag)
+  "Move point to begining of TAG and return the new point.  
+
+When TAG is nil, point remains unchanged and return nil.  "
+  (when tag
+    (goto-char (semantic-tag-start tag))))
+
+
+
+(defun malabar--add-delegate-var (qualified-class is-extension)
+"
+If IS-EXTENSION is a string, insert a field name IS-EXTENSION with type QUALIFIED-CLASS.  If not, do nothing and return nil.
+
+Issue: gh-83
+"
+  (when (stringp is-extension)
+    (let ((tag (malabar-first-member-of-class))
+	  (field (concat "private " qualified-class " " is-extension ";\n")))
+      (if tag
+	  (malabar-goto-tag tag)
+	(progn
+	  (malabar-goto-end-of-class)
+	  (insert "\n")))
+    (insert field))))
+
+(defun malabar-find-method-in-current-class (method-tag)
+  (let ((class-tag (malabar-get-class-tag-at-point))
+        (method-name (malabar--get-name method-tag))
+        (method-argument-types
+         (mapcar (lambda (arg)
+                   (malabar-qualify-class-name-in-buffer (malabar--get-type arg)))
+                 (malabar--get-arguments method-tag))))
+    (cl-some (lambda (tag)
+            (and (equal method-name
+                        (semantic-tag-name tag))
+                 (equal method-argument-types 
+                        (mapcar (lambda (arg-tag)
+                                  (malabar-qualify-class-name-in-buffer
+                                   (semantic-tag-type arg-tag)))
+                                (semantic-tag-function-arguments tag)))
+                 tag))
+          (semantic-tag-type-members class-tag))))
+
+
+(defun malabar-overridable-method-p (method-tag)
+  (and (not (malabar--final-p method-tag))
+       (not (malabar-find-method-in-current-class method-tag))
+       (or (malabar--public-p method-tag)
+           (malabar--protected-p method-tag)
+           (equal (malabar-get-package-name)
+                  (malabar-get-package-of
+                   (malabar--get-declaring-class method-tag))))))
+
+(defun malabar-get-superclass (class-tag)
+  (or (car (semantic-tag-type-superclasses class-tag))
+       "Object"))
+
+(defun malabar-get-superclass-at-point ()
+  (malabar-qualify-class-name-in-buffer (malabar-get-superclass (malabar-get-class-tag-at-point))))
+
+
+(defun malabar-overridable-methods ()
+  (cl-remove-if-not (lambda (s)
+                   (and (malabar--method-p s)
+                        (malabar-overridable-method-p s)))
+                 (malabar-get-members
+                  (malabar-get-superclass-at-point))))
+
+
+(defun malabar--override-methods (methods call-super &optional overridable-methods)
+  (let* ((method-count (length methods))
+         (progress-reporter (make-progress-reporter "Overriding methods..." 0 method-count))
+         (counter 0)
+         (overridable-methods (or overridable-methods
+                                  (malabar-overridable-methods))))
+    (message nil)
+    (let ((malabar--import-candidates nil))
+      (with-caches 
+       (dolist (method methods)
+         (progress-reporter-update progress-reporter (incf counter))
+         (malabar--override-method method overridable-methods call-super t)))
+      (malabar--import-handle-import-candidates malabar--import-candidates))
+    (progress-reporter-done progress-reporter)
+    (let ((class-tag (malabar-get-class-tag-at-point)))
+      (indent-region (semantic-tag-start class-tag) (semantic-tag-end class-tag)))))
+
+
+(defun malabar-override-method (&optional method-tag)
+  "Adds a stub implementation overriding method from the
+superclass to the class at point.  If METHOD-TAG is NIL, prompts
+for the method to override."
+  (interactive)
+  (let ((overridable-methods (malabar-overridable-methods)))
+    (unless method-tag
+      (setq method-tag
+            (malabar-choose "Method to override: "
+                            (mapcar 'malabar-make-choose-spec
+                                    overridable-methods))))
+    (when method-tag
+      (malabar--override-methods (list method-tag) t overridable-methods))))
+
+
+(defun malabar--override-method-stub (method-tag is-extension)
+  "Create the method body stub.  Method tag is the method to override. 
+
+If is-extension is nil then do not call the the super or a
+delegate.  If it is true, call the super only if the method is
+not abstract.  If it is a string, call same method on that
+variable named.
+ 
+Issue: gh-83"
+  (concat
+   "// TODO: Stub\n"
+   (let* ((call-super (or (stringp is-extension)
+			  (and is-extension
+			       (not (malabar--abstract-p method-tag)))))
+	  (extension-var (if (stringp is-extension) is-extension "super"))
+	  (super-call
+	   (concat extension-var "." (malabar--get-name method-tag)
+		   (malabar--stringify-arguments
+		    (malabar--get-arguments method-tag)))))
+     (if (equal (malabar--get-return-type method-tag) "void")
+	 (if call-super
+	     (concat super-call ";\n")
+	   "")
+       (concat "return "
+	       (if call-super
+                          super-call
+		 (malabar-default-return-value
+		  (malabar--get-return-type method-tag)))
+	       ";\n")))))
+
+
+(defun malabar--override-method (method-tag overridable-methods
+                                            is-extension no-indent-defun)
+  "Create an overridden method at the end of the current class"
+  (malabar-goto-end-of-class)
+  (insert "\n" 
+	  (if (malabar--add-override-annotation? is-extension)
+	      "@Override\n" 
+	    "")
+          (malabar-create-method-signature method-tag) " {\n"
+	  (malabar--override-method-stub method-tag is-extension)
+          "}\n")
+    (forward-line -2)
+    (unless no-indent-defun
+      (c-indent-defun))
+    (back-to-indentation)
+    (cl-flet ((find-tag-from-class (name declaring-class tags)
+                                (cl-find-if (lambda (tag)
+                                           (and (equal (malabar--get-name tag)
+                                                       name)
+                                                (equal (malabar--get-declaring-class tag)
+                                                       declaring-class)))
+                                         tags)))
+      (let ((equals-tag (find-tag-from-class "equals" "java.lang.Object"
+                                             overridable-methods))
+            (hashcode-tag (find-tag-from-class "hashCode" "java.lang.Object"
+                                               overridable-methods)))
+        (cond ((and (equal method-tag equals-tag)
+                    hashcode-tag)
+               (malabar-override-method hashcode-tag))
+              ((and (equal method-tag hashcode-tag)
+                    equals-tag)
+               (malabar-override-method equals-tag))))))
+
+(defun malabar--add-override-annotation? (_is-extension)
+  "Return non-nil if the @Override tag should be added.
+   Issue: gh-84"
+  t)
+
+
+(defun malabar--parse-type-parameters (type-parameters)
+  (let ((str (subst-char-in-string
+              ?> ?\)
+              (subst-char-in-string
+               ?< ?\(
+               (subst-char-in-string ?, ?\  type-parameters t)
+               t)
+              t)))
+    (when str
+      (mapcar 'symbol-name (car (read-from-string str))))))
+
+
+(defun malabar--query-for-type-parameters (tag)
+  ;; FIXME: We shouldn't need to parse this here!
+  ;; FIXME: Deals badly with nested parameters
+  (let ((type-parameters
+         (malabar--parse-type-parameters (malabar--get-type-parameters tag))))
+    (with-caches
+     (mapcar (lambda (p)
+               (cons p
+                     (let ((read-param (second (malabar-prompt-for-and-qualify-class
+                                                (format "Value for type parameter %s: " p)))))
+                       (if (equal "" read-param)
+                           p
+                         read-param))))
+             type-parameters))))
+
+
+(defun malabar--instantiate-type-parameters (tag)
+  (let ((type-instances (malabar--query-for-type-parameters tag))
+        (case-fold-search nil)
+        (import-candidates nil))
+    (while type-instances
+      (unless (equal (caar type-instances) (cdar type-instances))
+        (goto-char (point-min))
+        (let ((re (concat "\\<" (caar type-instances) "\\>"))
+              (rep (cdar type-instances)))
+          (while (re-search-forward re nil t)
+            (replace-match rep t t)))
+        (push (cdar type-instances) import-candidates))
+      (setq type-instances (cdr type-instances)))
+    (malabar--import-handle-import-candidates import-candidates)))
+
+
+(defun malabar-implement-interface* (&optional interface-in implement-keyword is-extension)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods.
+
+IS-EXTENSION can be set to the name of a delegate to call.
+
+"
+  (unless implement-keyword
+    (setq implement-keyword "implement"))
+  (destructuring-bind (_interface qualified-interface interface-info)
+      (malabar-prompt-for-and-qualify-class (format "Interface to %s: "
+                                                    implement-keyword)
+                                            interface-in)
+    (unless (malabar--interface-p interface-info)
+      (error "You cannot %s %s, it is not an interface"
+             implement-keyword qualified-interface))
+    (unless (malabar--class-accessible-p qualified-interface interface-info)
+      (error "You cannot %s %s, it is not accessible from %s"
+             implement-keyword qualified-interface (malabar-get-package-name)))
+    (malabar--implement-interface-move-to-insertion-point)
+    (if (semantic-tag-type-interfaces (malabar-get-class-tag-at-point))
+        (insert ", ")
+      (unless (bolp)
+        (newline))
+      (insert implement-keyword "s ")
+      (indent-according-to-mode))
+    (insert qualified-interface)
+    ;(-when-let (type-parameters (malabar--get-type-parameters interface-info))
+    ;  (insert type-parameters))
+    (unless (eolp)
+      (newline-and-indent))
+    (malabar--add-delegate-var qualified-interface is-extension)
+    (malabar--override-methods (malabar--get-methods interface-info) is-extension)
+    (malabar--instantiate-type-parameters interface-info)
+    (malabar-import-and-unqualify qualified-interface)))
+
+
+(defun malabar-implement-interface (&optional interface implement-keyword)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods."
+  (interactive)
+  (malabar-implement-interface* interface implement-keyword))
+
+(defun malabar-delegate-interface (delegate &optional interface implement-keyword)
+  "Adds INTERFACE to the current class's implements clause and
+adds stub implementations of all the interface's methods.
+
+Issue: gh-83"
+  (interactive "sName:")
+  (malabar-implement-interface* interface implement-keyword delegate))
+
+
 ;;;
 ;;; MODE
 ;;;
@@ -669,7 +989,7 @@ just return nil."
     (define-key map [?z]    'malabar-import-all)
     ;; (define-key map [?\C-o] 'malabar-override-method)
     ;; (define-key map [?\C-e] 'malabar-extend-class)
-    ;; (define-key map [?\C-i] 'malabar-implement-interface)
+    (define-key map [?\C-i] 'malabar-implement-interface)
 
     (define-key map [?i] 'semantic-ia-describe-class)
     (define-key map [?h] 'malabar-semantic-heirarchy)

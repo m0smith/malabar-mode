@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; malabar-service.el --- Project handling for malabar-mode
 ;;
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -32,11 +33,19 @@
 ;;;
 
 ;;;###autoload
-(defun malabar-service-call (service args-plist &optional buffer)
+(defun malabar-service-call (service args-plist &optional buffer array-type object-type readtable)
   "SERVICE is a known service to the malabat server 
 
    ARGS-PLIST is a list of '(key val key val ...). If pm is not
-  in the list, is is pulled from buffer.  Skip entries with a nil key or value"
+  in the list, is is pulled from buffer.  Skip entries with a nil key or value
+
+  ARRAY-TYPE is for the JSON reader and can be 'list or 'vector.  Default to vector.
+
+  OBJECT-TYPE is for the JSON reader and can be `alist', `plist',
+  or `hash-table'.  Default to `alist'.
+
+  READTABLE is the JSON readtable, default to `json-reatable'."
+
   (setq url-request-method "GET"
 	url-request-extra-headers nil
 	url-request-data nil)
@@ -53,8 +62,14 @@
 			args)))
       (with-current-buffer (url-retrieve-synchronously url)
 	(goto-char url-http-end-of-headers)
-	(let ((rtnval (json-read)))
-	  (kill-buffer (current-buffer))
+	(setq json-array-type (or array-type 'vector)
+	      json-object-type (or object-type 'alist))
+	
+	(when readtable (setq json-readtable-old json-readtable json-readtable readtable))
+	(let (
+	      (rtnval (json-read)))
+	  ;;(kill-buffer (current-buffer))
+	  (when readtable (setq json-readtable json-readtable-old))
 	  rtnval)))))
 
 

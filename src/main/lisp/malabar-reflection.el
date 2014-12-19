@@ -81,9 +81,11 @@
   (with-current-buffer (or buffer (current-buffer))
     (unless (consp classname)
       (or (malabar--get-class-info-from-source classname buffer)
-	  (let* ((repo  (expand-file-name malabar-package-maven-repo)))
+	  (let* ((repo  (expand-file-name malabar-package-maven-repo))
+		 (readtable (cons  '(?\" malabar-json-read-string) json-readtable)))
 	    (malabar-service-call "tags" (list "repo" repo "pm" (expand-file-name malabar-mode-project-file)
-					       "class" classname)))))))
+								 "class" classname)
+						    buffer 'list 'plist readtable))))))
 
 
 ;; (defun malabar-which (classname &optional buffer)
@@ -229,7 +231,7 @@ defined by having a parent pom."
                    (archive-extract-by-stdout archive file-name
                                               archive-zip-extract))))
             (if (and (numberp exit-code) (zerop exit-code))
-                (progn (malabar-mode)
+                (progn (set-auto-mode)
                        (goto-char (point-min))
                        (setq buffer-undo-list nil
                              buffer-saved-size (buffer-size)
@@ -311,8 +313,11 @@ defined by having a parent pom."
            (malabar--private-p tag))))
 
 (defun malabar--method-p (tag)
-  (eq (semantic-tag-class tag) 'function))
-
+  (let ((class-tag (semantic-tag-class tag)))
+    (or
+     (eq class-tag 'function)
+     (equal class-tag "function"))))
+  
 (defun malabar--constructor-p (tag)
   (and (malabar--method-p tag)
        (semantic-tag-function-constructor-p tag)))
