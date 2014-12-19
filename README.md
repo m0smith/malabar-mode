@@ -185,7 +185,6 @@ keybindings where applicable:
   qualified class name, the class will be excluded from import.  The
   default value excludes classes from <code>java.lang</code>, JRE internal
   classes and inner classes.</p></dd>
-</dl>
 
 <dt><b>ede-edit-file-target</b> <span class="classifier">(C-c C-v C-p)</span></dt>
 <dd>Visit the project file, that is the closest file named <code>pom.xml</code>
@@ -209,7 +208,13 @@ keybindings where applicable:
 <dt>malabar-update-package</dt>
 <dd>Updates the package statement of the current buffer to match its place
   in the source directory.</dd>
-  
+
+<dt>malabar-implement-interface <span class="classifier">(C-c C-v C-i)</span></dt>
+<dd>Prompts for an interface, adds stub implementations of all that
+  interface's methods and adds the interface to the class's implements
+  clause.</dd>
+
+</dl>
 
 In addition, [standard Semantic code completion][] is available; trigger
 this however you wish.  By default, `semantic-ia-complete-symbol` is
@@ -239,12 +244,6 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 
 <dt>malabar-groovy-stop</dt>
 <dd>Kill the Groovy console process.</dd>
-
-<dt>malabar-implement-interface <span class="classifier">(C-c C-v C-i)</span></dt>
-<dd>Prompts for an interface, adds stub implementations of all that
-  interface's methods and adds the interface to the class's implements
-  clause.</dd>
-  
   
 <dt>malabar-run-maven-command</dt>
 <dd>Prompts for and executes an (almost) arbitrary Maven command line.
@@ -301,6 +300,8 @@ The following are either not in 2.0 yet or are only partially working.  If you u
   constant will default to
   <code>malabar-refactor-extract-constant-default-scope</code>, but with a
   prefix arg will prompt for the scope.</dd>
+
+
 </dl>
 
 
