@@ -171,7 +171,7 @@ Argument DIR is the directory it is created for.
 ROOTPROJ is nil, since there is only one project."
   (or (ede-files-find-existing dir ede-maven2-project-list)
       ;; Doesn't already exist, so lets make one.
-       (let* ((target-names '("install" "package"))
+       (let* ((target-names '("install" "package clean test"))
 	     (this
 	      (ede-malabar-maven2-project "Malabar Maven"
 					  :name "Malabar maven dir" ; TODO: make fancy name from dir here.

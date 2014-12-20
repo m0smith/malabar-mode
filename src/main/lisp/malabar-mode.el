@@ -100,14 +100,21 @@
       )
     )))
 
-(defvar malabar-mode-post-groovy-to-be-called nil)
+(defvar malabar-mode-post-groovy-to-be-called nil
+  "Can take three values:
+
+    nil - The groovy process is not running
+
+    'init - The groovy process is running but the initialization of malabar-mode is not complete
+
+    'running - The groovy process is running and initialized")
 
 
 (defun malabar-groovy-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
   (message "Starting malabar server")
-  (setq malabar-mode-post-groovy-to-be-called t)
+  (setq malabar-mode-post-groovy-to-be-called 'init)
   (malabar-groovy-send-string 
    (format "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
@@ -274,10 +281,13 @@ See `json-read-string'"
   "Kill the buffer returned by `url-retrieve'."
   (kill-buffer (current-buffer)))
 
+
+ 
+
 (defun malabar-post-additional-classpath ()
   (interactive)
-  (when malabar-mode-post-groovy-to-be-called
-    (setq malabar-mode-post-groovy-to-be-called nil)
+  (when (equal malabar-mode-post-groovy-to-be-called 'init)
+    (setq malabar-mode-post-groovy-to-be-called 'running)
     (let ((url (format "http://%s:%s/add/"
 		       malabar-server-host
 		       malabar-server-port)))
@@ -951,6 +961,64 @@ command performs the following transform:
           (insert " != null ? " value " :"))))))
 
 
+(defun malabar-jump-to-thing (point)
+  "Jumps to the definition of the 'thing' at point.
+More technically, uses `semantic-analyze-current-context' output
+to identify an origin for the code at point, taking type
+membership into account.  This function is much like
+`semantic-ia-fast-jump', only a little smarter."
+  (interactive "d")
+  (let* ((ctxt (semantic-analyze-current-context point))
+         (prefix (and ctxt (reverse (oref ctxt prefix))))
+         (first (first prefix))
+         (second (second prefix)))
+    (cond ((semantic-tag-p first)
+           (malabar--jump-to-thing-helper first))
+          ((semantic-tag-p second)
+           ;; so, we have a tag and a string
+           ;; let's see if the string is a subtag of the type of the tag
+           (let* ((type (car (reverse (oref ctxt prefixtypes))))
+                  ;; TODO: prompt with completion if more than one match
+                  (first-tag
+                   (car (semantic-find-tags-by-name first
+                                                    (semantic-tag-type-members type)))))
+             (cond ((semantic-tag-with-position-p first-tag)
+                    (malabar--jump-to-thing-helper first-tag))
+                   ((and (semantic-tag-with-position-p type)
+                         (y-or-n-p (format "Could not find `%s'. Jump to %s? "
+                                           first (semantic-tag-name type))))
+                    (malabar--jump-to-thing-helper type))
+                   ((y-or-n-p (format "Could not find `%s'. Jump to %s? "
+                                      first (semantic-tag-name second)))
+                    (malabar--jump-to-thing-helper second)))))
+          ((semantic-tag-of-class-p (semantic-current-tag) 'include)
+           (semantic-decoration-include-visit))
+          (t
+           (error "Could not find suitable jump point for %s" first)))))
+
+(defun malabar--jump-to-thing-helper (destination)
+  (when (not (or (semantic-tag-with-position-p destination)
+                 (semantic-tag-file-name destination)))
+    (error "Tag %s has no suitable position defined"
+           (semantic-format-tag-name destination)))
+  ;; Lifted from semantic-ia--fast-jump-helper
+  ;; Once we have the tag, we can jump to it.  Here
+  ;; are the key bits to the jump:
+
+  ;; 1) Push the mark, so you can pop global mark back, or
+  ;;    use semantic-mru-bookmark mode to do so.
+  (push-mark)
+  (when (fboundp 'push-tag-mark)
+    (push-tag-mark))
+  ;; 2) Visits the tag.
+  (semantic-go-to-tag destination)
+  ;; 3) go-to-tag doesn't switch the buffer in the current window,
+  ;;    so it is like find-file-noselect.  Bring it forward.
+  (switch-to-buffer (current-buffer))
+  ;; 4) Fancy pulsing.
+  (pulse-momentary-highlight-one-line (point)))
+
+
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
@@ -976,7 +1044,7 @@ command performs the following transform:
     (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
     (define-key map [?w] 'malabar-which) 
     (define-key map [?\C-p] 'ede-edit-file-target)
-      ;; (define-key map [?\C-y] 'malabar-jump-to-thing)
+    (define-key map [?\C-y] 'malabar-jump-to-thing)
     ;;   (define-key map [?\C-r] malabar-refactor-map)
     ;;   (define-key map malabar-mode-key-prefix prefix-map))
     ;; (define-key map "\M-n" 'next-error)

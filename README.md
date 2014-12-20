@@ -214,6 +214,13 @@ keybindings where applicable:
   interface's methods and adds the interface to the class's implements
   clause.</dd>
 
+<dt>malabar-jump-to-thing <span class="classifier">(C-c C-v C-y)</span></dt>
+<dd>Jumps to the definition of the 'thing' at point. More technically,
+  uses <code>semantic-analyze-current-context</code> output to identify an origin
+  for the code at point, taking type membership into account.  This
+  function is much like <code>semantic-ia-fast-jump</code>, only a little
+  smarter.</dd>
+
 </dl>
 
 In addition, [standard Semantic code completion][] is available; trigger
@@ -288,12 +295,6 @@ The following are either not in 2.0 yet or are only partially working.  If you u
   <p>If the current buffer looks like a test class, this command does nothing.</p></dd>
   
   
-<dt>malabar-jump-to-thing <span class="classifier">(C-c C-v C-y)</span></dt>
-<dd>Jumps to the definition of the 'thing' at point. More technically,
-  uses <code>semantic-analyze-current-context</code> output to identify an origin
-  for the code at point, taking type membership into account.  This
-  function is much like <code>semantic-ia-fast-jump</code>, only a little
-  smarter.</dd>
   
 <dt>malabar-refactor-extract-constant <span class="classifier">(C-c C-v C-r C-c)</span></dt>
 <dd>Extracts the thing at point as a named constant.  The scope of the
