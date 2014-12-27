@@ -256,13 +256,13 @@ See `json-read-string'"
 
 
 ;;;
-;;; JVM
+;;; JDK
 ;;;
 
-(defun malabar-jvm-file (dir f)
+(defun malabar-jdk-file (dir f)
   (concat (file-name-as-directory dir) f))
 
-(defun malabar-jvm-find-home (rt-dir)
+(defun malabar-jdk-find-home (rt-dir)
   "Return the java home for a rt.jar full path, if it exists, or nil"
   (when (and rt-dir (file-exists-p rt-dir))
     (substring rt-dir 0 
@@ -270,7 +270,7 @@ See `json-read-string'"
 		  (length cedet-java-core-jar-name)))))
 
 ; Based on `cedet-java-try-to-list-jdk-dirs'
-(defun malabar-jvm-try-to-list-jdk-dirs (basedirs all-res)
+(defun malabar-jdk-try-to-list-jdk-dirs (basedirs all-res)
   "Searches for JDKs in specified directories (basedirs) and using specified regexes (all-res)
 
 ALL-RES is a list if strings to use a a regex of files in each
@@ -313,10 +313,10 @@ BASEDIRS or if :self then just use the directory itself"
 ;  "This code is stolen from `cedet-java-find-jdk-core-jar' which uses
 ; it to find the current JDK.  It would be useful to see all the
 ; install JDKs"
-(defun malabar-jvm-installed-jvm-roots ()
+(defun malabar-jdk-installed-jvm-roots ()
   "Return a list of all the installed JVMs.  Searches the common
 install locations in addition to the directories in
-`malabar-jvm-extra-locations'"
+`malabar-jdk-extra-locations'"
   (let* 
       ((funcs (list
 	       (lambda () (cedet-java-create-rt-file-name cedet-java-jdk-root))
@@ -325,37 +325,51 @@ install locations in addition to the directories in
 	       (lambda () (cedet-java-check-symlinks "/etc/alternatives/java"))
 	       (lambda () (cedet-java-check-symlinks "/usr/bin/java"))
 	       ;; Linux...
-	       (lambda () (malabar-jvm-try-to-list-jdk-dirs '("/usr/lib/jvm" "/usr/local/lib/jvm")
+	       (lambda () (malabar-jdk-try-to-list-jdk-dirs '("/usr/lib/jvm" "/usr/local/lib/jvm")
 							   '("default-java" ".*sun.*" ".*jdk.*" ".*gcj.*")))
 	       ;; Mac OS X
-	       (lambda () (malabar-jvm-try-to-list-jdk-dirs '("/Library/Java/JavaVirtualMachines/"
+	       (lambda () (malabar-jdk-try-to-list-jdk-dirs '("/Library/Java/JavaVirtualMachines/"
 							     "/System/Library/Java/JavaVirtualMachines/")
 							   '(".*[jJ][dD][kK].*")))
 	       ;; TODO: Check Windows (How it will behave on Non-English Windows?)
-	       (lambda () (malabar-jvm-try-to-list-jdk-dirs 
+	       (lambda () (malabar-jdk-try-to-list-jdk-dirs 
 			   (mapcar (lambda (d)
-				     (malabar-jvm-file d "Java")) 
+				     (malabar-jdk-file d "Java")) 
 				   (append
 				    (list (getenv "PROGRAMFILES")
 					  (getenv "ProgramFiles(x86)")
 					  (getenv "ProgramW6432"))
-				    malabar-jvm-extra-locations))
+				    malabar-jdk-extra-locations))
 			   '(".*jdk.*" ".*jre.*")))
-	       (lambda () (malabar-jvm-try-to-list-jdk-dirs malabar-jvm-extra-locations 
+	       (lambda () (malabar-jdk-try-to-list-jdk-dirs malabar-jdk-extra-locations 
 							    '(".*jdk.*" ".*jre.*" :self))))))
-     (-flatten (mapcar (lambda (f) (mapcar #'malabar-jvm-find-home (funcall f)))
+     (-flatten (mapcar (lambda (f) (mapcar #'malabar-jdk-find-home (funcall f)))
 		       funcs))))
 
 
-(defun malabar-jvm-installed-jvms ()
+(defun malabar-jdk-installed-jvms ()
   "Return an alist of JVM name as a string to 
     '(HOME)"
-  (let ((roots (malabar-jvm-installed-jvm-roots)))
+  (let ((roots (malabar-jdk-installed-jvm-roots)))
     (mapcar (lambda (root)
 	      (cons (file-name-nondirectory (directory-file-name root))
 		     (list root) ))
 	    roots)))
 
+
+(defun malabar-jdk-start (jdk)
+  (interactive (list (completing-read "JDK:" (malabar-jdk-installed-jvms))))
+  (let* ((jdk-alist (malabar-jdk-installed-jvms))
+	 (port (+ 49152 (random (- 65535 49152))))
+	 (jdk (first (assoc jdk jdk-alist)))
+	 (cwd (ede-find-project-root "pom.xml")))
+    (message "%s %s %s" port jdk cwd)
+    (malabar-service-call "spawn"
+			  (list "port" port
+				"version" malabar-server-jar-version
+				"jdk" jdk
+				"cwd" cwd
+				"class" "com.software_ninja.malabar.Malabar"))))
 
 ;;;    
 ;;; Project

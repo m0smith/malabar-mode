@@ -116,6 +116,14 @@ if the class is not otherwise resolvable."
   :group 'malabar
   :type '(repeat (file :tag "Path")))
 
+(defcustom malabar-jdk-extra-locations nil
+  "List of extra JVM locations.
+Each location may be a directory.  Malabar-mode
+will look for installed JVMs in these locations."
+  :group 'malabar
+  :type '(repeat (file :tag "Path")))
+
+
 (defcustom malabar-load-source-from-sibling-projects t
   "Whether to load source from sibling projects.
 Note that this will not work reliably with a 'flat' project
