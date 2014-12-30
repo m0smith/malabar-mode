@@ -430,15 +430,17 @@ e.g. `malabar-choose'."
 
 (define-cached-function malabar-qualify-class-name (unqualified &optional buffer)
   "A list of all matching classes or nil"
-  (with-current-buffer (or buffer (current-buffer))
-    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
-							      "repo"(expand-file-name malabar-package-maven-repo)
-							      "pattern" (format "[.]%s$" unqualified)
-							      "isClass" "true"
-							      "useRegex" "true"
-							      "max" "100")
-					     buffer)))
-      (mapcar (lambda (e) (cdr (assoc 'key e))) result-array))))
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer 
+      (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
+								  "repo"(expand-file-name malabar-package-maven-repo)
+								  "pattern" (format "[.]%s$" unqualified)
+								  "isClass" "true"
+								  "useRegex" "true"
+								  "max" "100")
+						 buffer)))
+	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
+
 
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"

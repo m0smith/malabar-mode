@@ -462,10 +462,15 @@ install locations in addition to the directories in
 (defun malabar-parse-script-raw (callback pom script &optional repo)
   "Parse the SCRIPT and call CALLBACK with the results buffer"
   (interactive "fPOM File:\nfJava File:")
+  
+  (setq url-request-method "GET"
+	url-request-extra-headers nil
+	url-request-data nil)
+  
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s" 
 		      malabar-server-host
-		      malabar-server-port
+		      (malabar-project-port (expand-file-name pom))
 		      repo (expand-file-name pom) (expand-file-name script))))
     ;(message "URL %s" url)
     (url-retrieve url callback)))

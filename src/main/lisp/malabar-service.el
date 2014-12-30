@@ -32,6 +32,17 @@
 ;;;  Service
 ;;;
 
+
+(defun malabar-service-arg-p  (c)
+  "Return non-nil if the car and cadr of c are not nil"
+  (and (not (null (car c))) 
+       (not (null (cadr c)))))
+
+(defun malabar-service-prepare-args (args-plist)
+  (let ((args-alist (-filter #'malabar-service-arg-p (-partition-all 2 args-plist))))
+    (if (assoc "pm" args-alist) args-alist 
+      (append args-alist `(("pm" ,malabar-mode-project-file))))))
+
 ;;;###autoload
 (defun malabar-service-call (service args-plist &optional buffer array-type object-type readtable)
   "SERVICE is a known service to the malabat server 
@@ -51,9 +62,7 @@
 	url-request-data nil)
   
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((args-alist (-partition-all 2 args-plist))
-	   (args-alist (-filter (lambda (c) (and (not (null (car c))) (not (null (cadr c))))) args-alist))
-	   (args-alist (if (assoc "pm" args-alist) args-alist (append args-alist `(("pm" ,malabar-mode-project-file)))))
+    (let* ((args-alist (malabar-service-prepare-args args-plist))
 	   (args (mapconcat (lambda (c) (concat (car c) "=" (cadr c))) args-alist "&"))
 	   (url (format "http://%s:%s/%s/?%s"
 			malabar-server-host
