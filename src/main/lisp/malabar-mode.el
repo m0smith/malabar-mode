@@ -259,6 +259,33 @@ See `json-read-string'"
 ;;; JDK
 ;;;
 
+(defun malabar-project-buffer-p (pm &optional buffer)
+  "Return the buffer is it is a member of the project managed by
+  PM (maybe a pom file)"
+  (with-current-buffer (or buffer (current-buffer))
+    (when (and (equal malabar-mode-project-file pm)
+	       buffer-file-name)
+      (current-buffer))))
+
+(defun malabar-project-parse-file-async (&optional buffer)
+  "Parse the file in the current buffer"
+  (with-current-buffer (or buffer (current-buffer))
+    (malabar-parse-script-raw
+     (lambda (_status) (kill-buffer (current-buffer)))
+     malabar-mode-project-file (buffer-file-name))))
+
+(defun malabar-project-update-port (pm port)
+  (add-to-list 'malabar-mode-project-service-alist 
+	       (list pm port)
+	       nil 
+	       (lambda (x y) nil)))
+	
+(defun malabar-project-port (pm &optional no-default)
+  "If NO-DEFAULT is non-nil, only return a found port"
+  (let ((pm (or pm malabar-mode-project-file)))
+    (or (cadr (assoc pm malabar-mode-project-service-alist))
+	(and (not no-default) malabar-server-port))))
+
 (defun malabar-jdk-file (dir f)
   (concat (file-name-as-directory dir) f))
 
@@ -357,19 +384,38 @@ install locations in addition to the directories in
 	    roots)))
 
 
+(defun malabar-jdk-stop (&optional pm)
+  (let* ((pm (or pm malabar-mode-project-file))
+	 (port (malabar-project-port pm t)))
+    (when port
+      (message "Stopping %s port %s" malabar-mode-project-name port)
+      (condition-case err
+	  (malabar-service-call "stop" (list "pm" pm))
+	(error err (message "%s" err)))
+      (malabar-project-update-port malabar-mode-project-file nil))))
+
 (defun malabar-jdk-start (jdk)
   (interactive (list (completing-read "JDK:" (malabar-jdk-installed-jvms))))
+  (malabar-jdk-stop)
+
   (let* ((jdk-alist (malabar-jdk-installed-jvms))
 	 (port (+ 49152 (random (- 65535 49152))))
-	 (jdk (first (assoc jdk jdk-alist)))
-	 (cwd (ede-find-project-root "pom.xml")))
-    (message "%s %s %s" port jdk cwd)
-    (malabar-service-call "spawn"
-			  (list "port" port
-				"version" malabar-server-jar-version
-				"jdk" jdk
-				"cwd" cwd
-				"class" "com.software_ninja.malabar.Malabar"))))
+	 (jdk (cadr (assoc jdk jdk-alist)))
+	 (cwd (ede-find-project-root "pom.xml"))
+	 (rtnval (malabar-service-call "spawn"
+				       (list "port" (number-to-string port)
+					     "version" malabar-server-jar-version
+					     "jdk" jdk
+					     "cwd" cwd
+					     "class" "com.software_ninja.malabar.Malabar"))))
+    (malabar-project-update-port malabar-mode-project-file port)
+    (malabar-post-additional-classpath*)
+    ;; Reparse all file buffers in the project using the new jdk
+    (mapcar #'malabar-project-parse-file-async
+	    (-filter (lambda (b) (malabar-project-buffer-p malabar-mode-project-file b)) 
+		       (buffer-list)))
+    (message "%s is using service port %s" malabar-mode-project-name port)
+    rtnval))
 
 ;;;    
 ;;; Project
@@ -397,18 +443,20 @@ install locations in addition to the directories in
   (kill-buffer (current-buffer)))
 
 
+(defun malabar-post-additional-classpath* ()
+  (let ((url (format "http://%s:%s/add/"
+		     malabar-server-host 
+		     (malabar-project-port malabar-mode-project-file))))
+    (malabar-url-http-post url (list
+				(cons "pm"        malabar-mode-project-file)
+				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
 (defun malabar-post-additional-classpath ()
   (interactive)
   (when (equal malabar-mode-post-groovy-to-be-called 'init)
     (setq malabar-mode-post-groovy-to-be-called 'running)
-    (let ((url (format "http://%s:%s/add/"
-		       malabar-server-host
-		       malabar-server-port)))
-      (malabar-url-http-post url (list
-				  (cons "pm"        malabar-mode-project-file)
-				  (cons "relative"  (json-encode malabar-package-additional-classpath)))))))
+    (malabar-post-additional-classpath*)))
 
 
 (defun malabar-parse-script-raw (callback pom script &optional repo)
@@ -1223,6 +1271,7 @@ membership into account.  This function is much like
 (make-variable-buffer-local 'malabar-mode-project-file)
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
+
 
 
 (add-hook 'groovy-mode-hook 'malabar-mode)

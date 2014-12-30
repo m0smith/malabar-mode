@@ -173,6 +173,7 @@
       (setq malabar-mode-project-dir project-dir )
       (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
       (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
+    
     malabar-mode-project-file))
 
 (defun malabar-find-project-file (&optional buffer)

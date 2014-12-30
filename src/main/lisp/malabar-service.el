@@ -57,7 +57,7 @@
 	   (args (mapconcat (lambda (c) (concat (car c) "=" (cadr c))) args-alist "&"))
 	   (url (format "http://%s:%s/%s/?%s"
 			malabar-server-host
-			malabar-server-port
+			(malabar-project-port malabar-mode-project-file)
 			service
 			args)))
       (with-current-buffer (url-retrieve-synchronously url)

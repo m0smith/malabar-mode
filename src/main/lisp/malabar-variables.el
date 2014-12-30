@@ -167,9 +167,12 @@ See `malabar-electric-colon'."
 
 
 (defvar malabar-compilation-project-file nil)
-(defvar malabar-mode-project-dir nil)
+(defvar omalabar-mode-project-dir nil)
 (defvar malabar-mode-project-file nil)
 (defvar malabar-mode-project-name nil)
+(defvar malabar-mode-project-service-alist nil
+  "An alist of PM to a list of:
+    ( PORT )" )
 (defvar malabar-groovy-compilation-buffer-name nil)
 
 (provide 'malabar-variables)
