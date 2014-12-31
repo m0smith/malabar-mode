@@ -468,10 +468,11 @@ install locations in addition to the directories in
 	url-request-data nil)
   
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
-	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s" 
+	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s&parser=%s" 
 		      malabar-server-host
 		      (malabar-project-port (expand-file-name pom))
-		      repo (expand-file-name pom) (expand-file-name script))))
+		      repo (expand-file-name pom) (expand-file-name script)
+		      malabar-mode-project-parser)))
     ;(message "URL %s" url)
     (url-retrieve url callback)))
 
@@ -605,10 +606,12 @@ was called."
     (with-current-buffer src-buffer
       (let ((name malabar-mode-project-name)
 	    (dir malabar-mode-project-dir)
+	    (parser malabar-mode-project-parser)
 	    (file malabar-mode-project-file))
 	(with-current-buffer target-buffer
 	  (setq malabar-mode-project-dir dir)
 	  (setq malabar-mode-project-file file)
+	  (setq malabar-mode-project-parser parser)
 	  (setq malabar-mode-project-name name))))))
 
 (defun malabar-stack-trace-buffer ( &optional buffer)
@@ -702,6 +705,7 @@ was called."
 						 (list "repo"   repo
 						       "pm"     (expand-file-name pom)
 						       "script" (expand-file-name script)
+						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
 			   buffer)))
     
@@ -1276,6 +1280,7 @@ membership into account.  This function is much like
 (make-variable-buffer-local 'malabar-mode-project-file)
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
+(make-variable-buffer-local 'malabar-mode-project-parser)
 
 
 
