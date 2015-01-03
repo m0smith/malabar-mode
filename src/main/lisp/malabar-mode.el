@@ -205,9 +205,11 @@ See `json-read-string'"
       (funcall cback 'finished nil)
     (let* ((pom-path malabar-mode-project-file)
 	   (buffer (current-buffer))
-	   (script (if (buffer-modified-p) (buffer-file-name) (buffer-file-name))))
+	   (func (if (buffer-modified-p) 'malabar-parse-scriptbody-raw 'malabar-parse-script-raw))
+	   (script (if (buffer-modified-p) (buffer-string) (buffer-file-name))))
       
-      (malabar-parse-script-raw
+      (message "flycheck with func:%s" func) 
+      (funcall func
        (lambda (_status)
 	 ;(message "%s %s %s" status (current-buffer) url-http-end-of-headers)
 	 (condition-case err
@@ -220,6 +222,7 @@ See `json-read-string'"
 		   (funcall cback 'finished error-list))))
 	   (error (let ((msg (error-message-string err)))
 		    (message "flycheck error: %s" msg)
+		    (pop-to-buffer (current-buffer))
 		    (funcall cback 'errored msg)))))
        pom-path script))))
 
@@ -427,7 +430,10 @@ install locations in addition to the directories in
 
 
 (defun malabar-url-http-post (url args)
-  "Send ARGS to URL as a POST request."
+  (malabar-url-http-post-with-callback 'malabar-kill-url-buffer url args))
+
+(defun malabar-url-http-post-with-callback (callback url args)
+  "Send ARGS (an alist) to URL as a POST request."
   (setq url-request-method "POST"
 	url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))
 	url-request-data (mapconcat (lambda (arg)
@@ -436,7 +442,7 @@ install locations in addition to the directories in
 					      (url-hexify-string (cdr arg))))
 				    args
 				    "&"))
-    (url-retrieve url 'malabar-kill-url-buffer))
+    (url-retrieve url callback))
 
 (defun malabar-kill-url-buffer (_status)
   "Kill the buffer returned by `url-retrieve'."
@@ -475,6 +481,22 @@ install locations in addition to the directories in
 		      malabar-mode-project-parser)))
     ;(message "URL %s" url)
     (url-retrieve url callback)))
+
+(defun malabar-parse-scriptbody-raw (callback pom scriptbody &optional repo)
+  "Parse the SCRIPTBODY and call CALLBACK with the results buffer"
+
+  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
+	 (url (format "http://%s:%s/parse/"
+		      malabar-server-host
+		      (malabar-project-port (expand-file-name pom)))))
+
+    (malabar-url-http-post-with-callback callback url
+					 (list
+					  (cons "repo" repo)
+					  (cons "pm" (expand-file-name pom))
+					  (cons "scriptBody" scriptbody)
+					  (cons "parser" malabar-mode-project-parser)))))
+					 
 
 ;;;
 ;;; Reflection
