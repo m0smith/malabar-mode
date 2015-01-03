@@ -1213,6 +1213,21 @@ membership into account.  This function is much like
   (pulse-momentary-highlight-one-line (point)))
 
 
+(defun malabar-debug-info ()
+  "Load the debug info into a new buffer for the project associated with the
+current buffer.  Also set the server logging level to FINEST.  See the *groovy* for the logging output"
+  (interactive)
+  (let* ((repo (expand-file-name malabar-package-maven-repo))
+	 (url (format "http://%s:%s/debug/"
+		      malabar-server-host
+		      (malabar-project-port (expand-file-name malabar-mode-project-file)))))
+    
+    (malabar-url-http-post-with-callback (lambda (_status) (pop-to-buffer (current-buffer))) 
+					 url
+					 (list
+					  (cons "repo" repo)
+					  (cons "pm" (expand-file-name malabar-mode-project-file))))))
+
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
@@ -1238,6 +1253,7 @@ membership into account.  This function is much like
     (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
     (define-key map [?w] 'malabar-which) 
     (define-key map [?\C-p] 'ede-edit-file-target)
+    (define-key map [?\C-M-d] 'malabar-debug-info)
     (define-key map [?\C-y] 'malabar-jump-to-thing)
     ;;   (define-key map [?\C-r] malabar-refactor-map)
     ;;   (define-key map malabar-mode-key-prefix prefix-map))
