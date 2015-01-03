@@ -62,6 +62,12 @@
 (defvar url-http-end-of-headers)
 
 
+(make-variable-buffer-local 'malabar-mode-project-file)
+(make-variable-buffer-local 'malabar-mode-project-dir)
+(make-variable-buffer-local 'malabar-mode-project-name)
+(make-variable-buffer-local 'malabar-mode-project-parser)
+
+
 (setq ede-maven2-execute-mvn-to-get-classpath nil)
 
 (semantic-mode 1)
@@ -74,8 +80,12 @@
 
 (defun malabar-run-groovy ()
   (interactive)
-  (run-groovy (format "%s %s" (expand-file-name "~/.gvm/groovy/2.3.7/bin/groovysh")
-		      " -Dhttp.proxyHost=proxy.ihc.com -Dhttp.proxyPort=8080 -Dgroovy.grape.report.downloads=true -Djava.net.useSystemProxies=true")))
+
+  (let ((debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
+	(proxy (if (equal malabar-groovy-proxy-host "") ""
+		 (format "-Dhttp.proxyHost=%s -Dhttp.proxyPort=%s -Djava.net.useSystemProxies=true" malabar-groovy-proxy-host malabar-groovy-proxy-port) "")))
+  (run-groovy (format "%s %s %s" (expand-file-name malabar-groovy-grooysh) debug proxy))))
+
 
 
 (defun malabar-groovy-send-string (str)
@@ -208,7 +218,7 @@ See `json-read-string'"
 	   (func (if (buffer-modified-p) 'malabar-parse-scriptbody-raw 'malabar-parse-script-raw))
 	   (script (if (buffer-modified-p) (buffer-string) (buffer-file-name))))
       
-      (message "flycheck with func:%s" func) 
+      ;;(message "flycheck with func:%s" func) 
       (funcall func
        (lambda (_status)
 	 ;(message "%s %s %s" status (current-buffer) url-http-end-of-headers)
@@ -1253,7 +1263,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
     (define-key map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
     (define-key map [?w] 'malabar-which) 
     (define-key map [?\C-p] 'ede-edit-file-target)
-    (define-key map [?\C-M-d] 'malabar-debug-info)
+    (define-key map (kbd "C-M-d") 'malabar-debug-info)
     (define-key map [?\C-y] 'malabar-jump-to-thing)
     ;;   (define-key map [?\C-r] malabar-refactor-map)
     ;;   (define-key map malabar-mode-key-prefix prefix-map))
@@ -1334,13 +1344,11 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
 
-(make-variable-buffer-local 'malabar-mode-project-file)
-(make-variable-buffer-local 'malabar-mode-project-dir)
-(make-variable-buffer-local 'malabar-mode-project-name)
-(make-variable-buffer-local 'malabar-mode-project-parser)
-
-(add-hook 'groovy-mode-hook 'malabar-groovy-mode)
-(add-hook 'java-mode-hook   'malabar-java-mode)
+(defun activate-malabar-mode ()
+  "Add hooks to the java and groovy modes to activate malabar mode.  Good for calling in .emacs"
+  (interactive)
+  (add-hook 'groovy-mode-hook 'malabar-groovy-mode)
+  (add-hook 'java-mode-hook   'malabar-java-mode))
 
 (provide 'malabar-mode)
 

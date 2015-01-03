@@ -55,7 +55,7 @@ keybindings.  Changing this variable is at your own risk."
       (define-key malabar-mode-map key malabar-command-map))
     (set-default variable key)))
 
-(defcustom malabar-server-jar-version "2.0.4"
+(defcustom malabar-server-jar-version "2.0.5"
   "The version of the malabar-mode-jar to fetch when starting"
   :group 'malabar
   :package-version '(malabar . "2.0")
@@ -80,7 +80,29 @@ keybindings.  Changing this variable is at your own risk."
   :package-version '(malabar . "2.0")
   :type 'string)
 
+(defcustom malabar-groovy-grooysh "~/.gvm/groovy/2.3.7/bin/groovysh"
+  "Where to find the groovysh executable"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
+(defcustom malabar-groovy-grooysh-debug nil
+  "If non-nil, turn on debugging of the groovysh"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'boolean)
+
+(defcustom malabar-groovy-proxy-host ""
+  "Proxy host for Groovy/Grape/Ivy to use to find dependencies.   Also see `malabar-groovy-proxy-port'"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-groovy-proxy-port ""	
+  "Proxy port for Groovy/Grape/Ivy to use to find dependencies.  Also see `malabar-groovy-proxy-host'"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
 (defcustom malabar-package-additional-classpath '( "build/classes/main" "build/classes/test" )
   "JARS and DIRS relative to the package root to add to the
