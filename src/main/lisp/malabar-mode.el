@@ -83,7 +83,7 @@
 
   (let ((debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
 	(proxy (if (equal malabar-groovy-proxy-host "") ""
-		 (format "-Dhttp.proxyHost=%s -Dhttp.proxyPort=%s -Djava.net.useSystemProxies=true" malabar-groovy-proxy-host malabar-groovy-proxy-port) "")))
+		 (format "-Dhttp.proxyHost=%s -Dhttp.proxyPort=%s -Djava.net.useSystemProxies=true" malabar-groovy-proxy-host malabar-groovy-proxy-port))))
   (run-groovy (format "%s %s %s" (expand-file-name malabar-groovy-grooysh) debug proxy))))
 
 
@@ -291,7 +291,7 @@ See `json-read-string'"
   (add-to-list 'malabar-mode-project-service-alist 
 	       (list pm port)
 	       nil 
-	       (lambda (x y) nil)))
+	       (lambda (_x _y) nil)))
 	
 (defun malabar-project-port (pm &optional no-default)
   "If NO-DEFAULT is non-nil, only return a found port"
@@ -424,9 +424,9 @@ install locations in addition to the directories in
     (malabar-project-update-port malabar-mode-project-file port)
     (malabar-post-additional-classpath)
     ;; Reparse all file buffers in the project using the new jdk
-    (mapcar #'malabar-project-parse-file-async
-	    (-filter (lambda (b) (malabar-project-buffer-p malabar-mode-project-file b)) 
-		       (buffer-list)))
+    (mapc #'malabar-project-parse-file-async
+	  (-filter (lambda (b) (malabar-project-buffer-p malabar-mode-project-file b)) 
+		   (buffer-list)))
     (message "%s is using service port %s" malabar-mode-project-name port)
     rtnval))
 
