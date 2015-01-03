@@ -1,5 +1,5 @@
 ;; -*- lexical-binding: t -*-
-;;; malabar-mode.el --- A better Java mode for Emacs
+;;; malabar-mode.el --- JVM Integration mode for EMACS
 
 ;; Copyright (c) Matthew O. Smith <matt@m0smith.com>
 ;;
@@ -9,7 +9,7 @@
 ;; URL: http://www.github.com/m0smith/malabar-mode
 ;; Version: 1.6-M8
 ;; Package-Requires: ((fringe-helper "1.0.1"))
-;; Keywords: java, maven, language, malabar
+;; Keywords: java, maven, groovy, language, malabar
 
 ;;; License:
 
