@@ -409,7 +409,7 @@ install locations in addition to the directories in
 					     "cwd" cwd
 					     "class" "com.software_ninja.malabar.Malabar"))))
     (malabar-project-update-port malabar-mode-project-file port)
-    (malabar-post-additional-classpath*)
+    (malabar-post-additional-classpath)
     ;; Reparse all file buffers in the project using the new jdk
     (mapcar #'malabar-project-parse-file-async
 	    (-filter (lambda (b) (malabar-project-buffer-p malabar-mode-project-file b)) 
@@ -443,7 +443,7 @@ install locations in addition to the directories in
   (kill-buffer (current-buffer)))
 
 
-(defun malabar-post-additional-classpath* ()
+(defun malabar-post-additional-classpath ()
   (let ((url (format "http://%s:%s/add/"
 		     malabar-server-host 
 		     (malabar-project-port malabar-mode-project-file))))
@@ -452,7 +452,7 @@ install locations in addition to the directories in
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
-(defun malabar-post-additional-classpath ()
+(defun malabar-post-additional-classpath-old ()
   (interactive)
   (when (equal malabar-mode-post-groovy-to-be-called 'init)
     (setq malabar-mode-post-groovy-to-be-called 'running)
@@ -1264,11 +1264,7 @@ membership into account.  This function is much like
     map)
   "Keymap of `malabar-mode'.")
 
-;;;###autoload
-(define-minor-mode malabar-mode
-  "Support and integeration for JVM languages"
-  :lighter " JVM"
-  :keymap malabar-mode-map
+(defun malabar-mode-body ()
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
@@ -1277,16 +1273,36 @@ membership into account.  This function is much like
   (malabar-post-additional-classpath)
   (malabar-abbrevs-setup))
 
+
+;;;###autoload
+(define-minor-mode malabar-mode
+  "Support and integeration for JVM languages"
+  :lighter " JVM"
+  :keymap malabar-mode-map
+  (malabar-mode-body))
+
+(define-minor-mode malabar-java-mode
+  "Java specfic minor mode for JVM languages"
+  :lighter " JVM-Java"
+  :keymap malabar-mode-map
+  (malabar-mode-body)
+  (setq malabar-mode-project-parser "java"))
+
+
+(define-minor-mode malabar-groovy-mode
+  "Groovy specfic minor mode for JVM languages"
+  :lighter " JVM-Groovy"
+  :keymap malabar-mode-map
+  (malabar-mode-body)
+  (setq malabar-mode-project-parser "groovy"))
+
 (make-variable-buffer-local 'malabar-mode-project-file)
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
 (make-variable-buffer-local 'malabar-mode-project-parser)
 
-
-
-(add-hook 'groovy-mode-hook 'malabar-mode)
-(add-hook 'java-mode-hook   'malabar-mode)
-
+(add-hook 'groovy-mode-hook 'malabar-groovy-mode)
+(add-hook 'java-mode-hook   'malabar-java-mode)
 
 (provide 'malabar-mode)
 
