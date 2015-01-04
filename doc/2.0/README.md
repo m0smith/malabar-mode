@@ -1,10 +1,9 @@
 [![Melpa Status](http://melpa.milkbox.net/packages/malabar-mode-badge.svg)](http://melpa.milkbox.net/#/malabar-mode)
-# malabar-mode
+# malabar-mode 
+A minor mode supporting JVM based development.
 
-EMACS integration with the JVM.
 
-
-malabar-mode is a monir-mode with hooks into Maven that makes
+malabar-mode extends java-mode with hooks into Maven that make
 it easy to compile files on the fly and execute Maven build
 commands.
 
@@ -13,13 +12,14 @@ NOTE:  The java/groovy code has been moved to https://github.com/m0smith/malabar
 This is based on a fork of
 [buzztaiki's fork](https://github.com/buzztaiki/malabar-mode) of
 [espenhw's malabar-mode](https://github.com/espenhw/malabar-mode) which has been merged
-back into the master branch. Development of malabar-mode has restarted. This is an attempt to keep it up to date and develop at a modest pace.
+back into the master branch. Development of malabar-mode has restarted. This is an attempt to keep
+it up to date and develop at a modest pace.
 
 You may want to skip to [Installation](#Installation).
 
 ## What malabar-mode offers
 
-Since malabar-mode can be used from both java-mode and groovy-mode, we get some things for free:
+Since malabar-mode is derived from java-mode, we get some things for free:
 
 - Syntax highlighting
 
@@ -33,14 +33,12 @@ anything you don't like.
 
 ### But there is more:
 
-- Tight integration with [Maven][]. If you're not using Maven, you
-  should not consider malabar-mode for now.  Adding [gradle support](https://github.com/m0smith/malabar-mode-jar/issues/18) is pending.
+- Tight integration with [Maven][]. If
+  you're not using Maven, you should not consider malabar-mode.
 
 - A [Groovy][] console for rapid prototyping and exploratory programming
 
 - [JUnit][] integration, both for running tests standalone and through Maven
-
-- Debugger integration with EMACS built in GUD
 
 - Import help; import one class or all needed classes in the buffer
   (with prompting if the class name is ambiguous)
@@ -48,63 +46,12 @@ anything you don't like.
 - Extend class / implement interface / override method helpers
 
 - Simplistic refactorings
-
 - See the [Cheat Sheet](src/main/lisp/malabar-cheatsheet.org "Malabar Mode Cheat Sheet")
 
 and more.
 
 <a name="Installation" />
 # Installation
-
-## 2.x
-
-There has been a lot of work to rewrite malabar-mode to make it easier to maintain, install and develop.  It is currently in a beta stage.  Once it has some time to mature, it will be put back into MELPA.  Until then, the installation is manual:
-
-- Install groovy (2.3.7 or later).  Ubunutu has a real old version.  Use GVM to install http://gvmtool.net/
-
-- Install gradle
-
-- Clone https://github.com/m0smith/malabar-mode/tree/develop
-
-```
-	git clone https://github.com/m0smith/malabar-mode.git
-	git checkout develop
-```
-
-- Clone https://github.com/alexott/cedet/tree/devel 
-
-```
-    git clone https://github.com/alexott/cedet.git
-	make all
-```
-
-- Install emacs package groovy-mode.  Do not use marmalade version as it is old.
-
-- Add to .emacs: 
-
-
-```
-
-	(load-file "~/projecrs/cedet/cedet-devel-load.el")
-	(add-to-list 'load-path "~/projects/malabar-mode/src/main/lisp")
-
-	(load "malabar-mode")
-
-	(eval-after-load 'inf-groovy
-		(add-hook 'inf-groovy-load-hook 'flycheck-mode))
-	(eval-after-load 'java-mode
-		(add-hook 'java-mode-hook   'flycheck-mode))
-
-```
-
-- in emacs (malabar-run-groovy) or C-u M-x run-groovy - you may need to enter the path to groovysh, especially on Windows
-- Edit a java/groovy file in a maven2 project
-- In the buffer run flycheck-mode and malabar-mode to enable the features
-  
-
-## 1.x installation
-
-**NOTE 1.x is no longer supported and no more development will happen on this branch**
 
 The malabar-mode package is now part of
 [MELPA](http://melpa.milkbox.net/) thanks to this
@@ -117,9 +64,9 @@ you’ve added MELPA to your package archives.
 
 ## Prerequisites
 
-### Groovy
+### Maven
 
-Version 2.3.7 or beyond
+The first time malabar-mode runs it will need to have the mvn executable in the `exec-path` and access to maven central in order to load its dependencies.  Also, starting the first time can take a long time as it downloads needed jars.
 
 ### Emacs
 
@@ -128,8 +75,32 @@ development now targets Emacs 24.
 
 ### CEDET
 
+A relatively recent [CEDET][] is needed in your Emacs
+environment. If you have a version of Emacs 23.2 or later,
+malabar-mode should work fine with the embedded CEDET.
 
-1. (optional) If you want to mimic the IDEish compile-on-save
+1. Add the following to your .emacs::
+
+        (require 'cedet)
+        (require 'semantic)
+        (load "semantic/loaddefs.el")
+        (semantic-mode 1);;
+        (require 'malabar-mode)
+        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))       
+
+   Alternatively, using Emacs 23.2+ and the embedded CEDET:
+   
+        ;; Or enable more if you wish
+        (setq semantic-default-submodes '(global-semantic-idle-scheduler-mode
+                                          global-semanticdb-minor-mode
+                                          global-semantic-idle-summary-mode
+                                          global-semantic-mru-bookmark-mode))
+        (semantic-mode 1)
+        (require 'malabar-mode)
+        (setq malabar-groovy-lib-dir "/path/to/malabar/lib")
+        (add-to-list 'auto-mode-alist '("\\.java\\'" . malabar-mode))
+
+2. (optional) If you want to mimic the IDEish compile-on-save
    behaviour, add the following as well::
 
         (add-hook 'malabar-mode-hook
@@ -141,99 +112,10 @@ development now targets Emacs 24.
 
 Update:  malabar-mode now has a menu.  Yay!
 
-## Java
-
-### What's working
-
-- flycheck integration is working except for the few edge cases where the groovy parser differs from th ejava parser
-
-- cedet integration for java, not working for groovy yet
-
-- unit testing a class or method
-
 Here is a list of available interactive commands, with default
 keybindings where applicable:
 
 <dl>
-
-<dt><b>malabar-run-test</b> <span class="classifier">(C-c C-v t)</span></dt>
-<dd>Runs the unit tests in the current class.  With a prefix args, ask for a method name and only run that test</dd>
-
-<dt><b>semantic-ia-describe-class</b> <span class="classifier">(C-c C-v i)</span></dt>
-<dd>Show the public variables and methods on a class</dd>
-
-<dt><b>malabar-semantic-heirarchy</b> <span class="classifier">(C-c C-v h)</span></dt>
-<dd>Show super classes and interfaces implemented by a class</dd>
-
-<dt><b>malabar-fully-qualified-class-name-kill-ring-save</b> <span class="classifier">(C-c C-v *)</span></dt>
-<dd>Copy the fully qualifed classname of the current buffer to the kill ring</dd>
-
-<dt><b>malabar-which</b> <span class="classifier">(C-c C-v w)</span></dt>
-<dd>Returns the jar containing the speficied class</dd>
-
-<dt><b>malabar-import-all</b> <span class="classifier">(C-c C-v z)</span></dt>
-<dd>Adds import statements for all unqualified classes in the buffer, as
-  if by performing <code>malabar-import-one-class</code> on each.</dd>
-  
-<dt><b>malabar-import-one-class</b> <span class="classifier">(C-c C-v C-z)</span></dt>
-<dd><p>Adds an import statement for a single unqualified class (defaults to
-  the symbol at point).  If more than one class matches the
-  unqualified name you will be asked which class to import.</p>
-
-  <p>The variable <code>malabar-import-excluded-classes-regexp-list</code>
-  contains a list of regular expressions; if one of these matches the
-  qualified class name, the class will be excluded from import.  The
-  default value excludes classes from <code>java.lang</code>, JRE internal
-  classes and inner classes.</p></dd>
-
-<dt><b>ede-edit-file-target</b> <span class="classifier">(C-c C-v C-p)</span></dt>
-<dd>Visit the project file, that is the closest file named <code>pom.xml</code>
-  searching upwards in the directory structure.</dd>
-
-<dt><b>malabar-groovy-send-buffer</b> <span class="classifier">(C-c C-v C-k)</span></dt>
-<dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-mode-load-class</code></dd>
-
-<dt><b>malabar-stack-trace-buffer</b> <span class="classifier">(C-c C-v C-#)</span></dt>
-<dd>Create a new stack trace buffer and optional copy the current region into it.  A stack trace buffer parses the stack trace and allows jumping directly to the error in the source file.  The stack trace buffer will parse whatever stack trace is pasted into it</dd>
-
-<dt><b>malabar-groovy-send-classpath-of-buffer</b> <span class="classifier">(C-c C-v s)</span></dt>
-<dd>For use with <code>malabar-groovy-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
-
-<dt><b>malabar-groovy-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
-<dd>Add a jar, zip or directory to the running groovy buffer</dd>
-
-<dt><b>malabar-jdb</b> <span class="classifier">(C-c C-v J)</span></dt>
-<dd>Start the JDB debugger on the current class.</dd>
-
-<dt>malabar-update-package</dt>
-<dd>Updates the package statement of the current buffer to match its place
-  in the source directory.</dd>
-
-<dt>malabar-implement-interface <span class="classifier">(C-c C-v C-i)</span></dt>
-<dd>Prompts for an interface, adds stub implementations of all that
-  interface's methods and adds the interface to the class's implements
-  clause.</dd>
-
-<dt>malabar-jump-to-thing <span class="classifier">(C-c C-v C-y)</span></dt>
-<dd>Jumps to the definition of the 'thing' at point. More technically,
-  uses <code>semantic-analyze-current-context</code> output to identify an origin
-  for the code at point, taking type membership into account.  This
-  function is much like <code>semantic-ia-fast-jump</code>, only a little
-  smarter.</dd>
-
-</dl>
-
-In addition, [standard Semantic code completion][] is available; trigger
-this however you wish.  By default, `semantic-ia-complete-symbol` is
-bound to `C-c C-v C-.` and `semantic-ia-complete-symbol-menu` is
-bound to `C-c C-v .`.
-
-### Still needing attention
-
-The following are either not in 2.0 yet or are only partially working.  If you use any of these regularly, please use the [issue tracker][] to let me know.  Those missing features that have issues added will be given higher priority.  Otherwise, they will be added back in random order.
-
-<dl>
-
 <dt>malabar-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
 <dd>Compiles the current file.</dd>
 
@@ -251,6 +133,26 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 
 <dt>malabar-groovy-stop</dt>
 <dd>Kill the Groovy console process.</dd>
+
+<dt>malabar-implement-interface <span class="classifier">(C-c C-v C-i)</span></dt>
+<dd>Prompts for an interface, adds stub implementations of all that
+  interface's methods and adds the interface to the class's implements
+  clause.</dd>
+  
+<dt>malabar-import-all <span class="classifier">(C-c C-v z)</span></dt>
+<dd>Adds import statements for all unqualified classes in the buffer, as
+  if by performing <code>malabar-import-one-class</code> on each.</dd>
+  
+<dt>malabar-import-one-class <span class="classifier">(C-c C-v C-z)</span></dt>
+<dd><p>Adds an import statement for a single unqualified class (defaults to
+  the symbol at point).  If more than one class matches the
+  unqualified name you will be asked which class to import.</p>
+
+  <p>The variable <code>malabar-import-excluded-classes-regexp-list</code>
+  contains a list of regular expressions; if one of these matches the
+  qualified class name, the class will be excluded from import.  The
+  default value excludes classes from <code>java.lang</code>, JRE internal
+  classes and inner classes.</p></dd>
   
 <dt>malabar-run-maven-command</dt>
 <dd>Prompts for and executes an (almost) arbitrary Maven command line.
@@ -281,6 +183,10 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 <dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the corresponding test to this buffer using Maven (<code>mvn test -Dtest=classname</code>)</dd>
 
+<dt>malabar-update-package</dt>
+<dd>Updates the package statement of the current buffer to match its place
+  in the source directory.</dd>
+  
 <dt>malabar-visit-corresponding-test</dt>
 <dd><p>Visits the corresponding test class; that is, the file in the
   parallel src/test/java hierarchy that matches the class in the
@@ -294,17 +200,28 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 
   <p>If the current buffer looks like a test class, this command does nothing.</p></dd>
   
+<dt>malabar-visit-project-file <span class="classifier">(C-c C-v C-p)</span></dt>
+<dd>Visit the project file, that is the closest file named <code>pom.xml</code>
+  searching upwards in the directory structure.</dd>
   
+<dt>malabar-jump-to-thing <span class="classifier">(C-c C-v C-y)</span></dt>
+<dd>Jumps to the definition of the 'thing' at point. More technically,
+  uses <code>semantic-analyze-current-context</code> output to identify an origin
+  for the code at point, taking type membership into account.  This
+  function is much like <code>semantic-ia-fast-jump</code>, only a little
+  smarter.</dd>
   
 <dt>malabar-refactor-extract-constant <span class="classifier">(C-c C-v C-r C-c)</span></dt>
 <dd>Extracts the thing at point as a named constant.  The scope of the
   constant will default to
   <code>malabar-refactor-extract-constant-default-scope</code>, but with a
   prefix arg will prompt for the scope.</dd>
-
-
 </dl>
 
+In addition, [standard Semantic code completion][] is available; trigger
+this however you wish.  By default, `semantic-ia-complete-symbol` is
+bound to `C-c C-v C-.` and `semantic-ia-complete-symbol-menu` is
+bound to `C-c C-v .`.
 
 ## Abbrevs
 
@@ -421,7 +338,7 @@ Try
 
 # Boring legal stuff
 
-malabar-mode is copyright (c) 2009-2014 Matthew O. Smith <matt@m0smith.com>
+malabar-mode is copyright (c) 2009-2010 Espen Wiborg <espenhw@grumblesmurf.org>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as

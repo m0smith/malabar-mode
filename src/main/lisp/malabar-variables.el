@@ -18,100 +18,143 @@
 ;; 02110-1301 USA.
 ;;
 
-;; Only external CEDET defines cedet-emacs-min-version
-(defvar malabar-use-external-cedet (boundp 'cedet-emacs-min-version)
-"Whether or not to use the external version of CEDET.")
+
+;;;
+;;; Variables
+
+;;; Customization
+(defgroup malabar nil
+  "Modern JVM Integration for GNU Emacs."
+  :prefix "malabar-"
+  :group 'tools
+  :link '(url-link :tag "Github" "https://github.com/m0smith/malabar-mode/"))
 
 
-(cond (malabar-use-external-cedet
-       (require 'srecode-map)
-       (require 'semantic-ia))
-      (t
-       (require 'srecode/map)
-       (require 'semantic/ia)))
+(defcustom malabar-keymap-prefix (kbd "C-c C-v")
+  "Prefix for key bindings of Malabar.
+
+Changing this variable outside Customize does not have any
+effect.  To change the keymap prefix from Lisp, you need to
+explicitly re-define the prefix key:
+
+    (define-key malabar-mode-map malabar-keymap-prefix nil)
+    (setq malabar-keymap-prefix (kbd \"C-c f\"))
+    (define-key malabar-mode-map malabar-keymap-prefix
+                malabar-command-map)
+
+Please note that Malabar's manual documents the default
+keybindings.  Changing this variable is at your own risk."
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string
+  :risky t
+  :set
+  (lambda (variable key)
+    (when (and (boundp variable) (boundp 'malabar-mode-map))
+      (define-key malabar-mode-map (symbol-value variable) nil)
+      (define-key malabar-mode-map key malabar-command-map))
+    (set-default variable key)))
+
+(defcustom malabar-server-jar-version "2.0.5"
+  "The version of the malabar-mode-jar to fetch when starting"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
 
-(defgroup malabar-mode nil
-  "A better Java mode"
-)
+(defcustom malabar-server-host "localhost"
+  "The host where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
-(defcustom malabar-mode-key-prefix [?\C-c ?\C-v]
-  "The prefix key for malabar-mode commands."
-  :group 'malabar-mode
-  :type 'sexp)
+(defcustom malabar-server-port "4428"
+  "The port where the server is running"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
 
-(defcustom malabar-mode-config-dir "~/.malabar_mode"
-  "Directory where configuration files are kept"
-  :group 'malabar-mode
+(defcustom malabar-package-maven-repo "~/.m2/repository"
+  "Where to find the maven repo"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-groovy-grooysh "~/.gvm/groovy/2.3.7/bin/groovysh"
+  "Where to find the groovysh executable"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-groovy-grooysh-debug nil
+  "If non-nil, turn on debugging of the groovysh"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'boolean)
+
+(defcustom malabar-groovy-proxy-host ""
+  "Proxy host for Groovy/Grape/Ivy to use to find dependencies.   Also see `malabar-groovy-proxy-port'"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-groovy-proxy-port ""	
+  "Proxy port for Groovy/Grape/Ivy to use to find dependencies.  Also see `malabar-groovy-proxy-host'"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'string)
+
+(defcustom malabar-package-additional-classpath '( "build/classes/main" "build/classes/test" )
+  "JARS and DIRS relative to the package root to add to the
+classpath.  These are added to every project.  May need to
+restart the *groovy* process to see changes to effect"
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type '(repeat (string :tag "Jar/Zip/Dir")))
+
+(defcustom malabar-install-directory
+  (file-name-as-directory (file-name-directory load-file-name))
+  "The directory where malabar-mode was installed"
+   :group 'malabar
   :type 'directory)
 
-(defcustom malabar-mode-config-classpath-file 
-  (format "%s/%s" malabar-mode-config-dir "classpath")
-  "File that contains the classpath used to start groovy"
-  :group 'malabar-mode
-  :type 'file)
+
+(defcustom malabar-hide-non-local-source-buffers t
+  "Whether to hide source buffers loaded from outside the current
+project from the buffer list (by prefixing the buffer name with a
+space).
+
+A value of t means always hide.
+A value of nil means never hide."
+  :group 'malabar
+  :type '(choice (const :tag "Hide" t)
+                 (const :tag "Don't hide" nil)))
+
+(defcustom malabar-extra-source-locations nil
+  "List of extra source locations.
+Each location may be a directory or a JAR/ZIP file.  Malabar-mode
+will look for the source code of a Java class in these locations
+if the class is not otherwise resolvable."
+  :group 'malabar
+  :type '(repeat (file :tag "Path")))
+
+(defcustom malabar-jdk-extra-locations nil
+  "List of extra JVM locations.
+Each location may be a directory.  Malabar-mode
+will look for installed JVMs in these locations."
+  :group 'malabar
+  :type '(repeat (file :tag "Path")))
 
 
-
-(defcustom malabar-util-path-separator path-separator
-  "Charater used to separate CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
-
-
-(defcustom malabar-util-path-filter 'identity
-  "Filter to process CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
-
-(defcustom malabar-util-groovy-file-filter 'identity
-  "Filter to process CLASSPATH entries."
-  :group 'malabar-groovy
-  :type ' string)
+(defcustom malabar-load-source-from-sibling-projects t
+  "Whether to load source from sibling projects.
+Note that this will not work reliably with a 'flat' project
+layout."
+  :group 'malabar
+  :type '(choice (const :tag "Load from siblings" t)
+                 (const :tag "Don't load from siblings" nil)))
 
 
-(defvar malabar-refactor-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [?\C-c] 'malabar-refactor-extract-constant)
-    map)
-  "Keymap for Malabar's refactorings.")
-
-(defvar malabar-mode-map
-  (let ((map (make-sparse-keymap)))
-    (let ((prefix-map (make-sparse-keymap)))
-      (define-key prefix-map [?p] 'malabar-package-project)
-      (define-key prefix-map [?\C-b] 'malabar-install-project)
-      (define-key prefix-map [?\C-c] 'malabar-compile-file)
-      (define-key prefix-map [?\C-g] 'malabar-insert-getset)
-      (define-key prefix-map [?t]    'malabar-run-test)
-      (define-key prefix-map [?\?]    'malabar-cheatsheat)
-      (define-key prefix-map [?\C-t] 'malabar-run-junit-test)
-      (define-key prefix-map [?\M-t] 'malabar-run-all-tests)
-      (define-key prefix-map [?\C-z] 'malabar-import-one-class)
-      (define-key prefix-map [?z] 'malabar-import-all)
-      (define-key prefix-map [?\C-o] 'malabar-override-method)
-      (define-key prefix-map [?\C-e] 'malabar-extend-class)
-      (define-key prefix-map [?\C-i] 'malabar-implement-interface)
-      (define-key prefix-map [?i] 'semantic-ia-describe-class)
-      (define-key prefix-map [?h] 'malabar-semantic-heirarchy)
-      (define-key prefix-map [?.]    (if malabar-use-external-cedet
-                                         'semantic-ia-complete-symbol-menu
-                                       'semantic-ia-complete-symbol))
-      (define-key prefix-map [?\C-.] 'semantic-ia-complete-symbol)
-      (define-key prefix-map [?*] 'malabar-fully-qualified-class-name-kill-ring-save)
-      (define-key prefix-map [?w] 'malabar-which)
-      (define-key prefix-map [?\C-p] 'malabar-visit-project-file) 
-      (define-key prefix-map [?\C-y] 'malabar-jump-to-thing)
-      (define-key prefix-map [?\C-r] malabar-refactor-map)
-      (define-key map malabar-mode-key-prefix prefix-map))
-    (define-key map "\M-n" 'next-error)
-    (define-key map "\M-p" 'previous-error)
-    (define-key map ":" 'malabar-electric-colon)
-    map)
-  "Keymap for Malabar mode.")
-
-(defvar malabar-compilation-project-file nil)
-(defvar malabar-compilation-project-test-source-directories nil)
 
 (defcustom malabar-case-fixed-abbrevs
   '(("pu" "public")
@@ -131,67 +174,28 @@
     ("#Test" malabar-abbrevs-create-test))
   "The list of abbrevs which should be recognized only in the
 specified case."
-  :group 'malabar-mode
+  :group 'malabar
+  :package-version '(malabar . "2.0")
   :type '(alist :key-type string :value-type (group (choice string
                                                             function))))
-
-(defcustom malabar-install-directory
-  (file-name-as-directory (file-name-directory load-file-name))
-  "The directory where malabar-mode was installed"
-  :group 'malabar-mode
-  :type 'directory)
-
-(defcustom malabar-srecode-template-directory
-  (file-name-as-directory (expand-file-name "srecode"
-                                            (file-name-directory load-file-name)))
-  "The directory where malabar-mode's srecode templates live."
-  :group 'malabar-mode
-  :type 'directory
-  :set (lambda (symbol value)
-         (when (boundp symbol)
-           (setq srecode-map-load-path (remove (symbol-value symbol) srecode-map-load-path)))
-         (set-default symbol value)
-         (add-to-list 'srecode-map-load-path value)
-         (srecode-map-update-map t)))
-
-(defcustom malabar-hide-non-local-source-buffers t
-  "Whether to hide source buffers loaded from outside the current
-project from the buffer list (by prefixing the buffer name with a
-space).
-
-A value of t means always hide.
-A value of nil means never hide."
-  :group 'malabar-mode
-  :type '(choice (const :tag "Hide" t)
-                 (const :tag "Don't hide" nil)))
-
-(defcustom malabar-load-source-from-sibling-projects t
-  "Whether to load source from sibling projects.
-Note that this will not work reliably with a 'flat' project
-layout."
-  :group 'malabar-mode
-  :type '(choice (const :tag "Load from siblings" t)
-                 (const :tag "Don't load from siblings" nil)))
-
-(defcustom malabar-extra-source-locations nil
-  "List of extra source locations.
-Each location may be a directory or a JAR/ZIP file.  Malabar-mode
-will look for the source code of a Java class in these locations
-if the class is not otherwise resolvable."
-  :group 'malabar-mode
-  :type '(repeat (file :tag "Path")))
 
 (defcustom malabar-electric-elvis-p t
   "Whether inserting a colon should electrically expand the Elvis
 operator ('?:').
 
 See `malabar-electric-colon'."
-  :group 'malabar-mode
+  :group 'malabar
   :type '(boolean))
 
-(defcustom malabar-mode-fallback 'java-mode
-  "Fallback mode for `malabar-mode-maybe'."
-  :group 'malabar-mode
-  :type 'function)
+
+(defvar malabar-compilation-project-file nil)
+(defvar omalabar-mode-project-dir nil)
+(defvar malabar-mode-project-file nil)
+(defvar malabar-mode-project-name nil)
+(defvar malabar-mode-project-parser "groovy")
+(defvar malabar-mode-project-service-alist nil
+  "An alist of PM to a list of:
+    ( PORT )" )
+(defvar malabar-groovy-compilation-buffer-name nil)
 
 (provide 'malabar-variables)

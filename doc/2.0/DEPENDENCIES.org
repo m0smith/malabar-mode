@@ -1,0 +1,2 @@
+- groovy-mode - 2.0 (not from marmalade)
+- cedet dev branch https://github.com/alexott/cedet/blob/deve

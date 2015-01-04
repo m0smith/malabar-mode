@@ -18,11 +18,9 @@
 ;; 02110-1301 USA.
 ;;
 (require 'cc-vars)
-(eval-when-compile (require 'cl))
-(require 'dash)
 
 (require 'malabar-util)
-;;(require 'malabar-reflection)
+(require 'malabar-reflection)
 
 (defcustom malabar-import-excluded-classes-regexp-list
   '("^java\\.lang\\.[^.]+$"                 ;; Always imported
@@ -221,7 +219,7 @@ in the list."
      :test #'equal)))
 
 (defun malabar-import-current-package-p (qualified-class)
-  (-when-let (package (malabar-get-package-name))
+  (when-let (package (malabar-get-package-name))
     (string-match-p (concat "^" (regexp-quote package) "\\.[^.]+$") qualified-class)))
 
 (defun malabar-import-exclude (qualified-class)
@@ -240,9 +238,9 @@ in the list."
                (null b-package-successors))))))
 
 (defun malabar-import-find-import (unqualified)
-  (-when-let (possible-classes
-             (remove-duplicates (sort (-remove #'malabar-import-exclude
-						  (malabar-qualify-class-name unqualified))
+  (when-let (possible-classes
+             (remove-duplicates (sort (remove-if #'malabar-import-exclude
+                                                 (malabar-qualify-class-name unqualified))
                                       #'malabar-import-sort-by-precedence)
                                 :test #'equal))
     (if (= 1 (length possible-classes))
@@ -257,7 +255,7 @@ in the list."
   "Attempts to add import statements for all unqualified type
 names in the current buffer."
   (interactive)
-  (-when-let (imports (remove nil
+  (when-let (imports (remove nil
                              (mapcar #'malabar-import-find-import
                                      (malabar-import-candidates))))
     (malabar-import-insert-imports imports)))
@@ -394,7 +392,7 @@ symbol ALL, consider the entire package."
     (let ((last-tag (semantic-current-tag-of-class 'include))
           (tag (progn (forward-line 1)
                       (semantic-current-tag-of-class 'include))))
-      (cl-flet ((package (include-tag)
+      (flet ((package (include-tag)
                       (let ((package-tokens
                              (nreverse
                               (split-string

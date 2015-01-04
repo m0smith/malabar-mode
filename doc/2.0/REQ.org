@@ -1,0 +1,36 @@
+* Requirements for 2.0
+
+  #+OPTIONS: toc:2   
+
+** Separate maven from malabar-mode
+
+Currently malabar-mode requires a certain version of maven to be install.
+
+Separate the project management out of malabar-mode.  Instead, provide
+a way to get the following based on the packaging system (maven, groovy, etc)
+
+# classpath
+# source dirs
+# test source dirs
+
+Use the test class path.
+
+
+** Grok pom.xml using groovy grape
+This ends up being much faster than spawning a new mvn process, also not dependant upon maven.
+
+** Use a groovy REPL
+Use Groovy as if it were a repl.   This adds a dependency on groovy-mode.
+** Easily add classpath to groovysh
+** flycheck integration using groovy
+Rather than spawn the a separate compile, use the running groovy inferior process
+
+** Implement all the features of the old version as a minor-mode
+** When opening a new java file, auto-populate with a template
+The template needs to be configurable per project.
+** Run an application (main)
+** Run a unit test
+
+* Future Requirements
+
+** Use a separate classpath for test and runtime
