@@ -64,19 +64,13 @@ There has been a lot of work to rewrite malabar-mode to make it easier to mainta
 
 - Install gradle
 
-- Clone https://github.com/m0smith/malabar-mode/tree/develop
-
-```
-	git clone https://github.com/m0smith/malabar-mode.git
-	git checkout develop
-```
-
 - Clone https://github.com/alexott/cedet/tree/devel 
 
 ```
     git clone https://github.com/alexott/cedet.git
 	make all
 ```
+- Install malabar-mode from melpa
 
 - Install emacs package groovy-mode.  Do not use marmalade version as it is old.
 
@@ -85,21 +79,21 @@ There has been a lot of work to rewrite malabar-mode to make it easier to mainta
 
 ```
 
-	(load-file "~/projecrs/cedet/cedet-devel-load.el")
-	(add-to-list 'load-path "~/projects/malabar-mode/src/main/lisp")
+	(load-file "~/projects/cedet/cedet-devel-load.el")
 
-	(load "malabar-mode")
+        (require 'malabar-mode)
 
-	(eval-after-load 'inf-groovy
-		(add-hook 'inf-groovy-load-hook 'flycheck-mode))
-	(eval-after-load 'java-mode
-		(add-hook 'java-mode-hook   'flycheck-mode))
+        (activate-malabar-mode)
+
+        (add-hook 'malabar-java-mode-hook 'flycheck-mode)
+        (add-hook 'malabar-groovy-mode-hook 'flycheck-mode)
+
+
 
 ```
 
 - in emacs (malabar-run-groovy) or C-u M-x run-groovy - you may need to enter the path to groovysh, especially on Windows
 - Edit a java/groovy file in a maven2 project
-- In the buffer run flycheck-mode and malabar-mode to enable the features
   
 
 ## 1.x installation
