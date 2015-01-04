@@ -96,8 +96,6 @@ There has been a lot of work to rewrite malabar-mode to make it easier to mainta
 - Edit a java/groovy file in a maven2 project
   
 
-## 1.x installation
-
 **NOTE 1.x is no longer supported and no more development will happen on this branch**
 
 The malabar-mode package is now part of
