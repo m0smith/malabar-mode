@@ -7,7 +7,7 @@
 ;;     Espen Wiborg <espenhw@grumblesmurf.org>
 ;;     Matthew Smith <matt@m0smith.com>
 ;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.6-M8
+;; Version: 2.0.1
 ;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, groovy, language, malabar
 
@@ -62,7 +62,7 @@
 (defvar url-http-end-of-headers)
 
 
-(make-variable-buffer-local 'malabar-mode-project-file)
+(make-variable-buffer-local 'malabar-mode-project-file) 
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
 (make-variable-buffer-local 'malabar-mode-project-parser)
@@ -1124,7 +1124,7 @@ If the version number could not be determined, signal an error,
 if called interactively, or if SHOW-VERSION is non-nil, otherwise
 just return nil."
   (interactive (list t))
-  (let ((version (pkg-info-version-info 'malabar)))
+  (let ((version (pkg-info-version-info 'malabar-mode)))
     (when show-version
       (message "Malabar version: %s" version))
     version))
@@ -1329,6 +1329,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   :keymap malabar-mode-map
   (malabar-mode-body))
 
+;;;###autoload
 (define-minor-mode malabar-java-mode
   "Java specfic minor mode for JVM languages"
   :lighter " JVM-Java"
@@ -1336,7 +1337,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (malabar-mode-body)
   (setq malabar-mode-project-parser "java"))
 
-
+;;;###autoload
 (define-minor-mode malabar-groovy-mode
   "Groovy specfic minor mode for JVM languages"
   :lighter " JVM-Groovy"
@@ -1344,6 +1345,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
 
+;;;###autoload
 (defun activate-malabar-mode ()
   "Add hooks to the java and groovy modes to activate malabar mode.  Good for calling in .emacs"
   (interactive)
@@ -1352,3 +1354,4 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 (provide 'malabar-mode)
 
+;;; malabar-mode.el ends here
