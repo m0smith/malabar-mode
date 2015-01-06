@@ -35,14 +35,36 @@
 
 ;;; Code:
 
+
+(defun malabar-ert-dir (path)
+  (let ((dir (expand-file-name path (file-name-directory (directory-file-name (file-name-directory (directory-file-name  default-directory)))))))
+    dir))
+
 (defun malabar-ert-load (name)
-  (let ((dir (expand-file-name "main/lisp" (file-name-directory (directory-file-name (file-name-directory (directory-file-name  default-directory)))))))
+  (let ((dir (malabar-ert-dir "main/lisp")))
     (add-to-list 'load-path dir)
     (load-file (expand-file-name name dir))))
 
 (ert-deftest malabar-version-test ()
   (malabar-ert-load "malabar-mode.el")
   (should (string-prefix-p "2.0.1" (malabar-version)))))
+
+(ert-deftest malabar-run-maven-command-test ()
+  "Unit test to verify that `malabar-run-maven-command' is running correctly"
+  (malabar-ert-load "malabar-mode.el")
+  (let* ((source (expand-file-name "AppTest.java" 
+				   (malabar-ert-dir "test/project/basic/src/test/java/com/software_ninja")))
+	 (buffer (find-file-noselect source)))
+    (with-current-buffer buffer
+      (should (string-prefix-p "2.0.1" (malabar-run-maven-command "mvn clean"))))))
+
+(ert-deftest malabar-ert-run-test ()
+  (malabar-ert-load "malabar-mode.el")
+  (let* ((source (expand-file-name "AppTest.java" 
+				   (malabar-ert-dir "test/project/basic/src/test/java/com/software_ninja")))
+	(buffer (find-file-noselect source)))
+    (with-current-buffer buffer
+      (should (= 42 (malabar-run-test nil))))))
 
 
 
