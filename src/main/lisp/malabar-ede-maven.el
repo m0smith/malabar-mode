@@ -90,88 +90,88 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;the 2 compile methods below currently do much the same thing.
-;;  - 1st one tries to find the "root project" and compile it
-;;  - 2nd compiles the child project the current file is a member of
-;;maven error messages are recognized by emacs23
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;;the 2 compile methods below currently do much the same thing.
+ ;;  - 1st one tries to find the "root project" and compile it
+ ;;  - 2nd compiles the child project the current file is a member of
+ ;;maven error messages are recognized by emacs23
 
-(defmethod project-compile-project ((proj ede-malabar-maven2-project) &optional command)
-  "Compile the entire current project PROJ.
-Argument COMMAND is the command to use when compiling."
-  ;; we need to be in the proj root dir for this to work
-  (apply #'malabar-ede-maven-execute 
-	 (ede-project-root-directory proj)
-	 (or command (oref proj :current-target))
-	 (oref proj :target-options)))
-
-
-  ;; (let ((default-directory (ede-project-root-directory proj)))
-  ;;   (compile (combine-and-quote-strings
-  ;; 	      (append (list ede-maven2-maven-command)
-  ;; 		      ede-maven2-maven-options
-  ;; 		      (list (or command (oref proj :current-target)))
-  ;; 		      (oref proj :target-options))))))
-
-;;; Classpath-related...
-(defconst maven2-outfile-name "mvn-classpath")
-
-(defmethod ede-java-classpath ((proj ede-malabar-maven2-project))
-  "Get classpath for maven project"
-  (ede-jvm-get-classpath-from-command proj ede-maven2-execute-mvn-to-get-classpath
-				      maven2-outfile-name ede-maven2-maven-command
-				      `(,nil ,nil ,nil "--batch-mode" "dependency:build-classpath"
-					     ,(concat "-Dmdep.outputFile=" maven2-outfile-name))))
-
-;; TODO: really should be based on content of pom.xml file. But we need parser for it...
-;; TODO: add caching...
-(defmethod ede-source-paths ((proj ede-malabar-maven2-project) mode)
-  "Get the base to all source trees in the current project for MODE."
-  (let ((dir (ede-project-root-directory proj)))
-    (mapcar (lambda (x) (concat dir x))
-	    (cond
-	     ((eq mode 'java-mode) '("src/main/java" "src/test/java"))
-	     ((eq mode 'clojure-mode) '("src/main/clojure" "src/test/clojure"))))))
-
-;; TODO: re-implement when pom.xml parser will be available
-(defmethod project-rescan ((proj ede-malabar-maven2-project))
-  "Rescan the EDE proj project THIS."
-  (when (ede-jvm-base-file-updated-p proj)
-    ;; TODO: fill information
-    (oset proj :pom nil)
-    ))
+ (defmethod project-compile-project ((proj ede-malabar-maven2-project) &optional command)
+   "Compile the entire current project PROJ.
+ Argument COMMAND is the command to use when compiling."
+   ;; we need to be in the proj root dir for this to work
+   (add-to-list (make-local-variable 'compilation-environment)
+		(format "JAVA_HOME=%s" (malabar-project-java-home)))
+   (apply #'malabar-ede-maven-execute 
+	  (ede-project-root-directory proj)
+	  (or command (oref proj :current-target))
+	  (oref proj :target-options)))
 
 
-(defclass malabar-jvm-target (ede-jvm-base-target)
-  nil
-  "")
+   ;; (let ((default-directory (ede-project-root-directory proj)))
+   ;;   (compile (combine-and-quote-strings
+   ;; 	      (append (list ede-maven2-maven-command)
+   ;; 		      ede-maven2-maven-options
+   ;; 		      (list (or command (oref proj :current-target)))
+   ;; 		      (oref proj :target-options))))))
 
-(defmethod project-compile-target ((obj malabar-jvm-target) &optional command)
-  "Compile the current target OBJ.
-Argument COMMAND is the command to use for compiling the target."
-  (when (oref obj :project)
-    (when (not (getenv "JAVA_HOME"))
-      (let ((jh (cedet-java-find-jdk-home)))
-	(when jh 
-	  (setenv "JAVA_HOME" jh))))
-    (project-compile-project (oref obj :project) (or command (oref obj :name)))))
+ ;;; Classpath-related...
+ (defconst maven2-outfile-name "mvn-classpath")
+
+ (defmethod ede-java-classpath ((proj ede-malabar-maven2-project))
+   "Get classpath for maven project"
+   (ede-jvm-get-classpath-from-command proj ede-maven2-execute-mvn-to-get-classpath
+				       maven2-outfile-name ede-maven2-maven-command
+				       `(,nil ,nil ,nil "--batch-mode" "dependency:build-classpath"
+					      ,(concat "-Dmdep.outputFile=" maven2-outfile-name))))
+
+ ;; TODO: really should be based on content of pom.xml file. But we need parser for it...
+ ;; TODO: add caching...
+ (defmethod ede-source-paths ((proj ede-malabar-maven2-project) mode)
+   "Get the base to all source trees in the current project for MODE."
+   (let ((dir (ede-project-root-directory proj)))
+     (mapcar (lambda (x) (concat dir x))
+	     (cond
+	      ((eq mode 'java-mode) '("src/main/java" "src/test/java"))
+	      ((eq mode 'clojure-mode) '("src/main/clojure" "src/test/clojure"))))))
+
+ ;; TODO: re-implement when pom.xml parser will be available
+ (defmethod project-rescan ((proj ede-malabar-maven2-project))
+   "Rescan the EDE proj project THIS."
+   (when (ede-jvm-base-file-updated-p proj)
+     ;; TODO: fill information
+     (oset proj :pom nil)
+     ))
 
 
-(defun malabar-maven2-create-target (name dir project)
-  (malabar-jvm-target name
-		      :name name
-		      :path (expand-file-name "pom.xml" dir)
-		      :project project))
+ (defclass malabar-jvm-target (ede-jvm-base-target)
+   nil
+   "")
+
+ (defmethod project-compile-target ((obj malabar-jvm-target) &optional command)
+   "Compile the current target OBJ.
+ Argument COMMAND is the command to use for compiling the target."
+   (when (oref obj :project)
+     (append (make-local-variable 'compilation-environment)
+	     (list (format "JAVA_HOME" (malabar-project-java-home))))
+     (project-compile-project (oref obj :project) (or command (oref obj :name)))))
 
 
-(defun malabar-maven2-load (dir &optional _rootproj)
-  "Return a Maven Project object if there is a match.
-Return nil if there isn't one.
-Argument DIR is the directory it is created for.
-ROOTPROJ is nil, since there is only one project."
-  (or (ede-files-find-existing dir ede-maven2-project-list)
-      ;; Doesn't already exist, so lets make one.
-       (let* ((target-names '("install" "package clean test"))
+ (defun malabar-maven2-create-target (name dir project)
+   (malabar-jvm-target name
+		       :name name
+		       :path (expand-file-name "pom.xml" dir)
+		       :project project))
+
+
+ (defun malabar-maven2-load (dir &optional _rootproj)
+   "Return a Maven Project object if there is a match.
+ Return nil if there isn't one.
+ Argument DIR is the directory it is created for.
+ ROOTPROJ is nil, since there is only one project."
+   (or (ede-files-find-existing dir ede-maven2-project-list)
+       ;; Doesn't already exist, so lets make one.
+	(let* ((target-names '("install" "package clean test"))
 	     (this
 	      (ede-malabar-maven2-project "Malabar Maven"
 					  :name "Malabar maven dir" ; TODO: make fancy name from dir here.
