@@ -311,7 +311,7 @@ See `json-read-string'"
    PROJECT-INFO: Cache for the project info if available.  If
    nil, fetch using `malabar-project-info'.
   
-   SP: An alist of system properties.  If nil, fetch from the PROJET-INFO 
+   SP: An alist of system properties.  If nil, fetch from the PROJECT-INFO 
 "
   (interactive (let* ((pi (malabar-project-info  malabar-mode-project-file))
 		      (sp (cdr (assoc 'systemProperties pi))))
@@ -322,7 +322,7 @@ See `json-read-string'"
 		
   (let* ((pm (or pm malabar-mode-project-file))
 	 (prop (if (stringp prop) (intern prop) prop))
-	 (sp (or sp (cdr (assoc 'systemProperties (or projet-info (malabar-project-info pm))))))
+	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm))))))
 	 (rtnval (cdr (assoc prop sp))))
     (when (called-interactively-p 'interactive)
       (message "%s" rtnval))
@@ -332,9 +332,12 @@ See `json-read-string'"
   "Return the full path to the JAVA_HOME associated with project file PM
    If NO-DEFAULT is non-nil, only return a found java-home"
   (interactive)
-  (let ((pm (or pm malabar-mode-project-file)))
-    (or (caddr (assoc pm malabar-mode-project-service-alist))
-	(and (not no-default) (malabar-project-system-property 'java.home pm)))))
+  (let ((pm (or pm malabar-mode-project-file))
+	(rtnval (or (caddr (assoc pm malabar-mode-project-service-alist))
+		    (and (not no-default) (malabar-project-system-property 'java.home pm)))))
+    (when (called-interactively-p 'interactive)
+      (message "%s" rtnval))
+    rtnval))
 
 
 (defun malabar-jdk-file (dir f)
@@ -1384,6 +1387,9 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   "Groovy specfic minor mode for JVM languages"
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
+  (unless malabar-package-additional-classpath
+    (make-variable-buffer-local 'malabar-package-additional-classpath)
+    (setq malabar-package-additional-classpath '("build/classes/main" "build/classes/test")))
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
 
