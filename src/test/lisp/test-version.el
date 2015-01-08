@@ -47,16 +47,18 @@
 
 (ert-deftest malabar-version-test ()
   (malabar-ert-load "malabar-mode.el")
-  (should (string-prefix-p "2.0.1" (malabar-version)))))
+  (should (string-prefix-p "2.0.1" (malabar-version))))
 
-(ert-deftest malabar-run-maven-command-test ()
+(ert-deftest malabar-run-maven-command-test () (should (= 1 1)))
+
+(ert-deftest malabar-ert-run-maven-command-test ()
   "Unit test to verify that `malabar-run-maven-command' is running correctly"
   (malabar-ert-load "malabar-mode.el")
   (let* ((source (expand-file-name "AppTest.java" 
 				   (malabar-ert-dir "test/project/basic/src/test/java/com/software_ninja")))
 	 (buffer (find-file-noselect source)))
     (with-current-buffer buffer
-      (should (string-prefix-p "2.0.1" (malabar-run-maven-command "mvn clean"))))))
+      (should (string-prefix-p "*compilation*" (buffer-name (malabar-run-maven-command "clean")))))))
 
 (ert-deftest malabar-ert-run-test ()
   (malabar-ert-load "malabar-mode.el")
@@ -64,7 +66,7 @@
 				   (malabar-ert-dir "test/project/basic/src/test/java/com/software_ninja")))
 	(buffer (find-file-noselect source)))
     (with-current-buffer buffer
-      (should (= 42 (malabar-run-test nil))))))
+      (should (equal 1 (length (malabar-run-test nil)))))))
 
 
 
