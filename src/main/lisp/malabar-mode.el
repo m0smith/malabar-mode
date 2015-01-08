@@ -754,7 +754,8 @@ was called."
 	(malabar-unittest-list-mode)
 	(malabar-project-copy-buffer-locals buffer)
 	(setq tabulated-list-entries results)
-	(tabulated-list-print t)))))
+	(tabulated-list-print t)))
+    results))
 
 
 (defun malabar-run-test (use-method &optional buffer repo pom )

@@ -58,6 +58,8 @@
   "Execute command-line maven tasks.  See
  `ede-maven2-maven-command' and `ede-maven2-maven-options'"
   (interactive "DDir:\nsTask:")
+  (add-to-list (make-local-variable 'compilation-environment)
+	       (format "JAVA_HOME=%s" (malabar-project-java-home)))
   (let ((default-directory dir))
     (compile (combine-and-quote-strings
 	      (append (list ede-maven2-maven-command)
@@ -89,6 +91,11 @@
 
 
 
+(defun malabar-ede-maven-project-compile-project (proj command)
+  (apply #'malabar-ede-maven-execute 
+	 (ede-project-root-directory proj)
+	 (or command (oref proj :current-target))
+	 (oref proj :target-options)))
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  ;;the 2 compile methods below currently do much the same thing.
@@ -100,12 +107,7 @@
    "Compile the entire current project PROJ.
  Argument COMMAND is the command to use when compiling."
    ;; we need to be in the proj root dir for this to work
-   (add-to-list (make-local-variable 'compilation-environment)
-		(format "JAVA_HOME=%s" (malabar-project-java-home)))
-   (apply #'malabar-ede-maven-execute 
-	  (ede-project-root-directory proj)
-	  (or command (oref proj :current-target))
-	  (oref proj :target-options)))
+   (malabar-ede-maven-project-compile-project proj command))
 
 
    ;; (let ((default-directory (ede-project-root-directory proj)))
