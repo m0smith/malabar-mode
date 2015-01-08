@@ -154,8 +154,8 @@
    "Compile the current target OBJ.
  Argument COMMAND is the command to use for compiling the target."
    (when (oref obj :project)
-     (append (make-local-variable 'compilation-environment)
-	     (list (format "JAVA_HOME" (malabar-project-java-home))))
+     (add-to-list (make-local-variable 'compilation-environment)
+		  (format "JAVA_HOME=%s" (malabar-project-java-home)))
      (project-compile-project (oref obj :project) (or command (oref obj :name)))))
 
 
