@@ -250,8 +250,8 @@ skipping tests."
   (interactive (list (read-from-minibuffer "mvn command line: " nil nil nil
                                            'malabar-maven-command-line-history)))
   (let ((parsed-command (malabar-parse-maven-command-line command-line)))
-    (apply #'malabar-execute-maven (malabar-find-project-file)
-           parsed-command)))
+    (apply #'malabar-ede-maven-execute malabar-mode-project-dir
+           (car parsed-command))))
 
 (defun malabar-project-test-source-directories (project-info)
   "Return as a list all the source classpath elements.  Includes

@@ -129,8 +129,11 @@
 (defun malabar-project-info (pom &optional repo)
   "Get the project info for a project file"
   (interactive "fPOM File:")
-  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo))))
-	 (malabar-service-call "pi" (list "repo" repo "pm" (expand-file-name pom)))))
+  (let ((pm (or pom malabar-mode-project-file))
+	(repo (or repo (expand-file-name malabar-package-maven-repo))))
+    (unless pm
+      (error "The malabar project file is not set"))
+    (malabar-service-call "pi" (list "repo" repo "pm" (expand-file-name pm)))))
 
 
 (defun malabar--load-local-source (classname project-info)

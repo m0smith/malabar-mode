@@ -7,7 +7,7 @@
 ;;     Espen Wiborg <espenhw@grumblesmurf.org>
 ;;     Matthew Smith <matt@m0smith.com>
 ;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 1.7.1
+;; Version: 2.0.1
 ;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, groovy, language, malabar
 
@@ -62,7 +62,7 @@
 (defvar url-http-end-of-headers)
 
 
-(make-variable-buffer-local 'malabar-mode-project-file)
+(make-variable-buffer-local 'malabar-mode-project-file) 
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
 (make-variable-buffer-local 'malabar-mode-project-parser)
@@ -70,8 +70,6 @@
 
 (setq ede-maven2-execute-mvn-to-get-classpath nil)
 
-(semantic-mode 1)
-(global-ede-mode 1)
 
 ;;;
 ;;; Groovy
@@ -287,9 +285,9 @@ See `json-read-string'"
      (lambda (_status) (kill-buffer (current-buffer)))
      malabar-mode-project-file (buffer-file-name))))
 
-(defun malabar-project-update-port (pm port)
+(defun malabar-project-update-service-info (pm port java-home)
   (add-to-list 'malabar-mode-project-service-alist 
-	       (list pm port)
+	       (list pm port java-home)
 	       nil 
 	       (lambda (_x _y) nil)))
 	
@@ -299,7 +297,51 @@ See `json-read-string'"
     (or (cadr (assoc pm malabar-mode-project-service-alist))
 	(and (not no-default) malabar-server-port))))
 
+
+(defun malabar-project-system-property (prop &optional pm project-info sp)
+  "Return the value of the Java system property named PROP for
+   the JDK associated with PM.  This is the equivilent of calling
+   System.getProperty(prop);
+
+   PROP: The name of the property as a string or symbol.  If nil, return nil.
+
+   PM: The full path the project manager file (pom.xml).  Use
+   malabar-mode-project-file if nil.
+
+   PROJECT-INFO: Cache for the project info if available.  If
+   nil, fetch using `malabar-project-info'.
+  
+   SP: An alist of system properties.  If nil, fetch from the PROJECT-INFO 
+"
+  (interactive (let* ((pi (malabar-project-info  malabar-mode-project-file))
+		      (sp (cdr (assoc 'systemProperties pi))))
+		 (list (completing-read "Property:" sp)
+		       malabar-mode-project-file
+		       pi
+		       sp)))
+		
+  (let* ((pm (or pm malabar-mode-project-file))
+	 (prop (if (stringp prop) (intern prop) prop))
+	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm))))))
+	 (rtnval (cdr (assoc prop sp))))
+    (when (called-interactively-p 'interactive)
+      (message "%s" rtnval))
+    rtnval))
+
+(defun malabar-project-java-home ( &optional pm no-default)
+  "Return the full path to the JAVA_HOME associated with project file PM
+   If NO-DEFAULT is non-nil, only return a found java-home"
+  (interactive)
+  (let ((pm (or pm malabar-mode-project-file))
+	(rtnval (or (caddr (assoc pm malabar-mode-project-service-alist))
+		    (and (not no-default) (malabar-project-system-property 'java.home pm)))))
+    (when (called-interactively-p 'interactive)
+      (message "%s" rtnval))
+    rtnval))
+
+
 (defun malabar-jdk-file (dir f)
+  "Return dir/f as appropriate for the os"
   (concat (file-name-as-directory dir) f))
 
 (defun malabar-jdk-find-home (rt-dir)
@@ -405,7 +447,7 @@ install locations in addition to the directories in
       (condition-case err
 	  (malabar-service-call "stop" (list "pm" pm))
 	(error err (message "%s" err)))
-      (malabar-project-update-port malabar-mode-project-file nil))))
+      (malabar-project-update-service-info malabar-mode-project-file nil nil))))
 
 (defun malabar-jdk-start (jdk)
   (interactive (list (completing-read "JDK:" (malabar-jdk-installed-jvms))))
@@ -413,15 +455,15 @@ install locations in addition to the directories in
 
   (let* ((jdk-alist (malabar-jdk-installed-jvms))
 	 (port (+ 49152 (random (- 65535 49152))))
-	 (jdk (cadr (assoc jdk jdk-alist)))
+	 (jdk-home (cadr (assoc jdk jdk-alist)))
 	 (cwd (ede-find-project-root "pom.xml"))
 	 (rtnval (malabar-service-call "spawn"
 				       (list "port" (number-to-string port)
 					     "version" malabar-server-jar-version
-					     "jdk" jdk
+					     "jdk" jdk-home
 					     "cwd" cwd
 					     "class" "com.software_ninja.malabar.Malabar"))))
-    (malabar-project-update-port malabar-mode-project-file port)
+    (malabar-project-update-service-info malabar-mode-project-file port jdk-home)
     (malabar-post-additional-classpath)
     ;; Reparse all file buffers in the project using the new jdk
     (mapc #'malabar-project-parse-file-async
@@ -712,7 +754,8 @@ was called."
 	(malabar-unittest-list-mode)
 	(malabar-project-copy-buffer-locals buffer)
 	(setq tabulated-list-entries results)
-	(tabulated-list-print t)))))
+	(tabulated-list-print t)))
+    results))
 
 
 (defun malabar-run-test (use-method &optional buffer repo pom )
@@ -1124,7 +1167,7 @@ If the version number could not be determined, signal an error,
 if called interactively, or if SHOW-VERSION is non-nil, otherwise
 just return nil."
   (interactive (list t))
-  (let ((version (pkg-info-version-info 'malabar)))
+  (let ((version (pkg-info-version-info 'malabar-mode)))
     (when show-version
       (message "Malabar version: %s" version))
     version))
@@ -1313,6 +1356,9 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   "Keymap of `malabar-mode'.")
 
 (defun malabar-mode-body ()
+  (semantic-mode)
+  (ede-minor-mode)
+
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
@@ -1329,6 +1375,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   :keymap malabar-mode-map
   (malabar-mode-body))
 
+;;;###autoload
 (define-minor-mode malabar-java-mode
   "Java specfic minor mode for JVM languages"
   :lighter " JVM-Java"
@@ -1336,14 +1383,18 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (malabar-mode-body)
   (setq malabar-mode-project-parser "java"))
 
-
+;;;###autoload
 (define-minor-mode malabar-groovy-mode
   "Groovy specfic minor mode for JVM languages"
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
+  (unless malabar-package-additional-classpath
+    (make-variable-buffer-local 'malabar-package-additional-classpath)
+    (setq malabar-package-additional-classpath '("build/classes/main" "build/classes/test")))
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
 
+;;;###autoload
 (defun activate-malabar-mode ()
   "Add hooks to the java and groovy modes to activate malabar mode.  Good for calling in .emacs"
   (interactive)
@@ -1352,3 +1403,4 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 (provide 'malabar-mode)
 
+;;; malabar-mode.el ends here
