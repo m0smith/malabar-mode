@@ -39,6 +39,8 @@
 
 ;;; Code:
 
+(require 'malabar-project)
+
 (defun malabar-maven2-extract-classpath (pom-file)
   (interactive "fPOM:")
   (let ((pi (malabar-project-info pom-file)))

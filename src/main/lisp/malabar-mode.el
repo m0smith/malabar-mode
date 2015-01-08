@@ -306,7 +306,7 @@ See `json-read-string'"
    PROP: The name of the property as a string or symbol.  If nil, return nil.
 
    PM: The full path the project manager file (pom.xml).  Use
-   malabar-mode-project-file if nil.
+   `malabar-mode-project-file' if nil.
 
    PROJECT-INFO: Cache for the project info if available.  If
    nil, fetch using `malabar-project-info'.
@@ -1338,9 +1338,6 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
   "Menu of `malabar-mode'.")
 
-(easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
-
-
 
 
 (defvar malabar-mode-map
@@ -1358,6 +1355,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 (defun malabar-mode-body ()
   (semantic-mode)
   (ede-minor-mode)
+  (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
 
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
