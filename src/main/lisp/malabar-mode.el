@@ -45,6 +45,7 @@
 (require 'semantic/db-javap)
 (require 'url-vars)
 (require 'ede/maven2)
+(require 'pulse)
 
 (require 'malabar-variables)
 (require 'malabar-abbrevs)
@@ -332,9 +333,9 @@ See `json-read-string'"
   "Return the full path to the JAVA_HOME associated with project file PM
    If NO-DEFAULT is non-nil, only return a found java-home"
   (interactive)
-  (let ((pm (or pm malabar-mode-project-file))
-	(rtnval (or (caddr (assoc pm malabar-mode-project-service-alist))
-		    (and (not no-default) (malabar-project-system-property 'java.home pm)))))
+  (let* ((pm2 (or pm malabar-mode-project-file))
+	 (rtnval (or (caddr (assoc pm2 malabar-mode-project-service-alist))
+		     (and (not no-default) (malabar-project-system-property 'java.home pm2)))))
     (when (called-interactively-p 'interactive)
       (message "%s" rtnval))
     rtnval))
@@ -478,8 +479,6 @@ install locations in addition to the directories in
 
 (require 'json)
 
-(defvar url-http-end-of-headers)
-
 
 (defun malabar-url-http-post (url args)
   (malabar-url-http-post-with-callback 'malabar-kill-url-buffer url args))
@@ -510,11 +509,11 @@ install locations in addition to the directories in
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
-(defun malabar-post-additional-classpath-old ()
-  (interactive)
-  (when (equal malabar-mode-post-groovy-to-be-called 'init)
-    (setq malabar-mode-post-groovy-to-be-called 'running)
-    (malabar-post-additional-classpath*)))
+;; (defun malabar-post-additional-classpath-old ()
+;;   (interactive)
+;;   (when (equal malabar-mode-post-groovy-to-be-called 'init)
+;;     (setq malabar-mode-post-groovy-to-be-called 'running)
+;;     (malabar-post-additional-classpath*)))
 
 
 (defun malabar-parse-script-raw (callback pom script &optional repo)
@@ -1387,10 +1386,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
   (unless malabar-package-additional-classpath
-    (make-variable-buffer-local 'malabar-package-additional-classpath)
     (setq malabar-package-additional-classpath '("build/classes/main" "build/classes/test")))
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
+
 
 ;;;###autoload
 (defun activate-malabar-mode ()
@@ -1398,6 +1397,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (interactive)
   (add-hook 'groovy-mode-hook 'malabar-groovy-mode)
   (add-hook 'java-mode-hook   'malabar-java-mode))
+
+
+(make-variable-buffer-local 'malabar-package-additional-classpath)
+
 
 (provide 'malabar-mode)
 
