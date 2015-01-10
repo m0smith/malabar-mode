@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; malabar-abbrevs.el --- A better Java mode for Emacs
 ;;
 ;; Copyright (c) 2009, 2010 Espen Wiborg <espenhw@grumblesmurf.org>
@@ -19,7 +20,9 @@
 ;;
 
 (require 'skeleton)
-(eval-when-compile (require 'cl))
+(require 'cc-mode)
+(eval-when-compile 
+  (require 'cl))
 (require 'malabar-variables)
 
 (defun malabar-abbrevs-delete-abbrev ()
@@ -77,3 +80,5 @@ lookup."
         malabar-case-fixed-abbrevs))
 
 (provide 'malabar-abbrevs)
+
+;;; malabar-abbrevs ends here
