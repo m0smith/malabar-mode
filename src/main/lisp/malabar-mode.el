@@ -267,6 +267,7 @@ See `json-read-string'"
 (add-to-list 'flycheck-checkers 'jvm-mode-malabar)
 
 
+
 ;;;
 ;;; JDK
 ;;;
@@ -285,6 +286,66 @@ See `json-read-string'"
     (malabar-parse-script-raw
      (lambda (_status) (kill-buffer (current-buffer)))
      malabar-mode-project-file (buffer-file-name))))
+
+;;;
+;;;  Parse list mode
+;;;
+
+(define-derived-mode malabar-parse-list-mode tabulated-list-mode "malabar-mode" 
+  "Used by `malabar-test-run' to show the test failures"
+  (setq tabulated-list-format [("File" 50 t)
+			       ("Line" 4 nil)
+			       ("Col" 4 nil)
+                               ("Msg" 80 nil)
+			       ])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "File" nil))
+  (tabulated-list-init-header))
+
+(defun malabar-parse-show-stacktrace (_button)
+  (let* ((buffer (current-buffer))
+	 (entry (tabulated-list-get-entry))
+	 (trace (elt entry 3)))
+    (pop-to-buffer (format "*Malabar Trace<%s>*" (tabulated-list-get-id)) nil)
+    (setq inhibit-read-only t)
+    (erase-buffer)
+    (insert trace)
+    (malabar-project-copy-buffer-locals buffer)
+    (compilation-mode)
+    (malabar-project-copy-buffer-locals buffer)
+    (goto-char (point-min))))
+
+
+(defun malabar-parse-list (results buffer)
+  (interactive)
+  (let ((results (mapcar (lambda (r) 
+			   (let (( id (elt r 0))
+				 ( msg (elt r 1))
+				 ( exmsg (elt r 2))
+				 ;( trace (elt r 2))
+				 )
+			     (when (null msg) (aset r 1 ""))
+			     (when (null exmsg) (aset r 2 ""))
+			     (aset r 0 (cons id (list 'action 'malabar-parse-show-stacktrace )))
+			     (list id  r))) results)))
+    (if (= (length results) 0)
+	(message "Success")
+      (with-current-buffer buffer
+	(pop-to-buffer (format "*Malabar Test Results<%s>*" malabar-mode-project-name) nil)
+	(malabar-parse-list-mode)
+	(malabar-project-copy-buffer-locals buffer)
+	(setq tabulated-list-entries results)
+	(tabulated-list-print t)))
+    results))
+
+
+
+
+;;;###autoload
+(defun malabar-compile-file (&optional buffer)
+  "Compile the current buffer.  If there are errors open them up into a list-buffer"
+  (interactive)
+  (malabar-project-parse-file-async buffer))
 
 (defun malabar-project-update-service-info (pm port java-home)
   (add-to-list 'malabar-mode-project-service-alist 
@@ -1284,7 +1345,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
     ;; (define-key map [?\C-b] 'malabar-install-project)
-    ;; (define-key map [?\C-c] 'malabar-compile-file)
+    (define-key map [?\C-c] 'malabar-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
     (define-key map [?t]    'malabar-run-test)
     (define-key map [?\?]   'malabar-cheatsheet)
