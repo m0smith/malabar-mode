@@ -189,7 +189,7 @@ See `malabar-electric-colon'."
 
 
 (defvar malabar-compilation-project-file nil)
-(defvar omalabar-mode-project-dir nil)
+(defvar malabar-mode-project-dir nil)
 (defvar malabar-mode-project-file nil)
 (defvar malabar-mode-project-name nil)
 (defvar malabar-mode-project-parser "groovy")
@@ -198,4 +198,12 @@ See `malabar-electric-colon'."
     ( PORT )" )
 (defvar malabar-groovy-compilation-buffer-name nil)
 
+;; 
+;; External references
+;;
+
+(defvar url-http-end-of-headers)
+
 (provide 'malabar-variables)
+
+;;; malabar-variables ends here
