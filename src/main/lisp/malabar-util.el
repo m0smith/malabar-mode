@@ -21,30 +21,30 @@
 ;(require 'semantic)
 
 
-(defun malabar-util-expand-file-name (f &optional DEFAULT-DIRECTORY)
-  (let ((rtnval (funcall malabar-util-path-filter 
-			 (expand-file-name f DEFAULT-DIRECTORY))))
-   ;; (message "malabar-util-expand-file-name: %s" rtnval)
-    rtnval))
+;; (defun malabar-util-expand-file-name (f &optional DEFAULT-DIRECTORY)
+;;   (let ((rtnval (funcall malabar-util-path-filter 
+;; 			 (expand-file-name f DEFAULT-DIRECTORY))))
+;;    ;; (message "malabar-util-expand-file-name: %s" rtnval)
+;;     rtnval))
 
-(defun malabar-util-expand-file-name-nth (fs n &optional DEFAULT-DIRECTORY)
-  "Expand a filename.  FS is a list and the filename to expand is the N element."
-  (malabar-util-expand-file-name (nth n fs) DEFAULT-DIRECTORY))
+;; (defun malabar-util-expand-file-name-nth (fs n &optional DEFAULT-DIRECTORY)
+;;   "Expand a filename.  FS is a list and the filename to expand is the N element."
+;;   (malabar-util-expand-file-name (nth n fs) DEFAULT-DIRECTORY))
 
 
-(defun malabar-util-groovy-expand-file-name (f &optional DEFAULT-DIRECTORY)
-  (let ((rtnval 
-	 (funcall malabar-util-groovy-file-filter
-		  (funcall malabar-util-path-filter 
-			   (expand-file-name f DEFAULT-DIRECTORY)))))
-    ;;(message "malabar-util-grooy-expand-file-name: %s" rtnval)
-    rtnval))
+;; (defun malabar-util-groovy-expand-file-name (f &optional DEFAULT-DIRECTORY)
+;;   (let ((rtnval 
+;; 	 (funcall malabar-util-groovy-file-filter
+;; 		  (funcall malabar-util-path-filter 
+;; 			   (expand-file-name f DEFAULT-DIRECTORY)))))
+;;     ;;(message "malabar-util-grooy-expand-file-name: %s" rtnval)
+;;     rtnval))
 
 (defun malabar-util-reverse-slash (f)
   (replace-regexp-in-string "\\\\" "/" f t t))
 
 (defun string-starts-with (string start)
-  (string-match-p (concat "^" (regexp-quote start)) string))
+  (string-prefix-p start string))
 
 (defun string-ends-with (string end)
   (string-match-p (concat (regexp-quote end) "$") string))
@@ -227,3 +227,5 @@ gleaned from COMMAND-LINE."
 ;; Local Variables:
 ;; byte-compile-warnings:(not cl-functions)
 ;; End:
+
+;;; malabar-util ends here
