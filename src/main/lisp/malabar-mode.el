@@ -302,36 +302,44 @@ See `json-read-string'"
   (setq tabulated-list-sort-key (cons "File" nil))
   (tabulated-list-init-header))
 
-(defun malabar-parse-show-stacktrace (_button)
-  (let* ((buffer (current-buffer))
-	 (entry (tabulated-list-get-entry))
-	 (trace (elt entry 3)))
-    (pop-to-buffer (format "*Malabar Trace<%s>*" (tabulated-list-get-id)) nil)
-    (setq inhibit-read-only t)
-    (erase-buffer)
-    (insert trace)
-    (malabar-project-copy-buffer-locals buffer)
-    (compilation-mode)
-    (malabar-project-copy-buffer-locals buffer)
-    (goto-char (point-min))))
+(defun malabar-parse-show-error-in-file (_button)
+  "A button handler for a tabulated list that jumps to the column and line mentioned"
+  (let* ((entry (tabulated-list-get-entry))
+	 (msg  (elt entry 3))
+	 (file (elt entry 4))
+	 (line (elt entry 5))
+	 (col  (elt entry 6)))
+
+    (save-excursion
+      (find-file-other-window (expand-file-name file))
+      (goto-char (point-min))
+      (forward-line (1- line))
+      (right-char (1- col))
+      (message msg))))
 
 
-(defun malabar-parse-list (results buffer)
-  (interactive)
+
+(defun malabar-parse-list (results-in buffer)
+  "Create a tabulated-list buffer with the results of a parse call"
   (let ((results (mapcar (lambda (r) 
-			   (let (( id (elt r 0))
-				 ( msg (elt r 1))
-				 ( exmsg (elt r 2))
-				 ;( trace (elt r 2))
-				 )
-			     (when (null msg) (aset r 1 ""))
-			     (when (null exmsg) (aset r 2 ""))
-			     (aset r 0 (cons id (list 'action 'malabar-parse-show-stacktrace )))
-			     (list id  r))) results)))
+			   (let* (( file (cdr (assoc 'sourceLocator r)))
+				  ( col (cdr (assoc 'column r)))
+				  ( line (cdr (assoc 'line r)))
+				  ( message (cdr (assoc 'message r)))
+				  ( cols (vector (cons (malabar-util-right-substring file 50) (list 'action #'malabar-parse-show-error-in-file))
+						       (number-to-string line) 
+						       (number-to-string col) 
+						       message 
+						       file 
+						       line 
+						       col)))
+			     (list (md5 (format "%s" cols)) cols)))
+			 results-in)))
+
     (if (= (length results) 0)
 	(message "Success")
       (with-current-buffer buffer
-	(pop-to-buffer (format "*Malabar Test Results<%s>*" malabar-mode-project-name) nil)
+	(pop-to-buffer (format "*Malabar Parse Results<%s>*" malabar-mode-project-name) nil)
 	(malabar-parse-list-mode)
 	(malabar-project-copy-buffer-locals buffer)
 	(setq tabulated-list-entries results)
@@ -339,13 +347,23 @@ See `json-read-string'"
     results))
 
 
-
+(defun malabar-parse-list-callback (buffer)
+  (lambda (_status)
+    (goto-char url-http-end-of-headers)
+    (message "callback")
+    (let ((rtnval (json-read)))
+      (kill-buffer (current-buffer))
+      (malabar-parse-list rtnval buffer))))
+;;(lambda (_status) (kill-buffer (current-buffer)))
 
 ;;;###autoload
 (defun malabar-compile-file (&optional buffer)
   "Compile the current buffer.  If there are errors open them up into a list-buffer"
   (interactive)
-  (malabar-project-parse-file-async buffer))
+  (with-current-buffer (or buffer (current-buffer))
+    (malabar-parse-script-raw (malabar-parse-list-callback (current-buffer))
+     malabar-mode-project-file (buffer-file-name))))
+
 
 (defun malabar-project-update-service-info (pm port java-home)
   (add-to-list 'malabar-mode-project-service-alist 

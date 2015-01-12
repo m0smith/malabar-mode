@@ -57,6 +57,14 @@
       (setq string (replace-match "" t t string)))
     string))
 
+(defun malabar-util-right-substring (str len)
+  "Right trim a string to length"
+  (if (> (length str) len)
+      (substring str (- len))
+    str))
+
+
+
 (defun string-delete-whitespace (string) 
   (save-match-data (replace-regexp-in-string "[\r\n\t ]+" "" string t t)))
     
