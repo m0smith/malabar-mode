@@ -313,8 +313,8 @@ See `json-read-string'"
     (save-excursion
       (find-file-other-window (expand-file-name file))
       (goto-char (point-min))
-      (forward-line (1- line))
-      (right-char (1- col))
+      (forward-line (- line 1))
+      (move-to-column  col )
       (message msg))))
 
 
@@ -472,6 +472,15 @@ BASEDIRS or if :self then just use the directory itself"
   ;;   rt-path))
 
 
+
+(defun malabar-jdk-find-home-helper (f)
+  "Call function F and get the java home"
+  (let ((r (funcall f)))
+    (if (stringp r)
+	(malabar-jdk-find-home r)
+      (mapcar #'malabar-jdk-find-home r))))
+
+
 ;  "This code is stolen from `cedet-java-find-jdk-core-jar' which uses
 ; it to find the current JDK.  It would be useful to see all the
 ; install JDKs"
@@ -505,8 +514,7 @@ install locations in addition to the directories in
 			   '(".*jdk.*" ".*jre.*")))
 	       (lambda () (malabar-jdk-try-to-list-jdk-dirs malabar-jdk-extra-locations 
 							    '(".*jdk.*" ".*jre.*" :self))))))
-     (-flatten (mapcar (lambda (f) (mapcar #'malabar-jdk-find-home (funcall f)))
-		       funcs))))
+     (-flatten (mapcar #'malabar-jdk-find-home-helper funcs))))
 
 
 (defun malabar-jdk-installed-jvms ()
