@@ -41,7 +41,7 @@
 (eval-when-compile 
   (require 'cl)
   (require 'gud))
-(require 'groovy-mode)
+;(require 'groovy-mode)
 (require 'semantic/db-javap)
 (require 'url-vars)
 (require 'ede/maven2)
@@ -133,6 +133,7 @@
      malabar();" malabar-server-jar-version)))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+
 
 
 (defun malabar-mode-load-class (&optional buffer)
@@ -856,7 +857,7 @@ was called."
 
    pom:    the dir to the pom file.  Default: search up the file tree for a pom.xml"
 
-  (interactive "P\n")
+  (interactive "P")
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
@@ -869,8 +870,31 @@ was called."
 						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
 			   buffer)))
-    
-	
+
+(defun malabar-groovy-run-main ( args-in &optional class-name-in)
+  "Run the main methoff of a class.  Look at the *groovy* buffer for output.  
+
+   ARGS-IN is a string of arguments separated by spaces, quotes are respected
+
+   CLASS-NAME-IN is the name pf the class to run.  Default to the
+   class in the current buffer
+"
+  (interactive "sArgs:")
+  (let* ((args    (split-string-and-unquote (or args-in "")))
+	 (repo    (expand-file-name malabar-package-maven-repo))
+	 (buffer  (current-buffer))
+	 (script  (buffer-file-name buffer))
+	 (class-name (or class-name-in (malabar-get-fully-qualified-class-name)))
+	 (pom     malabar-mode-project-file))
+    (malabar-service-call "exec"
+			  (append (list "repo"   repo
+					"pm"     (expand-file-name pom)
+					"class" class-name)
+				  (-flatten
+				   (mapcar (lambda (a) (list "arg" a)) args))))))
+			      
+			      
+
 	
 (defun malabar-jdb ()
   "Start the JDB debugger for the class in the current buffer.
