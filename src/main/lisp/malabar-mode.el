@@ -41,7 +41,7 @@
 (eval-when-compile 
   (require 'cl)
   (require 'gud))
-;(require 'groovy-mode)
+(require 'groovy-mode)
 (require 'semantic/db-javap)
 (require 'url-vars)
 (require 'ede/maven2)
