@@ -876,7 +876,7 @@ was called."
 
    ARGS-IN is a string of arguments separated by spaces, quotes are respected
 
-   CLASS-NAME-IN is the name pf the class to run.  Default to the
+   CLASS-NAME-IN is the name of the class to run.  Default to the
    class in the current buffer
 "
   (interactive "sArgs:")
@@ -1504,8 +1504,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 (defun activate-malabar-mode ()
   "Add hooks to the java and groovy modes to activate malabar mode.  Good for calling in .emacs"
   (interactive)
-  (add-hook 'groovy-mode-hook 'malabar-groovy-mode)
-  (add-hook 'java-mode-hook   'malabar-java-mode))
+  (eval-after-load 'groovy-mode
+    (add-hook 'groovy-mode-hook 'malabar-groovy-mode))
+  (eval-after-load 'java-mode
+    (add-hook 'java-mode-hook   'malabar-java-mode)))
 
 
 (make-variable-buffer-local 'malabar-package-additional-classpath)
