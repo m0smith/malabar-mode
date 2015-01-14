@@ -882,7 +882,6 @@ was called."
   (interactive "sArgs:")
   (let* ((args    (split-string-and-unquote (or args-in "")))
 	 (repo    (expand-file-name malabar-package-maven-repo))
-	 (buffer  (current-buffer))
 	 (class-name (or class-name-in (malabar-get-fully-qualified-class-name)))
 	 (pom     malabar-mode-project-file))
     (malabar-service-call "exec"
