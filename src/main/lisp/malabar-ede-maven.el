@@ -39,6 +39,8 @@
 
 ;;; Code:
 
+(require 'malabar-project)
+
 (defun malabar-maven2-extract-classpath (pom-file)
   (interactive "fPOM:")
   (let ((pi (malabar-project-info pom-file)))
@@ -154,8 +156,8 @@
    "Compile the current target OBJ.
  Argument COMMAND is the command to use for compiling the target."
    (when (oref obj :project)
-     (append (make-local-variable 'compilation-environment)
-	     (list (format "JAVA_HOME" (malabar-project-java-home))))
+     (add-to-list (make-local-variable 'compilation-environment)
+		  (format "JAVA_HOME=%s" (malabar-project-java-home)))
      (project-compile-project (oref obj :project) (or command (oref obj :name)))))
 
 
@@ -205,3 +207,5 @@
  'unique)
 
 (provide 'malabar-ede-maven)
+
+;;; malabar-ede-mave ends here

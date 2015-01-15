@@ -80,13 +80,12 @@ There has been a lot of work to rewrite malabar-mode to make it easier to mainta
 ```
 
 	(load-file "~/projects/cedet/cedet-devel-load.el")
+    (add-hook 'after-init-hook (lambda ()
+			     (message "activate-malabar-mode")
+			     (activate-malabar-mode)))
 
-        (require 'malabar-mode)
-
-        (activate-malabar-mode)
-
-        (add-hook 'malabar-java-mode-hook 'flycheck-mode)
-        (add-hook 'malabar-groovy-mode-hook 'flycheck-mode)
+    (add-hook 'malabar-java-mode-hook 'flycheck-mode)
+    (add-hook 'malabar-groovy-mode-hook 'flycheck-mode)
 
 
 

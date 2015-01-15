@@ -22,7 +22,7 @@
 
 (require 'malabar-util)
 (require 'malabar-variables)
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 (require 'dash)
 
 
@@ -200,7 +200,7 @@ return a list of the other modules in the project, nil otherwise"
     (when (malabar--project-file parent)
       (remove nil
               (mapcar 'malabar--project-file
-                      (remove-if-not 'file-accessible-directory-p
+                      (cl-remove-if-not 'file-accessible-directory-p
                                      (directory-files parent 'full "^[^\\.]")))))))
 
 (defun malabar-visit-project-file ()
@@ -208,13 +208,12 @@ return a list of the other modules in the project, nil otherwise"
   (interactive)
   (ede-edit-file-target))
 
-;; (defun malabar-build-project (clean-p &rest goals)
-;;   (when clean-p
-;;     (setq goals (cons 'clean goals)))
-;;   (malabar-execute-maven (malabar-find-project-file)
-;;                          goals
-;;                          nil
-;;                          nil))
+
+(defun malabar-build-project (clean-p &rest goals)
+  (when clean-p
+    (setq goals (cons 'clean goals)))
+  (malabar-ede-maven-execute malabar-mode-project-dir
+			     goals))
 
 ;; (defun malabar-execute-maven (project-file goals definitions profiles)
 ;;   (malabar-setup-compilation-buffer)
@@ -225,22 +224,22 @@ return a list of the other modules in the project, nil otherwise"
 ;;            (malabar--make-groovy-list goals)
 ;;            (malabar--make-groovy-list profiles)
 ;;            (malabar--make-groovy-map definitions))))
-
+;;;###autoload
 (defun malabar-install-project (clean-p)
   "Runs 'mvn install' on the current project.  With prefix
 argument, cleans the project first ('mvn clean install')."
   (interactive "P")
-  (malabar-build-project clean-p 'install))
-
+  (malabar-build-project clean-p "install"))
+;;;###autoload
 (defun malabar-package-project (clean-p)
   "Runs 'mvn package' on the current project.  With prefix
 argument, cleans the project first ('mvn clean package')."
   (interactive "P")
-  (malabar-build-project clean-p 'package))
+  (malabar-build-project clean-p "package"))
 
 (defvar malabar-maven-command-line-history nil
   "Minibuffer history for `malabar-run-maven-command`.")
-
+;;;###autoload
 (defun malabar-run-maven-command (command-line)
   "Prompts for and executes an (almost) arbitrary Maven command line.
 Honors profile activation, property definitions and lifecycle
@@ -322,23 +321,4 @@ the both runtime and test source, resource and dependencies"
 
 (provide 'malabar-project)
 
-;; Local variables:
-;; byte-compile-warnings: (not cl-functions)
-;; End:
-
-;;;### (autoloads nil nil ("malabar-reflection.el" "malabar-semanticdb.el"
-;;;;;;  "malabar-util.el" "malabar-variables.el") (21645 56234 944000
-;;;;;;  0))
-
-;;;***
-
-;;;### (autoloads (malabar-mode) "malabar-mode" "malabar-mode.el"
-;;;;;;  (21645 56155 0 0))
-;;; Generated autoloads from malabar-mode.el
-
-(autoload 'malabar-mode "malabar-mode" "\
-Support and integeration for JVM languages
-
-\(fn &optional ARG)" t nil)
-
-;;;***
+;;; malabar-project ends here

@@ -33,6 +33,8 @@
 ;;;
 
 
+(defvar url-http-end-of-headers)
+
 (defun malabar-service-arg-p  (c)
   "Return non-nil if the car and cadr of c are not nil"
   (and (not (null (car c))) 
@@ -88,3 +90,5 @@
 
 
 (provide 'malabar-service)
+
+;;; malabar-service ends here

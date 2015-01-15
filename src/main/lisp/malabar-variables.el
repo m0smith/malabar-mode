@@ -55,7 +55,7 @@ keybindings.  Changing this variable is at your own risk."
       (define-key malabar-mode-map key malabar-command-map))
     (set-default variable key)))
 
-(defcustom malabar-server-jar-version "2.0.6"
+(defcustom malabar-server-jar-version "2.1.0"
   "The version of the malabar-mode-jar to fetch when starting"
   :group 'malabar
   :package-version '(malabar . "2.0")
@@ -189,7 +189,7 @@ See `malabar-electric-colon'."
 
 
 (defvar malabar-compilation-project-file nil)
-(defvar omalabar-mode-project-dir nil)
+(defvar malabar-mode-project-dir nil)
 (defvar malabar-mode-project-file nil)
 (defvar malabar-mode-project-name nil)
 (defvar malabar-mode-project-parser "groovy")
@@ -198,4 +198,12 @@ See `malabar-electric-colon'."
     ( PORT )" )
 (defvar malabar-groovy-compilation-buffer-name nil)
 
+;; 
+;; External references
+;;
+
+(defvar url-http-end-of-headers)
+
 (provide 'malabar-variables)
+
+;;; malabar-variables ends here

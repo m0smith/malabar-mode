@@ -41,10 +41,11 @@
 (eval-when-compile 
   (require 'cl)
   (require 'gud))
-(require 'groovy-mode)
+(require 'inf-groovy)
 (require 'semantic/db-javap)
 (require 'url-vars)
 (require 'ede/maven2)
+(require 'pulse)
 
 (require 'malabar-variables)
 (require 'malabar-abbrevs)
@@ -132,6 +133,7 @@
      malabar();" malabar-server-jar-version)))
 
 (add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+
 
 
 (defun malabar-mode-load-class (&optional buffer)
@@ -266,6 +268,7 @@ See `json-read-string'"
 (add-to-list 'flycheck-checkers 'jvm-mode-malabar)
 
 
+
 ;;;
 ;;; JDK
 ;;;
@@ -284,6 +287,84 @@ See `json-read-string'"
     (malabar-parse-script-raw
      (lambda (_status) (kill-buffer (current-buffer)))
      malabar-mode-project-file (buffer-file-name))))
+
+;;;
+;;;  Parse list mode
+;;;
+
+(define-derived-mode malabar-parse-list-mode tabulated-list-mode "malabar-mode" 
+  "Used by `malabar-test-run' to show the test failures"
+  (setq tabulated-list-format [("File" 50 t)
+			       ("Line" 4 nil)
+			       ("Col" 4 nil)
+                               ("Msg" 80 nil)
+			       ])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "File" nil))
+  (tabulated-list-init-header))
+
+(defun malabar-parse-show-error-in-file (_button)
+  "A button handler for a tabulated list that jumps to the column and line mentioned"
+  (let* ((entry (tabulated-list-get-entry))
+	 (msg  (elt entry 3))
+	 (file (elt entry 4))
+	 (line (elt entry 5))
+	 (col  (elt entry 6)))
+
+    (save-excursion
+      (find-file-other-window (expand-file-name file))
+      (goto-char (point-min))
+      (forward-line (- line 1))
+      (move-to-column  col )
+      (message msg))))
+
+
+
+(defun malabar-parse-list (results-in buffer)
+  "Create a tabulated-list buffer with the results of a parse call"
+  (let ((results (mapcar (lambda (r) 
+			   (let* (( file (cdr (assoc 'sourceLocator r)))
+				  ( col (cdr (assoc 'column r)))
+				  ( line (cdr (assoc 'line r)))
+				  ( message (cdr (assoc 'message r)))
+				  ( cols (vector (cons (malabar-util-right-substring file 50) (list 'action #'malabar-parse-show-error-in-file))
+						       (number-to-string line) 
+						       (number-to-string col) 
+						       message 
+						       file 
+						       line 
+						       col)))
+			     (list (md5 (format "%s" cols)) cols)))
+			 results-in)))
+
+    (if (= (length results) 0)
+	(message "Success")
+      (with-current-buffer buffer
+	(pop-to-buffer (format "*Malabar Parse Results<%s>*" malabar-mode-project-name) nil)
+	(malabar-parse-list-mode)
+	(malabar-project-copy-buffer-locals buffer)
+	(setq tabulated-list-entries results)
+	(tabulated-list-print t)))
+    results))
+
+
+(defun malabar-parse-list-callback (buffer)
+  (lambda (_status)
+    (goto-char url-http-end-of-headers)
+    (message "callback")
+    (let ((rtnval (json-read)))
+      (kill-buffer (current-buffer))
+      (malabar-parse-list rtnval buffer))))
+;;(lambda (_status) (kill-buffer (current-buffer)))
+
+;;;###autoload
+(defun malabar-compile-file (&optional buffer)
+  "Compile the current buffer.  If there are errors open them up into a list-buffer"
+  (interactive)
+  (with-current-buffer (or buffer (current-buffer))
+    (malabar-parse-script-raw (malabar-parse-list-callback (current-buffer))
+     malabar-mode-project-file (buffer-file-name))))
+
 
 (defun malabar-project-update-service-info (pm port java-home)
   (add-to-list 'malabar-mode-project-service-alist 
@@ -306,7 +387,7 @@ See `json-read-string'"
    PROP: The name of the property as a string or symbol.  If nil, return nil.
 
    PM: The full path the project manager file (pom.xml).  Use
-   malabar-mode-project-file if nil.
+   `malabar-mode-project-file' if nil.
 
    PROJECT-INFO: Cache for the project info if available.  If
    nil, fetch using `malabar-project-info'.
@@ -332,9 +413,9 @@ See `json-read-string'"
   "Return the full path to the JAVA_HOME associated with project file PM
    If NO-DEFAULT is non-nil, only return a found java-home"
   (interactive)
-  (let ((pm (or pm malabar-mode-project-file))
-	(rtnval (or (caddr (assoc pm malabar-mode-project-service-alist))
-		    (and (not no-default) (malabar-project-system-property 'java.home pm)))))
+  (let* ((pm2 (or pm malabar-mode-project-file))
+	 (rtnval (or (caddr (assoc pm2 malabar-mode-project-service-alist))
+		     (and (not no-default) (malabar-project-system-property 'java.home pm2)))))
     (when (called-interactively-p 'interactive)
       (message "%s" rtnval))
     rtnval))
@@ -392,6 +473,15 @@ BASEDIRS or if :self then just use the directory itself"
   ;;   rt-path))
 
 
+
+(defun malabar-jdk-find-home-helper (f)
+  "Call function F and get the java home"
+  (let ((r (funcall f)))
+    (if (stringp r)
+	(malabar-jdk-find-home r)
+      (mapcar #'malabar-jdk-find-home r))))
+
+
 ;  "This code is stolen from `cedet-java-find-jdk-core-jar' which uses
 ; it to find the current JDK.  It would be useful to see all the
 ; install JDKs"
@@ -425,8 +515,7 @@ install locations in addition to the directories in
 			   '(".*jdk.*" ".*jre.*")))
 	       (lambda () (malabar-jdk-try-to-list-jdk-dirs malabar-jdk-extra-locations 
 							    '(".*jdk.*" ".*jre.*" :self))))))
-     (-flatten (mapcar (lambda (f) (mapcar #'malabar-jdk-find-home (funcall f)))
-		       funcs))))
+     (-flatten (mapcar #'malabar-jdk-find-home-helper funcs))))
 
 
 (defun malabar-jdk-installed-jvms ()
@@ -478,8 +567,6 @@ install locations in addition to the directories in
 
 (require 'json)
 
-(defvar url-http-end-of-headers)
-
 
 (defun malabar-url-http-post (url args)
   (malabar-url-http-post-with-callback 'malabar-kill-url-buffer url args))
@@ -510,11 +597,11 @@ install locations in addition to the directories in
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
-(defun malabar-post-additional-classpath-old ()
-  (interactive)
-  (when (equal malabar-mode-post-groovy-to-be-called 'init)
-    (setq malabar-mode-post-groovy-to-be-called 'running)
-    (malabar-post-additional-classpath*)))
+;; (defun malabar-post-additional-classpath-old ()
+;;   (interactive)
+;;   (when (equal malabar-mode-post-groovy-to-be-called 'init)
+;;     (setq malabar-mode-post-groovy-to-be-called 'running)
+;;     (malabar-post-additional-classpath*)))
 
 
 (defun malabar-parse-script-raw (callback pom script &optional repo)
@@ -770,7 +857,7 @@ was called."
 
    pom:    the dir to the pom file.  Default: search up the file tree for a pom.xml"
 
-  (interactive "P\n")
+  (interactive "P")
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
@@ -783,8 +870,29 @@ was called."
 						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
 			   buffer)))
-    
-	
+
+(defun malabar-groovy-run-main ( args-in &optional class-name-in)
+  "Run the main methoff of a class.  Look at the *groovy* buffer for output.  
+
+   ARGS-IN is a string of arguments separated by spaces, quotes are respected
+
+   CLASS-NAME-IN is the name of the class to run.  Default to the
+   class in the current buffer
+"
+  (interactive "sArgs:")
+  (let* ((args    (split-string-and-unquote (or args-in "")))
+	 (repo    (expand-file-name malabar-package-maven-repo))
+	 (class-name (or class-name-in (malabar-get-fully-qualified-class-name)))
+	 (pom     malabar-mode-project-file))
+    (malabar-service-call "exec"
+			  (append (list "repo"   repo
+					"pm"     (expand-file-name pom)
+					"class" class-name)
+				  (-flatten
+				   (mapcar (lambda (a) (list "arg" a)) args))))))
+			      
+			      
+
 	
 (defun malabar-jdb ()
   "Start the JDB debugger for the class in the current buffer.
@@ -1285,7 +1393,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (let ((map (make-sparse-keymap)))
     (define-key map [?p] 'ede-compile-target)
     ;; (define-key map [?\C-b] 'malabar-install-project)
-    ;; (define-key map [?\C-c] 'malabar-compile-file)
+    (define-key map [?\C-c] 'malabar-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
     (define-key map [?t]    'malabar-run-test)
     (define-key map [?\?]   'malabar-cheatsheet)
@@ -1338,9 +1446,6 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
   "Menu of `malabar-mode'.")
 
-(easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
-
-
 
 
 (defvar malabar-mode-map
@@ -1358,6 +1463,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 (defun malabar-mode-body ()
   (semantic-mode)
   (ede-minor-mode)
+  (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
 
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
@@ -1389,10 +1495,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
   (unless malabar-package-additional-classpath
-    (make-variable-buffer-local 'malabar-package-additional-classpath)
     (setq malabar-package-additional-classpath '("build/classes/main" "build/classes/test")))
   (malabar-mode-body)
   (setq malabar-mode-project-parser "groovy"))
+
 
 ;;;###autoload
 (defun activate-malabar-mode ()
@@ -1400,6 +1506,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   (interactive)
   (add-hook 'groovy-mode-hook 'malabar-groovy-mode)
   (add-hook 'java-mode-hook   'malabar-java-mode))
+
+
+(make-variable-buffer-local 'malabar-package-additional-classpath)
+
 
 (provide 'malabar-mode)
 
