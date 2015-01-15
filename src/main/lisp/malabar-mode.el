@@ -1504,10 +1504,8 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 (defun activate-malabar-mode ()
   "Add hooks to the java and groovy modes to activate malabar mode.  Good for calling in .emacs"
   (interactive)
-  (eval-after-load 'groovy-mode
-    (lambda () (add-hook 'groovy-mode-hook 'malabar-groovy-mode)))
-  (eval-after-load 'java-mode
-    (lambda () (add-hook 'java-mode-hook   'malabar-java-mode))))
+  (add-hook 'groovy-mode-hook 'malabar-groovy-mode)
+  (add-hook 'java-mode-hook   'malabar-java-mode))
 
 
 (make-variable-buffer-local 'malabar-package-additional-classpath)
