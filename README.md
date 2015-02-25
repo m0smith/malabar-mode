@@ -68,7 +68,8 @@ There has been a lot of work to rewrite malabar-mode to make it easier to mainta
 
 ```
     git clone https://github.com/alexott/cedet.git
-	make all
+    cd cedet
+    make all
 ```
 - Install malabar-mode from melpa
 
