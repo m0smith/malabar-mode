@@ -742,6 +742,26 @@ was called."
 	(elt files 0)
       (concat root (elt malabar-java-stack-trace-dirs  0) "/" package2 "/" file))))
       
+
+(defun malabar-java-stack-trace-gud-break ()
+  "Set the breakpoint of the current line in the stack trace by finding the file, going to the specified line and calling `gud-break'"
+  (interactive)
+  (let* ((regex (cadr (assq 'malabar-java-stack-trace compilation-error-regexp-alist-alist)))
+	(current-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	(match? (string-match regex current-line))
+	(package (match-string 1 current-line))
+	(path    (replace-regexp-in-string "\\." "/" package))
+	(class   (match-string 2 current-line))
+	(file    (match-string 4 current-line))
+	(line    (match-string 5 current-line))
+	(full-file-name (malabar-java-stack-trace-best-filename path file)))
+    (when (file-exists-p full-file-name)
+      (find-file full-file-name))
+    (beginning-of-buffer)
+    (forward-line (- (string-to-number line) 1))
+    (gud-basic-call (format "stop at %s.%s:%s" package class line))
+    (pop-to-buffer gud-comint-buffer)))
+      
 	 
 (defun malabar-java-stack-trace-regexp-to-filename ()
   "Generates a relative filename from java-stack-trace regexp match data."
@@ -758,7 +778,7 @@ was called."
 (add-to-list 'compilation-error-regexp-alist 'malabar-java-stack-trace)
 (add-to-list 'compilation-error-regexp-alist-alist
 	     '(malabar-java-stack-trace .
-				("^[[:space:]]at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
+				("^[[:space:]]*at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
 				 malabar-java-stack-trace-regexp-to-filename 5)))
 
 (defun malabar-project-copy-buffer-locals ( src-buffer)
@@ -786,6 +806,7 @@ was called."
 	(with-current-buffer (pop-to-buffer (format "*Malabar Stack Trace<%s>*" malabar-mode-project-name))
 	  (malabar-project-copy-buffer-locals buffer)
 	  (compilation-mode)
+	  (define-key compilation-mode-map [?\C-b] 'malabar-java-stack-trace-gud-break)
 	  (malabar-project-copy-buffer-locals buffer)
 	  (setq inhibit-read-only t)
 	  (when active
@@ -892,6 +913,34 @@ was called."
 				   (mapcar (lambda (a) (list "arg" a)) args))))))
 			      
 			      
+
+
+
+    
+
+
+(defun malabar-project-sourcepath (&optional buffer)
+  "Convert the classpath to a source path"
+  (with-current-buffer (or buffer (current-buffer))
+    (if (not ede-object)
+	(error "Cannot invoke malabar-project-sourcepath for buffer %s" (buffer-name)))
+    (let* ((project-file (malabar-find-project-file))
+	   (project-info (malabar-project-info project-file)))
+      (malabar-project-source-directories project-info))))
+	   
+
+(defun malabar-jdb-remote (port)
+  "Start the JDB debugger for the class in the current buffer."
+
+  (interactive "nPort:")
+  (let* ((classpath (malabar-groovy-classpath-string-of-buffer))
+	 (gud-jdb-classpath classpath)
+	 (sourcepath (malabar-util-reverse-slash (malabar-util-string-join (malabar-project-sourcepath) path-separator))))
+    (append-to-file (format "use %s\n" sourcepath) nil (expand-file-name ".jdbrc"))
+    (jdb (format "%s  -connect com.sun.jdi.SocketAttach:hostname=localhost,port=%s" 
+		 gud-jdb-command-name 
+		 ;
+		 port))))
 
 	
 (defun malabar-jdb ()
@@ -1476,14 +1525,34 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 ;;;###autoload
 (define-minor-mode malabar-mode
-  "Support and integeration for JVM languages"
+  "Support and integeration for JVM languages
+
+When called interactively, toggle `malabar-mode'.  With prefix
+ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM"
   :keymap malabar-mode-map
   (malabar-mode-body))
 
 ;;;###autoload
 (define-minor-mode malabar-java-mode
-  "Java specfic minor mode for JVM languages"
+  "Java specfic minor mode for JVM languages.
+
+When called interactively, toggle `malabar-mode'.  With prefix
+ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM-Java"
   :keymap malabar-mode-map
   (malabar-mode-body)
@@ -1491,7 +1560,17 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 ;;;###autoload
 (define-minor-mode malabar-groovy-mode
-  "Groovy specfic minor mode for JVM languages"
+  "Groovy specfic minor mode for JVM languages.
+
+When called interactively, toggle `malabar-mode'.  With prefix
+ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
   (unless malabar-package-additional-classpath
