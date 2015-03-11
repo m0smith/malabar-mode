@@ -1544,12 +1544,12 @@ Otherwise behave as if called interactively.
 (define-minor-mode malabar-java-mode
   "Java specfic minor mode for JVM languages.
 
-When called interactively, toggle `malabar-mode'.  With prefix
-ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+When called interactively, toggle `malabar-java-mode'.  With prefix
+ARG, enable `malabar-java-mode' if ARG is positive, otherwise disable
 it.
 
-When called from Lisp, enable `malabar-mode' if ARG is omitted,
-nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+When called from Lisp, enable `malabar-java-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-java-mode'.
 Otherwise behave as if called interactively.
 
 \\{malabar-mode-map}"
@@ -1562,12 +1562,12 @@ Otherwise behave as if called interactively.
 (define-minor-mode malabar-groovy-mode
   "Groovy specfic minor mode for JVM languages.
 
-When called interactively, toggle `malabar-mode'.  With prefix
-ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+When called interactively, toggle `malabar-groovy-mode'.  With prefix
+ARG, enable `malabar-groovy-mode' if ARG is positive, otherwise disable
 it.
 
-When called from Lisp, enable `malabar-mode' if ARG is omitted,
-nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+When called from Lisp, enable `malabar-groovy-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-groovy-mode'.
 Otherwise behave as if called interactively.
 
 \\{malabar-mode-map}"
