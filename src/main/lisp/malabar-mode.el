@@ -779,7 +779,7 @@ was called."
 	(full-file-name (malabar-java-stack-trace-best-filename path file)))
     (when (file-exists-p full-file-name)
       (find-file full-file-name))
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (forward-line (- (string-to-number line) 1))
     (gud-basic-call (format "stop at %s.%s:%s" package class line))
     (pop-to-buffer gud-comint-buffer)))
