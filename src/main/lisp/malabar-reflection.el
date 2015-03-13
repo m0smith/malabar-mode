@@ -137,7 +137,7 @@
     (unless pmfile
       (error "The malabar project file is not set"))
     (let ((rtnval (malabar-service-call "pi" (list "repo" repo "pm" pm "pmfile" (expand-file-name pmfile)))))
-      (when (called-interacratively-p 'interactive)
+      (when (called-interactively-p 'interactive)
 	(message "%s" rtnval))
       rtnval)))
 	
