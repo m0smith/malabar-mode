@@ -625,7 +625,7 @@ install locations in addition to the directories in
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&pmfile=%s&script=%s&parser=%s" 
 		      malabar-server-host
-		      (malabar-project-port (expand-file-name pom))
+		      (malabar-project-port (expand-file-name pmfile))
 		      repo pm (expand-file-name pmfile) (expand-file-name script)
 		      malabar-mode-project-parser)))
     ;(message "URL %s" url)
@@ -637,7 +637,7 @@ install locations in addition to the directories in
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (url (format "http://%s:%s/parse/"
 		      malabar-server-host
-		      (malabar-project-port (expand-file-name pom)))))
+		      (malabar-project-port (expand-file-name pmfile)))))
 
     (malabar-url-http-post-with-callback callback url
 					 (list
@@ -877,7 +877,7 @@ was called."
     results))
 
 
-(defun malabar-run-test (use-method &optional buffer repo pom )
+(defun malabar-run-test (use-method &optional buffer repo pm pmfile )
   "Runs the current buffer as a unit test, using jUnit.  
 
    USE-METHOD: if USE-METHOD is non-nil or With a  prefix arg, 
@@ -893,11 +893,13 @@ was called."
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
-	 (pom (or pom malabar-mode-project-file)))
+	 (pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager)))
 	 
     (malabar-unittest-list (malabar-service-call "test"
 						 (list "repo"   repo
-						       "pm"     (expand-file-name pom)
+						       "pm"     pm
+						       "pmfile" (expand-file-name pmfile)
 						       "script" (expand-file-name script)
 						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
