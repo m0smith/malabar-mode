@@ -181,8 +181,9 @@
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
-      (let ((pom malabar-mode-project-file))
-	(malabar-groovy-send-classpath pom repo)))))
+      (let ((pmfile malabar-mode-project-file)
+	    (pm malabar-mode-project-manager))
+	(malabar-groovy-send-classpath pm pmfile repo)))))
 
 (defun malabar-groovy-send-buffer (&optional buffer)
   (interactive)
