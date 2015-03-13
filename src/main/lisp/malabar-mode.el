@@ -768,9 +768,10 @@ was called."
 (defun malabar-java-stack-trace-gud-break ()
   "Set the breakpoint of the current line in the stack trace by finding the file, going to the specified line and calling `gud-break'"
   (interactive)
-  (let* ((regex (cadr (assq 'malabar-java-stack-trace compilation-error-regexp-alist-alist)))
+  (let* (
+	 ;(regex (cadr (assq 'malabar-java-stack-trace compilation-error-regexp-alist-alist)))
 	(current-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	;(match? (string-match regex current-line))
+	; (match? (string-match regex current-line))
 	(package (match-string 1 current-line))
 	(path    (replace-regexp-in-string "\\." "/" package))
 	(class   (match-string 2 current-line))
