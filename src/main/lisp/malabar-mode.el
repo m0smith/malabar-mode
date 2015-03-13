@@ -770,7 +770,7 @@ was called."
   (interactive)
   (let* ((regex (cadr (assq 'malabar-java-stack-trace compilation-error-regexp-alist-alist)))
 	(current-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
-	(match? (string-match regex current-line))
+	;(match? (string-match regex current-line))
 	(package (match-string 1 current-line))
 	(path    (replace-regexp-in-string "\\." "/" package))
 	(class   (match-string 2 current-line))
