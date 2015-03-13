@@ -126,14 +126,21 @@
       (-when-let (tag (malabar--get-class-info-from-buffer source-buffer))
         (malabar--class-info-set-from-source tag)))))
 
-(defun malabar-project-info (pom &optional repo)
+(defun malabar-project-info (pm pmfile &optional repo)
   "Get the project info for a project file"
-  (interactive "fPOM File:")
-  (let ((pm (or pom malabar-mode-project-file))
+  (interactive (list
+		(completing-read "Project Manager: " '("maven" "gradle"))
+		(read-file-name  "Project file (pom, build.gradle):")))
+  (let ((pmfile (or pmfile malabar-mode-project-file))
+	(pm (or pm malabar-mode-project-manager))
 	(repo (or repo (expand-file-name malabar-package-maven-repo))))
-    (unless pm
+    (unless pmfile
       (error "The malabar project file is not set"))
-    (malabar-service-call "pi" (list "repo" repo "pm" (expand-file-name pm)))))
+    (let ((rtnval (malabar-service-call "pi" (list "repo" repo "pm" pm "pmfile" (expand-file-name pmfile)))))
+      (when (called-interactively-p 'interactive)
+	(message "%s" rtnval))
+      rtnval)))
+	
 
 
 (defun malabar--load-local-source (classname project-info)
