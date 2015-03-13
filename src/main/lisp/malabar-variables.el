@@ -188,9 +188,17 @@ See `malabar-electric-colon'."
   :type '(boolean))
 
 
+(defcustom malabar-known-project-managers '("maven" "gradle")
+  "A list of known project managers to pick from for
+`malabar-mode-project-manager'.  Adding an entry here does not
+magically make it happen.  This is used mostly for pick lists."
+  :group 'malabar
+  :type '(repeat (string :tag "Project Manager")))
+
 (defvar malabar-compilation-project-file nil)
 (defvar malabar-mode-project-dir nil)
 (defvar malabar-mode-project-file nil)
+(defvar malabar-mode-project-manager nil)
 (defvar malabar-mode-project-name nil)
 (defvar malabar-mode-project-parser "groovy")
 (defvar malabar-mode-project-service-alist nil

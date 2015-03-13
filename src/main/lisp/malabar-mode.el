@@ -64,6 +64,7 @@
 
 
 (make-variable-buffer-local 'malabar-mode-project-file) 
+(make-variable-buffer-local 'malabar-mode-project-manager) 
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
 (make-variable-buffer-local 'malabar-mode-project-parser)
@@ -152,16 +153,20 @@
    (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" 
 	   (expand-file-name element))))
 
-(defun malabar-groovy-send-classpath  (pom &optional repo)
+(defun malabar-groovy-send-classpath  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
-  (interactive "fPOM File:")
+  (interactive (list
+		(completing-read "Project Manager: " malabar-known-project-managers)
+		(read-file-name  "Project file (pom, build.gradle):")))
   (mapcar 'malabar-groovy-send-classpath-element 
-	  (malabar-project-classpath-list (malabar-project-info pom repo) 'test)))
+	  (malabar-project-classpath-list (malabar-project-info pm pmfile repo) 'test)))
 
-(defun malabar-groovy-classpath-string  (pom &optional repo)
+(defun malabar-groovy-classpath-string  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
-  (interactive "fPOM File:")
-  (mapconcat 'identity (malabar-project-test-source-directories (malabar-project-info pom repo))
+  (interactive (list
+		(completing-read "Project Manager: " malabar-known-project-managers)
+		(read-file-name  "Project file (pom, build.gradle):")))
+  (mapconcat 'identity (malabar-project-test-source-directories (malabar-project-info pm pmfile repo))
 	     path-separator))
 
 
@@ -394,16 +399,17 @@ See `json-read-string'"
   
    SP: An alist of system properties.  If nil, fetch from the PROJECT-INFO 
 "
-  (interactive (let* ((pi (malabar-project-info  malabar-mode-project-file))
+  (interactive (let* ((pi (malabar-project-info  malabar-mode-project-manager malabar-mode-project-file))
 		      (sp (cdr (assoc 'systemProperties pi))))
 		 (list (completing-read "Property:" sp)
 		       malabar-mode-project-file
 		       pi
 		       sp)))
 		
-  (let* ((pm (or pm malabar-mode-project-file))
+  (let* ((pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager))
 	 (prop (if (stringp prop) (intern prop) prop))
-	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm))))))
+	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm pmfile))))))
 	 (rtnval (cdr (assoc prop sp))))
     (when (called-interactively-p 'interactive)
       (message "%s" rtnval))
@@ -925,7 +931,7 @@ was called."
     (if (not ede-object)
 	(error "Cannot invoke malabar-project-sourcepath for buffer %s" (buffer-name)))
     (let* ((project-file (malabar-find-project-file))
-	   (project-info (malabar-project-info project-file)))
+	   (project-info (malabar-project-info malabar-mode-project-manager project-file)))
       (malabar-project-source-directories project-info))))
 	   
 
@@ -962,7 +968,7 @@ The current buffer must have a java file with a main method"
 
   (let* ((dir (expand-file-name (file-name-directory (buffer-file-name buffer))))
          (project-file (malabar-find-project-file buffer))
-	 (project-info (malabar-project-info project-file))
+	 (project-info (malabar-project-info malabar-mode-project-manager project-file))
          (source-directories (append (malabar-project-source-directories
                                       project-info)
                                      (malabar-project-test-source-directories

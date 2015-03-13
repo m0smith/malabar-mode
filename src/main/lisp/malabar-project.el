@@ -60,12 +60,6 @@
 ;; (add-hook 'compilation-finish-functions 'malabar--clean-compilation-messages)
 
 
-(defun malabar-project-info (pom &optional repo)
-  "Get the project info for a "
-  (interactive "fPOM File:")
-  (let* ((repo (or repo (expand-file-name malabar-package-maven-repo))))
-    (malabar-service-call "pi" (list "pm" (expand-file-name pom)
-				     "repo" repo))))
 	 
 
 (defun malabar-project-classpath-list (project-info scope)
@@ -252,6 +246,15 @@ skipping tests."
     (apply #'malabar-ede-maven-execute malabar-mode-project-dir
            (car parsed-command))))
 
+(defun malabar-source-from-class (class-element)
+  (cond 
+   ((file-directory-p (expand-file-name class-element))  class-element)
+   ((string-match "[.]jar$" class-element) 
+    (let ((rtnval (replace-regexp-in-string "[.]jar$" "-sources.jar" class-element)))
+      (if (file-readable-p (expand-file-name rtnval)) rtnval class-element)))
+   (t class-element)))
+
+
 (defun malabar-project-test-source-directories (project-info)
   "Return as a list all the source classpath elements.  Includes
 the both runtime and test source, resource and dependencies"
@@ -264,7 +267,7 @@ the both runtime and test source, resource and dependencies"
 		  (malabar-project-sources project-info 'runtime)
 		  (malabar-project-elements project-info 'test)
 		  (malabar-project-elements project-info 'runtime)
-		  (malabar-project-classpath-list project-info 'test)
+		  (mapcar #' malabar-source-from-class (malabar-project-classpath-list project-info 'test))
 		  nil)))
 
 
@@ -276,7 +279,7 @@ the both runtime and test source, resource and dependencies"
 		  (malabar-project-resources project-info 'runtime)
 		  (malabar-project-sources project-info 'runtime)
 		  (malabar-project-elements project-info 'runtime)
-		  (malabar-project-classpath-list project-info 'runtime )
+		  (mapcar #' malabar-source-from-class (malabar-project-classpath-list project-info 'runtime ))
 		  nil)))
 
 

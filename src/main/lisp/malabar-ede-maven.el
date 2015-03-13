@@ -40,10 +40,11 @@
 ;;; Code:
 
 (require 'malabar-project)
+(require 'malabar-reflection)
 
 (defun malabar-maven2-extract-classpath (pom-file)
   (interactive "fPOM:")
-  (let ((pi (malabar-project-info pom-file)))
+  (let ((pi (malabar-project-info "maven" pom-file)))
     (-filter 'file-exists-p 
 	     (apply #'append
 		    (malabar-project-additional-classpath)
@@ -173,6 +174,7 @@
  Return nil if there isn't one.
  Argument DIR is the directory it is created for.
  ROOTPROJ is nil, since there is only one project."
+   (message "Calling malabar-maven2-load on %s" dir)
    (or (ede-files-find-existing dir ede-maven2-project-list)
        ;; Doesn't already exist, so lets make one.
 	(let* ((target-names '("install" "package clean test"))
@@ -186,6 +188,7 @@
 	 (oset this targets 
 	       (mapcar (lambda (n) (malabar-maven2-create-target n dir this)) target-names))
          (ede-add-project-to-global-list this)
+	 (setq malabar-mode-project-manager "maven")
          ;; TODO: the above seems to be done somewhere else, maybe ede-load-project-file
          ;; this seems to lead to multiple copies of project objects in ede-projects
 	 ;; TODO: call rescan project to setup all data

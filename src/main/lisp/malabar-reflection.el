@@ -117,7 +117,7 @@
 
 (defun malabar--get-class-info-from-source (classname buffer)
   (let ((use-dialog-box nil)
-	(project-info (malabar-project-info (malabar-find-project-file buffer))))
+	(project-info (malabar-project-info malabar-mode-project-manager (malabar-find-project-file buffer))))
     (-when-let (source-buffer (or (malabar--load-local-source classname project-info)
 				  (and malabar-load-source-from-sibling-projects
 				       (malabar--load-sibling-source buffer classname project-info ))
@@ -129,7 +129,7 @@
 (defun malabar-project-info (pm pmfile &optional repo)
   "Get the project info for a project file"
   (interactive (list
-		(completing-read "Project Manager: " '("maven" "gradle"))
+		(completing-read "Project Manager: " malabar-known-project-managers nil nil nil nil malabar-mode-project-manager)
 		(read-file-name  "Project file (pom, build.gradle):")))
   (let ((pmfile (or pmfile malabar-mode-project-file))
 	(pm (or pm malabar-mode-project-manager))
@@ -137,7 +137,7 @@
     (unless pmfile
       (error "The malabar project file is not set"))
     (let ((rtnval (malabar-service-call "pi" (list "repo" repo "pm" pm "pmfile" (expand-file-name pmfile)))))
-      (when (called-interactively-p 'interactive)
+      (when (called-interacratively-p 'interactive)
 	(message "%s" rtnval))
       rtnval)))
 	
