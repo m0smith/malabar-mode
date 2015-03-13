@@ -220,6 +220,7 @@ See `json-read-string'"
   (if (not (comint-check-proc "*groovy*"))
       (funcall cback 'finished nil)
     (let* ((pom-path malabar-mode-project-file)
+	   (pm  malabar-mode-project-manager)
 	   (buffer (current-buffer))
 	   (func (if (buffer-modified-p) 'malabar-parse-scriptbody-raw 'malabar-parse-script-raw))
 	   (script (if (buffer-modified-p) (buffer-string) (buffer-file-name))))
@@ -240,7 +241,7 @@ See `json-read-string'"
 		    (message "flycheck error: %s" msg)
 		    (pop-to-buffer (current-buffer))
 		    (funcall cback 'errored msg)))))
-       pom-path script))))
+       pm pom-path script))))
 
 
 
@@ -613,7 +614,7 @@ install locations in addition to the directories in
 ;;     (malabar-post-additional-classpath*)))
 
 
-(defun malabar-parse-script-raw (callback pom script &optional repo)
+(defun malabar-parse-script-raw (callback pm pmfile script &optional repo)
   "Parse the SCRIPT and call CALLBACK with the results buffer"
   (interactive "fPOM File:\nfJava File:")
   
@@ -622,15 +623,15 @@ install locations in addition to the directories in
 	url-request-data nil)
   
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
-	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s&parser=%s" 
+	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&pmfile=%s&script=%s&parser=%s" 
 		      malabar-server-host
 		      (malabar-project-port (expand-file-name pom))
-		      repo (expand-file-name pom) (expand-file-name script)
+		      repo pm (expand-file-name pmfile) (expand-file-name script)
 		      malabar-mode-project-parser)))
     ;(message "URL %s" url)
     (url-retrieve url callback)))
 
-(defun malabar-parse-scriptbody-raw (callback pom scriptbody &optional repo)
+(defun malabar-parse-scriptbody-raw (callback pm pmfile scriptbody &optional repo)
   "Parse the SCRIPTBODY and call CALLBACK with the results buffer"
 
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
@@ -641,7 +642,8 @@ install locations in addition to the directories in
     (malabar-url-http-post-with-callback callback url
 					 (list
 					  (cons "repo" repo)
-					  (cons "pm" (expand-file-name pom))
+					  (cons "pm" pm)
+					  (cons "pmfile" (expand-file-name pmfile))
 					  (cons "scriptBody" scriptbody)
 					  (cons "parser" malabar-mode-project-parser)))))
 					 
