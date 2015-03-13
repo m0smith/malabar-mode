@@ -370,7 +370,7 @@ See `json-read-string'"
   (interactive)
   (with-current-buffer (or buffer (current-buffer))
     (malabar-parse-script-raw (malabar-parse-list-callback (current-buffer))
-     malabar-mode-project-file (buffer-file-name))))
+     malabar-mode-project-manager malabar-mode-project-file (buffer-file-name))))
 
 
 (defun malabar-project-update-service-info (pm port java-home)
@@ -538,13 +538,16 @@ install locations in addition to the directories in
 	    roots)))
 
 
-(defun malabar-jdk-stop (&optional pm)
-  (let* ((pm (or pm malabar-mode-project-file))
+(defun malabar-jdk-stop (&optional pmfile pm)
+  (let* ((pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager))
 	 (port (malabar-project-port pm t)))
     (when port
       (message "Stopping %s port %s" malabar-mode-project-name port)
       (condition-case err
-	  (malabar-service-call "stop" (list "pm" pm))
+	  (malabar-service-call "stop" (list 
+					"pm" pm
+					"pmfile" pmfile))
 	(error err (message "%s" err)))
       (malabar-project-update-service-info malabar-mode-project-file nil nil))))
 
@@ -577,12 +580,19 @@ install locations in addition to the directories in
 
 (require 'json)
 
+(defun malabar-url-validate-args (args-alist) 
+  (let ((pm (cdr (assoc "pm" args-alist))))
+    (unless (member pm malabar-known-project-managers) 
+      (error "The argument 'pm' is required.  It should be one of %s. Passed arguments %s" malabar-known-project-managers args-alist))))
+
 
 (defun malabar-url-http-post (url args)
   (malabar-url-http-post-with-callback 'malabar-kill-url-buffer url args))
 
 (defun malabar-url-http-post-with-callback (callback url args)
   "Send ARGS (an alist) to URL as a POST request."
+  (message "hasmter")
+  (malabar-url-validate-args args)
   (setq url-request-method "POST"
 	url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))
 	url-request-data (mapconcat (lambda (arg)
@@ -603,7 +613,8 @@ install locations in addition to the directories in
 		     malabar-server-host 
 		     (malabar-project-port malabar-mode-project-file))))
     (malabar-url-http-post url (list
-				(cons "pm"        malabar-mode-project-file)
+				(cons "pm"        malabar-mode-project-manager)
+				(cons "pmfile"     malabar-mode-project-file)
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
@@ -1449,7 +1460,8 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 					 url
 					 (list
 					  (cons "repo" repo)
-					  (cons "pm" (expand-file-name malabar-mode-project-file))))))
+					  (cons "pm" malabar-mode-project-manager)
+					  (cons "pmfile" (expand-file-name malabar-mode-project-file))))))
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))

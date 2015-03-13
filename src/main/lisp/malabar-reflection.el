@@ -83,9 +83,11 @@
       (or (malabar--get-class-info-from-source classname buffer)
 	  (let* ((repo  (expand-file-name malabar-package-maven-repo))
 		 (readtable (cons  '(?\" malabar-json-read-string) json-readtable)))
-	    (malabar-service-call "tags" (list "repo" repo "pm" (expand-file-name malabar-mode-project-file)
-								 "class" classname)
-						    buffer 'list 'plist readtable))))))
+	    (malabar-service-call "tags" (list "repo" repo 
+					       "pm"   malabar-mode-project-manager
+					       "pmfile" (expand-file-name malabar-mode-project-file)
+					       "class" classname)
+				  buffer 'list 'plist readtable))))))
 
 
 ;; (defun malabar-which (classname &optional buffer)
@@ -136,7 +138,10 @@
 	(repo (or repo (expand-file-name malabar-package-maven-repo))))
     (unless pmfile
       (error "The malabar project file is not set"))
-    (let ((rtnval (malabar-service-call "pi" (list "repo" repo "pm" pm "pmfile" (expand-file-name pmfile)))))
+    (let ((rtnval (malabar-service-call "pi" (list 
+					      "repo" repo 
+					      "pm" pm 
+					      "pmfile" (expand-file-name pmfile)))))
       (when (called-interactively-p 'interactive)
 	(message "%s" rtnval))
       rtnval)))
@@ -442,12 +447,15 @@ e.g. `malabar-choose'."
   "A list of all matching classes or nil"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer 
-      (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
-								  "repo"(expand-file-name malabar-package-maven-repo)
-								  "pattern" (format "[.]%s$" unqualified)
-								  "isClass" "true"
-								  "useRegex" "true"
-								  "max" "100")
+      (let* ((result-array (malabar-service-call "resource" 
+						 (list 
+						  "pm" malabar-mode-project-manager
+						  "pmfile" (expand-file-name malabar-mode-project-file)
+						  "repo"(expand-file-name malabar-package-maven-repo)
+						  "pattern" (format "[.]%s$" unqualified)
+						  "isClass" "true"
+						  "useRegex" "true"
+						  "max" "100")
 						 buffer)))
 	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
 
@@ -455,12 +463,15 @@ e.g. `malabar-choose'."
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
-								"repo"(expand-file-name malabar-package-maven-repo)
-								"pattern" unqualified
-								"isClass" "true"
-								"useRegex" "false"
-								"max" "1")
+    (let* ((result-array (malabar-service-call "resource" 
+					       (list 
+						"pm" malabar-mode-project-manager
+						"pmfile" (expand-file-name malabar-mode-project-file)
+						"repo"(expand-file-name malabar-package-maven-repo)
+						"pattern" unqualified
+						"isClass" "true"
+						"useRegex" "false"
+						"max" "1")
 					       buffer))
 	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
 	   (value (cdr (assoc 'value result-alist))))

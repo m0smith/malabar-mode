@@ -175,25 +175,29 @@
  Argument DIR is the directory it is created for.
  ROOTPROJ is nil, since there is only one project."
    (message "Calling malabar-maven2-load on %s" dir)
-   (or (ede-files-find-existing dir ede-maven2-project-list)
-       ;; Doesn't already exist, so lets make one.
-	(let* ((target-names '("install" "package clean test"))
-	     (this
-	      (ede-malabar-maven2-project "Malabar Maven"
-					  :name "Malabar maven dir" ; TODO: make fancy name from dir here.
-					  :directory dir
-					  :file (expand-file-name "pom.xml" dir)
-					  :current-targets  target-names
-					  :classpath (malabar-maven2-extract-classpath (expand-file-name "pom.xml" dir)))))
-	 (oset this targets 
-	       (mapcar (lambda (n) (malabar-maven2-create-target n dir this)) target-names))
-         (ede-add-project-to-global-list this)
-	 (setq malabar-mode-project-manager "maven")
-         ;; TODO: the above seems to be done somewhere else, maybe ede-load-project-file
-         ;; this seems to lead to multiple copies of project objects in ede-projects
-	 ;; TODO: call rescan project to setup all data
-	 (message "%s" this)
-	 this)))
+   (let ((rtnval (or (ede-files-find-existing dir ede-maven2-project-list)
+		     ;; Doesn't already exist, so lets make one.
+		     (let* ((target-names '("install" "package clean test"))
+			    (this
+			     (ede-malabar-maven2-project "Malabar Maven"
+							 :name "Malabar maven dir" ; TODO: make fancy name from dir here.
+							 :directory dir
+							 :file (expand-file-name "pom.xml" dir)
+							 :current-targets  target-names
+							 :classpath (malabar-maven2-extract-classpath (expand-file-name "pom.xml" dir)))))
+		       (oset this targets 
+			     (mapcar (lambda (n) (malabar-maven2-create-target n dir this)) target-names))
+		       (ede-add-project-to-global-list this)
+		       (setq malabar-mode-project-manager "maven")
+		       ;; TODO: the above seems to be done somewhere else, maybe ede-load-project-file
+		       ;; this seems to lead to multiple copies of project objects in ede-projects
+		       ;; TODO: call rescan project to setup all data
+		       (message "%s" this)
+		       this))))
+     (when rtnval 
+       (message "Setting malabar-mode-project-manager %s" "maven")
+       (setq malabar-mode-project-manager "maven"))
+     rtnval))
 
 
 (ede-add-project-autoload
