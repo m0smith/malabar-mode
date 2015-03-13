@@ -384,14 +384,16 @@ See `json-read-string'"
 	(and (not no-default) malabar-server-port))))
 
 
-(defun malabar-project-system-property (prop &optional pm project-info sp)
+(defun malabar-project-system-property (prop &optional pm pmfile project-info sp)
   "Return the value of the Java system property named PROP for
    the JDK associated with PM.  This is the equivilent of calling
    System.getProperty(prop);
 
    PROP: The name of the property as a string or symbol.  If nil, return nil.
+  
+   PM: The project manager: maven, gradle, etc
 
-   PM: The full path the project manager file (pom.xml).  Use
+   PMFILE: The full path the project manager file (pom.xml).  Use
    `malabar-mode-project-file' if nil.
 
    PROJECT-INFO: Cache for the project info if available.  If
