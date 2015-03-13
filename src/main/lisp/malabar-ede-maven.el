@@ -177,7 +177,7 @@
    (message "Calling malabar-maven2-load on %s" dir)
    (let ((rtnval (or (ede-files-find-existing dir ede-maven2-project-list)
 		     ;; Doesn't already exist, so lets make one.
-		     (let* ((target-names '("install" "package clean test"))
+		     (let* ((target-names '("install"))
 			    (this
 			     (ede-malabar-maven2-project "Malabar Maven"
 							 :name "Malabar maven dir" ; TODO: make fancy name from dir here.
