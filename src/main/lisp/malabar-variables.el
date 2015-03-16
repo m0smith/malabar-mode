@@ -80,7 +80,7 @@ keybindings.  Changing this variable is at your own risk."
   :package-version '(malabar . "2.0")
   :type 'string)
 
-(defcustom malabar-groovy-grooysh "~/.gvm/groovy/2.3.7/bin/groovysh"
+(defcustom malabar-groovy-grooysh "~/.gvm/groovy/current/bin/groovysh"
   "Where to find the groovysh executable"
   :group 'malabar
   :package-version '(malabar . "2.0")
