@@ -80,7 +80,33 @@ keybindings.  Changing this variable is at your own risk."
   :package-version '(malabar . "2.0")
   :type 'string)
 
-(defcustom malabar-groovy-grooysh "~/.gvm/groovy/current/bin/groovysh"
+
+
+(defun malabar-groovysh-version-dir-> ( &rest files)
+  "Expect FILES to be a list of diretories with names like
+/a/fine/path/12.4.5.  Return non-nil if they are order largest to
+smallest"
+  (every (lambda (ls) (not (apply 'version-list-< ls)))
+	 (-partition-in-steps 2 1
+			      (-map 
+			       'version-to-list
+			       (--mapcat (last (split-string it "[/]")) files)))))
+
+(defun malabar-groovy-groovysh-guess* ()
+  (let ((execs '("bin/groovysh" "bin/groovysh.bat"))
+	(version-dirs (sort  (directory-files "~/.gvm/groovy" t "[0-9]$") 'malabar-groovysh-version-dir->)))
+    (car
+     (-filter 'file-executable-p
+	      (-table-flat 'expand-file-name execs version-dirs)))))
+
+(defun malabar-groovy-groovysh-guess ()
+  "On Windows the ~/.gvm/groovy/current might be a unfollowable symlink."
+  (let ((exec "~/.gvm/groovy/current/bin/groovysh"))
+    (if (file-executable-p (expand-file-name exec))
+	exec
+      (or (malabar-groovy-groovysh-guess*) exec))))
+
+(defcustom malabar-groovy-grooysh (malabar-groovy-grooysh-guess)
   "Where to find the groovysh executable"
   :group 'malabar
   :package-version '(malabar . "2.0")
