@@ -106,7 +106,7 @@ smallest"
 	exec
       (or (malabar-groovy-groovysh-guess*) exec))))
 
-(defcustom malabar-groovy-grooysh (malabar-groovy-grooysh-guess)
+(defcustom malabar-groovy-grooysh (malabar-groovy-groovysh-guess)
   "Where to find the groovysh executable"
   :group 'malabar
   :package-version '(malabar . "2.0")
