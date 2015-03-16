@@ -86,7 +86,7 @@ keybindings.  Changing this variable is at your own risk."
   "Expect FILES to be a list of diretories with names like
 /a/fine/path/12.4.5.  Return non-nil if they are order largest to
 smallest"
-  (every (lambda (ls) (not (apply 'version-list-< ls)))
+  (-all? (lambda (ls) (not (apply 'version-list-< ls)))
 	 (-partition-in-steps 2 1
 			      (-map 
 			       'version-to-list
