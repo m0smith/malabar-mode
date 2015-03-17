@@ -165,6 +165,7 @@
   (with-current-buffer (or buffer (current-buffer))
     (let ((project-dir (malabar--project-file dir)))
       (setq malabar-mode-project-dir project-dir )
+      (setq malabar-mode-project-manager "maven" )
       (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
       (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
     

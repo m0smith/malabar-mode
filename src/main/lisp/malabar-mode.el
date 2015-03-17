@@ -814,10 +814,12 @@ was called."
       (let ((name malabar-mode-project-name)
 	    (dir malabar-mode-project-dir)
 	    (parser malabar-mode-project-parser)
+	    (pm malabar-mode-project-manager)
 	    (file malabar-mode-project-file))
 	(with-current-buffer target-buffer
 	  (setq malabar-mode-project-dir dir)
 	  (setq malabar-mode-project-file file)
+	  (setq malabar-mode-project-manager pm)
 	  (setq malabar-mode-project-parser parser)
 	  (setq malabar-mode-project-name name))))))
 
@@ -1545,6 +1547,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
+    (setq malabar-mode-project-manager "maven" )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
     (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
   
