@@ -83,9 +83,11 @@
       (or (malabar--get-class-info-from-source classname buffer)
 	  (let* ((repo  (expand-file-name malabar-package-maven-repo))
 		 (readtable (cons  '(?\" malabar-json-read-string) json-readtable)))
-	    (malabar-service-call "tags" (list "repo" repo "pm" (expand-file-name malabar-mode-project-file)
-								 "class" classname)
-						    buffer 'list 'plist readtable))))))
+	    (malabar-service-call "tags" (list "repo" repo 
+					       "pm"   malabar-mode-project-manager
+					       "pmfile" (expand-file-name malabar-mode-project-file)
+					       "class" classname)
+				  buffer 'list 'plist readtable))))))
 
 
 ;; (defun malabar-which (classname &optional buffer)
@@ -117,7 +119,7 @@
 
 (defun malabar--get-class-info-from-source (classname buffer)
   (let ((use-dialog-box nil)
-	(project-info (malabar-project-info (malabar-find-project-file buffer))))
+	(project-info (malabar-project-info malabar-mode-project-manager (malabar-find-project-file buffer))))
     (-when-let (source-buffer (or (malabar--load-local-source classname project-info)
 				  (and malabar-load-source-from-sibling-projects
 				       (malabar--load-sibling-source buffer classname project-info ))
@@ -126,14 +128,24 @@
       (-when-let (tag (malabar--get-class-info-from-buffer source-buffer))
         (malabar--class-info-set-from-source tag)))))
 
-(defun malabar-project-info (pom &optional repo)
+(defun malabar-project-info (pm pmfile &optional repo)
   "Get the project info for a project file"
-  (interactive "fPOM File:")
-  (let ((pm (or pom malabar-mode-project-file))
+  (interactive (list
+		(completing-read "Project Manager: " malabar-known-project-managers nil nil nil nil malabar-mode-project-manager)
+		(read-file-name  "Project file (pom, build.gradle):")))
+  (let ((pmfile (or pmfile malabar-mode-project-file))
+	(pm (or pm malabar-mode-project-manager))
 	(repo (or repo (expand-file-name malabar-package-maven-repo))))
-    (unless pm
+    (unless pmfile
       (error "The malabar project file is not set"))
-    (malabar-service-call "pi" (list "repo" repo "pm" (expand-file-name pm)))))
+    (let ((rtnval (malabar-service-call "pi" (list 
+					      "repo" repo 
+					      "pm" pm 
+					      "pmfile" (expand-file-name pmfile)))))
+      (when (called-interactively-p 'interactive)
+	(message "%s" rtnval))
+      rtnval)))
+	
 
 
 (defun malabar--load-local-source (classname project-info)
@@ -435,12 +447,15 @@ e.g. `malabar-choose'."
   "A list of all matching classes or nil"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer 
-      (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
-								  "repo"(expand-file-name malabar-package-maven-repo)
-								  "pattern" (format "[.]%s$" unqualified)
-								  "isClass" "true"
-								  "useRegex" "true"
-								  "max" "100")
+      (let* ((result-array (malabar-service-call "resource" 
+						 (list 
+						  "pm" malabar-mode-project-manager
+						  "pmfile" (expand-file-name malabar-mode-project-file)
+						  "repo"(expand-file-name malabar-package-maven-repo)
+						  "pattern" (format "[.]%s$" unqualified)
+						  "isClass" "true"
+						  "useRegex" "true"
+						  "max" "100")
 						 buffer)))
 	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
 
@@ -448,12 +463,15 @@ e.g. `malabar-choose'."
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((result-array (malabar-service-call "resource" (list "pm" (expand-file-name malabar-mode-project-file)
-								"repo"(expand-file-name malabar-package-maven-repo)
-								"pattern" unqualified
-								"isClass" "true"
-								"useRegex" "false"
-								"max" "1")
+    (let* ((result-array (malabar-service-call "resource" 
+					       (list 
+						"pm" malabar-mode-project-manager
+						"pmfile" (expand-file-name malabar-mode-project-file)
+						"repo"(expand-file-name malabar-package-maven-repo)
+						"pattern" unqualified
+						"isClass" "true"
+						"useRegex" "false"
+						"max" "1")
 					       buffer))
 	   (result-alist (if (> (length result-array) 0) (aref result-array 0)))
 	   (value (cdr (assoc 'value result-alist))))

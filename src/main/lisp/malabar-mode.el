@@ -64,6 +64,7 @@
 
 
 (make-variable-buffer-local 'malabar-mode-project-file) 
+(make-variable-buffer-local 'malabar-mode-project-manager) 
 (make-variable-buffer-local 'malabar-mode-project-dir)
 (make-variable-buffer-local 'malabar-mode-project-name)
 (make-variable-buffer-local 'malabar-mode-project-parser)
@@ -80,10 +81,13 @@
 (defun malabar-run-groovy ()
   (interactive)
 
-  (let ((debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
+  (let ((exec (expand-file-name malabar-groovy-grooysh))
+	(debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
 	(proxy (if (equal malabar-groovy-proxy-host "") ""
 		 (format "-Dhttp.proxyHost=%s -Dhttp.proxyPort=%s -Djava.net.useSystemProxies=true" malabar-groovy-proxy-host malabar-groovy-proxy-port))))
-  (run-groovy (format "%s %s %s" (expand-file-name malabar-groovy-grooysh) debug proxy))))
+    (unless (file-executable-p exec)
+      (error "groovysh executable  (see malabar-groovy-grooysh) is not found or is not executable %s" exec))
+    (run-groovy (format "%s %s %s" exec debug proxy))))
 
 
 
@@ -152,16 +156,20 @@
    (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" 
 	   (expand-file-name element))))
 
-(defun malabar-groovy-send-classpath  (pom &optional repo)
+(defun malabar-groovy-send-classpath  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
-  (interactive "fPOM File:")
+  (interactive (list
+		(completing-read "Project Manager: " malabar-known-project-managers)
+		(read-file-name  "Project file (pom, build.gradle):")))
   (mapcar 'malabar-groovy-send-classpath-element 
-	  (malabar-project-classpath-list (malabar-project-info pom repo) 'test)))
+	  (malabar-project-classpath-list (malabar-project-info pm pmfile repo) 'test)))
 
-(defun malabar-groovy-classpath-string  (pom &optional repo)
+(defun malabar-groovy-classpath-string  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
-  (interactive "fPOM File:")
-  (mapconcat 'identity (malabar-project-test-source-directories (malabar-project-info pom repo))
+  (interactive (list
+		(completing-read "Project Manager: " malabar-known-project-managers)
+		(read-file-name  "Project file (pom, build.gradle):")))
+  (mapconcat 'identity (malabar-project-test-source-directories (malabar-project-info pm pmfile repo))
 	     path-separator))
 
 
@@ -176,8 +184,9 @@
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
-      (let ((pom malabar-mode-project-file))
-	(malabar-groovy-send-classpath pom repo)))))
+      (let ((pmfile malabar-mode-project-file)
+	    (pm malabar-mode-project-manager))
+	(malabar-groovy-send-classpath pm pmfile repo)))))
 
 (defun malabar-groovy-send-buffer (&optional buffer)
   (interactive)
@@ -214,6 +223,7 @@ See `json-read-string'"
   (if (not (comint-check-proc "*groovy*"))
       (funcall cback 'finished nil)
     (let* ((pom-path malabar-mode-project-file)
+	   (pm  malabar-mode-project-manager)
 	   (buffer (current-buffer))
 	   (func (if (buffer-modified-p) 'malabar-parse-scriptbody-raw 'malabar-parse-script-raw))
 	   (script (if (buffer-modified-p) (buffer-string) (buffer-file-name))))
@@ -234,7 +244,7 @@ See `json-read-string'"
 		    (message "flycheck error: %s" msg)
 		    (pop-to-buffer (current-buffer))
 		    (funcall cback 'errored msg)))))
-       pom-path script))))
+       pm pom-path script))))
 
 
 
@@ -363,7 +373,7 @@ See `json-read-string'"
   (interactive)
   (with-current-buffer (or buffer (current-buffer))
     (malabar-parse-script-raw (malabar-parse-list-callback (current-buffer))
-     malabar-mode-project-file (buffer-file-name))))
+     malabar-mode-project-manager malabar-mode-project-file (buffer-file-name))))
 
 
 (defun malabar-project-update-service-info (pm port java-home)
@@ -379,14 +389,16 @@ See `json-read-string'"
 	(and (not no-default) malabar-server-port))))
 
 
-(defun malabar-project-system-property (prop &optional pm project-info sp)
+(defun malabar-project-system-property (prop &optional pm pmfile project-info sp)
   "Return the value of the Java system property named PROP for
    the JDK associated with PM.  This is the equivilent of calling
    System.getProperty(prop);
 
    PROP: The name of the property as a string or symbol.  If nil, return nil.
+  
+   PM: The project manager: maven, gradle, etc
 
-   PM: The full path the project manager file (pom.xml).  Use
+   PMFILE: The full path the project manager file (pom.xml).  Use
    `malabar-mode-project-file' if nil.
 
    PROJECT-INFO: Cache for the project info if available.  If
@@ -394,16 +406,17 @@ See `json-read-string'"
   
    SP: An alist of system properties.  If nil, fetch from the PROJECT-INFO 
 "
-  (interactive (let* ((pi (malabar-project-info  malabar-mode-project-file))
+  (interactive (let* ((pi (malabar-project-info  malabar-mode-project-manager malabar-mode-project-file))
 		      (sp (cdr (assoc 'systemProperties pi))))
 		 (list (completing-read "Property:" sp)
 		       malabar-mode-project-file
 		       pi
 		       sp)))
 		
-  (let* ((pm (or pm malabar-mode-project-file))
+  (let* ((pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager))
 	 (prop (if (stringp prop) (intern prop) prop))
-	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm))))))
+	 (sp (or sp (cdr (assoc 'systemProperties (or project-info (malabar-project-info pm pmfile))))))
 	 (rtnval (cdr (assoc prop sp))))
     (when (called-interactively-p 'interactive)
       (message "%s" rtnval))
@@ -528,13 +541,16 @@ install locations in addition to the directories in
 	    roots)))
 
 
-(defun malabar-jdk-stop (&optional pm)
-  (let* ((pm (or pm malabar-mode-project-file))
+(defun malabar-jdk-stop (&optional pmfile pm)
+  (let* ((pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager))
 	 (port (malabar-project-port pm t)))
     (when port
       (message "Stopping %s port %s" malabar-mode-project-name port)
       (condition-case err
-	  (malabar-service-call "stop" (list "pm" pm))
+	  (malabar-service-call "stop" (list 
+					"pm" pm
+					"pmfile" pmfile))
 	(error err (message "%s" err)))
       (malabar-project-update-service-info malabar-mode-project-file nil nil))))
 
@@ -567,12 +583,19 @@ install locations in addition to the directories in
 
 (require 'json)
 
+(defun malabar-url-validate-args (args-alist) 
+  (let ((pm (cdr (assoc "pm" args-alist))))
+    (unless (member pm malabar-known-project-managers) 
+      (error "The argument 'pm' is required.  It should be one of %s. Passed arguments %s" malabar-known-project-managers args-alist))))
+
 
 (defun malabar-url-http-post (url args)
   (malabar-url-http-post-with-callback 'malabar-kill-url-buffer url args))
 
 (defun malabar-url-http-post-with-callback (callback url args)
   "Send ARGS (an alist) to URL as a POST request."
+  (message "hasmter")
+  (malabar-url-validate-args args)
   (setq url-request-method "POST"
 	url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))
 	url-request-data (mapconcat (lambda (arg)
@@ -593,7 +616,8 @@ install locations in addition to the directories in
 		     malabar-server-host 
 		     (malabar-project-port malabar-mode-project-file))))
     (malabar-url-http-post url (list
-				(cons "pm"        malabar-mode-project-file)
+				(cons "pm"        malabar-mode-project-manager)
+				(cons "pmfile"     malabar-mode-project-file)
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
@@ -604,7 +628,7 @@ install locations in addition to the directories in
 ;;     (malabar-post-additional-classpath*)))
 
 
-(defun malabar-parse-script-raw (callback pom script &optional repo)
+(defun malabar-parse-script-raw (callback pm pmfile script &optional repo)
   "Parse the SCRIPT and call CALLBACK with the results buffer"
   (interactive "fPOM File:\nfJava File:")
   
@@ -613,26 +637,27 @@ install locations in addition to the directories in
 	url-request-data nil)
   
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
-	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&script=%s&parser=%s" 
+	 (url (format "http://%s:%s/parse/?repo=%s&pm=%s&pmfile=%s&script=%s&parser=%s" 
 		      malabar-server-host
-		      (malabar-project-port (expand-file-name pom))
-		      repo (expand-file-name pom) (expand-file-name script)
+		      (malabar-project-port (expand-file-name pmfile))
+		      repo pm (expand-file-name pmfile) (expand-file-name script)
 		      malabar-mode-project-parser)))
     ;(message "URL %s" url)
     (url-retrieve url callback)))
 
-(defun malabar-parse-scriptbody-raw (callback pom scriptbody &optional repo)
+(defun malabar-parse-scriptbody-raw (callback pm pmfile scriptbody &optional repo)
   "Parse the SCRIPTBODY and call CALLBACK with the results buffer"
 
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (url (format "http://%s:%s/parse/"
 		      malabar-server-host
-		      (malabar-project-port (expand-file-name pom)))))
+		      (malabar-project-port (expand-file-name pmfile)))))
 
     (malabar-url-http-post-with-callback callback url
 					 (list
 					  (cons "repo" repo)
-					  (cons "pm" (expand-file-name pom))
+					  (cons "pm" pm)
+					  (cons "pmfile" (expand-file-name pmfile))
 					  (cons "scriptBody" scriptbody)
 					  (cons "parser" malabar-mode-project-parser)))))
 					 
@@ -742,6 +767,27 @@ was called."
 	(elt files 0)
       (concat root (elt malabar-java-stack-trace-dirs  0) "/" package2 "/" file))))
       
+
+(defun malabar-java-stack-trace-gud-break ()
+  "Set the breakpoint of the current line in the stack trace by finding the file, going to the specified line and calling `gud-break'"
+  (interactive)
+  (let* (
+	 ;(regex (cadr (assq 'malabar-java-stack-trace compilation-error-regexp-alist-alist)))
+	(current-line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+	; (match? (string-match regex current-line))
+	(package (match-string 1 current-line))
+	(path    (replace-regexp-in-string "\\." "/" package))
+	(class   (match-string 2 current-line))
+	(file    (match-string 4 current-line))
+	(line    (match-string 5 current-line))
+	(full-file-name (malabar-java-stack-trace-best-filename path file)))
+    (when (file-exists-p full-file-name)
+      (find-file full-file-name))
+    (goto-char (point-min))
+    (forward-line (- (string-to-number line) 1))
+    (gud-basic-call (format "stop at %s.%s:%s" package class line))
+    (pop-to-buffer gud-comint-buffer)))
+      
 	 
 (defun malabar-java-stack-trace-regexp-to-filename ()
   "Generates a relative filename from java-stack-trace regexp match data."
@@ -758,7 +804,7 @@ was called."
 (add-to-list 'compilation-error-regexp-alist 'malabar-java-stack-trace)
 (add-to-list 'compilation-error-regexp-alist-alist
 	     '(malabar-java-stack-trace .
-				("^[[:space:]]at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
+				("^[[:space:]]*at[[:space:]]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)[.]\\([a-zA-Z.$_0-9]+\\)(\\([^:)]*\\):\\([0-9]+\\))"
 				 malabar-java-stack-trace-regexp-to-filename 5)))
 
 (defun malabar-project-copy-buffer-locals ( src-buffer)
@@ -768,10 +814,12 @@ was called."
       (let ((name malabar-mode-project-name)
 	    (dir malabar-mode-project-dir)
 	    (parser malabar-mode-project-parser)
+	    (pm malabar-mode-project-manager)
 	    (file malabar-mode-project-file))
 	(with-current-buffer target-buffer
 	  (setq malabar-mode-project-dir dir)
 	  (setq malabar-mode-project-file file)
+	  (setq malabar-mode-project-manager pm)
 	  (setq malabar-mode-project-parser parser)
 	  (setq malabar-mode-project-name name))))))
 
@@ -786,6 +834,7 @@ was called."
 	(with-current-buffer (pop-to-buffer (format "*Malabar Stack Trace<%s>*" malabar-mode-project-name))
 	  (malabar-project-copy-buffer-locals buffer)
 	  (compilation-mode)
+	  (define-key compilation-mode-map [?\C-b] 'malabar-java-stack-trace-gud-break)
 	  (malabar-project-copy-buffer-locals buffer)
 	  (setq inhibit-read-only t)
 	  (when active
@@ -845,7 +894,7 @@ was called."
     results))
 
 
-(defun malabar-run-test (use-method &optional buffer repo pom )
+(defun malabar-run-test (use-method &optional buffer repo pm pmfile )
   "Runs the current buffer as a unit test, using jUnit.  
 
    USE-METHOD: if USE-METHOD is non-nil or With a  prefix arg, 
@@ -861,11 +910,13 @@ was called."
   (let* ((repo (or repo (expand-file-name malabar-package-maven-repo)))
 	 (buffer (or buffer (current-buffer)))
 	 (script (buffer-file-name buffer))
-	 (pom (or pom malabar-mode-project-file)))
+	 (pmfile (or pmfile malabar-mode-project-file))
+	 (pm (or pm malabar-mode-project-manager)))
 	 
     (malabar-unittest-list (malabar-service-call "test"
 						 (list "repo"   repo
-						       "pm"     (expand-file-name pom)
+						       "pm"     pm
+						       "pmfile" (expand-file-name pmfile)
 						       "script" (expand-file-name script)
 						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
@@ -893,6 +944,34 @@ was called."
 			      
 			      
 
+
+
+    
+
+
+(defun malabar-project-sourcepath (&optional buffer)
+  "Convert the classpath to a source path"
+  (with-current-buffer (or buffer (current-buffer))
+    (if (not ede-object)
+	(error "Cannot invoke malabar-project-sourcepath for buffer %s" (buffer-name)))
+    (let* ((project-file (malabar-find-project-file))
+	   (project-info (malabar-project-info malabar-mode-project-manager project-file)))
+      (malabar-project-source-directories project-info))))
+	   
+
+(defun malabar-jdb-remote (port)
+  "Start the JDB debugger for the class in the current buffer."
+
+  (interactive "nPort:")
+  (let* ((classpath (malabar-groovy-classpath-string-of-buffer))
+	 (gud-jdb-classpath classpath)
+	 (sourcepath (malabar-util-reverse-slash (malabar-util-string-join (malabar-project-sourcepath) path-separator))))
+    (append-to-file (format "use %s\n" sourcepath) nil (expand-file-name ".jdbrc"))
+    (jdb (format "%s  -connect com.sun.jdi.SocketAttach:hostname=localhost,port=%s" 
+		 gud-jdb-command-name 
+		 ;
+		 port))))
+
 	
 (defun malabar-jdb ()
   "Start the JDB debugger for the class in the current buffer.
@@ -913,7 +992,7 @@ The current buffer must have a java file with a main method"
 
   (let* ((dir (expand-file-name (file-name-directory (buffer-file-name buffer))))
          (project-file (malabar-find-project-file buffer))
-	 (project-info (malabar-project-info project-file))
+	 (project-info (malabar-project-info malabar-mode-project-manager project-file))
          (source-directories (append (malabar-project-source-directories
                                       project-info)
                                      (malabar-project-test-source-directories
@@ -1387,7 +1466,8 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 					 url
 					 (list
 					  (cons "repo" repo)
-					  (cons "pm" (expand-file-name malabar-mode-project-file))))))
+					  (cons "pm" malabar-mode-project-manager)
+					  (cons "pmfile" (expand-file-name malabar-mode-project-file))))))
 
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
@@ -1467,6 +1547,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
   (let ((project-dir (ede-find-project-root "pom.xml")))
     (setq malabar-mode-project-dir project-dir )
+    (setq malabar-mode-project-manager "maven" )
     (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
     (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
   
@@ -1476,14 +1557,34 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 ;;;###autoload
 (define-minor-mode malabar-mode
-  "Support and integeration for JVM languages"
+  "Support and integeration for JVM languages
+
+When called interactively, toggle `malabar-mode'.  With prefix
+ARG, enable `malabar-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM"
   :keymap malabar-mode-map
   (malabar-mode-body))
 
 ;;;###autoload
 (define-minor-mode malabar-java-mode
-  "Java specfic minor mode for JVM languages"
+  "Java specfic minor mode for JVM languages.
+
+When called interactively, toggle `malabar-java-mode'.  With prefix
+ARG, enable `malabar-java-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-java-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-java-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM-Java"
   :keymap malabar-mode-map
   (malabar-mode-body)
@@ -1491,7 +1592,17 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 
 ;;;###autoload
 (define-minor-mode malabar-groovy-mode
-  "Groovy specfic minor mode for JVM languages"
+  "Groovy specfic minor mode for JVM languages.
+
+When called interactively, toggle `malabar-groovy-mode'.  With prefix
+ARG, enable `malabar-groovy-mode' if ARG is positive, otherwise disable
+it.
+
+When called from Lisp, enable `malabar-groovy-mode' if ARG is omitted,
+nil or positive.  If ARG is `toggle', toggle `malabar-groovy-mode'.
+Otherwise behave as if called interactively.
+
+\\{malabar-mode-map}"
   :lighter " JVM-Groovy"
   :keymap malabar-mode-map
   (unless malabar-package-additional-classpath

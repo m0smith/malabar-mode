@@ -43,6 +43,11 @@
 (defun malabar-util-reverse-slash (f)
   (replace-regexp-in-string "\\\\" "/" f t t))
 
+(defun malabar-util-string-join  (strings &optional separator)
+  "Join the list of STRINGS using optional SEPARATOR"
+  (mapconcat 'identity strings separator))
+
+
 (defun string-starts-with (string start)
   (string-prefix-p start string))
 
