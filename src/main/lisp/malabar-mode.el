@@ -594,7 +594,6 @@ install locations in addition to the directories in
 
 (defun malabar-url-http-post-with-callback (callback url args)
   "Send ARGS (an alist) to URL as a POST request."
-  (message "hasmter")
   (malabar-url-validate-args args)
   (setq url-request-method "POST"
 	url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded"))
