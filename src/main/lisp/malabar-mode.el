@@ -39,8 +39,8 @@
 
 ;;; Code:
 (eval-when-compile 
-  (require 'cl)
-  (require 'gud))
+  (require 'cl))
+(require 'gud)
 (require 'inf-groovy)
 (require 'semantic/db-javap)
 (require 'url-vars)
@@ -296,7 +296,7 @@ See `json-read-string'"
   (with-current-buffer (or buffer (current-buffer))
     (malabar-parse-script-raw
      (lambda (_status) (kill-buffer (current-buffer)))
-     malabar-mode-project-file (buffer-file-name))))
+     malabar-mode-project-manager malabar-mode-project-file (buffer-file-name))))
 
 ;;;
 ;;;  Parse list mode
