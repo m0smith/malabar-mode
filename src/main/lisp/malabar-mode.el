@@ -84,7 +84,10 @@
   (let ((exec (expand-file-name malabar-groovy-grooysh))
 	(debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
 	(proxy (if (equal malabar-groovy-proxy-host "") ""
-		 (format "-Dhttp.proxyHost=%s -Dhttp.proxyPort=%s -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true" malabar-groovy-proxy-host malabar-groovy-proxy-port  malabar-groovy-proxy-host malabar-groovy-proxy-port))))
+		 (format "-Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
+                          -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true" 
+			 malabar-groovy-proxy-host malabar-groovy-proxy-port 
+			 malabar-groovy-proxy-host malabar-groovy-proxy-port))))
     (unless (file-executable-p exec)
       (error "groovysh executable  (see malabar-groovy-groovysh) is not found or is not executable %s" exec))
     (run-groovy (format "%s %s %s" exec debug proxy))))
