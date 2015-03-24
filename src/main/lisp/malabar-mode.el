@@ -93,6 +93,32 @@
     (run-groovy (format "%s %s %s" exec debug proxy))))
 
 
+(defun forward-gav ( &optional arg)
+  (interactive)
+  (let ((sentence-end "[\"']"))
+    (forward-sentence arg)
+    (left-char 1)))
+
+
+(defun interactive-region-or-string (prompt &optional hist)
+  "For use with `interactive' where a string is needed and it can default to the currently active region"
+  (let ((default (if mark-active (buffer-substring (region-beginning) (region-end)))))
+    (list (read-string prompt default hist))))
+
+
+(defun malabar-groovy-grab-artifact (group artifact version)
+  "Fetch from the repo the specified atifact and load it into the running groovy shell."
+  (malabar-groovy-send-string "import groovy.grape.Grape")
+  (malabar-groovy-send-string (format "Grape.grab(group:'%s', module:'%s', version:'%s')" group artifact version)))
+
+(defun malabar-groovy-grab-artifact-gav (gav)
+  "Fetch from the repo the specified atifact and load it into the running groovy shell.
+
+    Defaults to the currently selected region.
+
+    GAV is a single string separated by colon GROUP:ARTIFACT:VERSION"
+  (interactive (interactive-region-or-string "sGROUP:ARTIFACT:VERSION :"))
+  (apply 'malabar-groovy-grab-artifact (split-string gav ":")))
 
 (defun malabar-groovy-send-string (str)
   "Send a string to the inferior Groovy process."
