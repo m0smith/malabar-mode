@@ -46,6 +46,8 @@
 (require 'url-vars)
 (require 'ede/maven2)
 (require 'pulse)
+(require 'url-http)
+(require 'url-proxy)
 
 (require 'malabar-variables)
 (require 'malabar-abbrevs)
