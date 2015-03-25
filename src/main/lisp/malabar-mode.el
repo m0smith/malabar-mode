@@ -122,8 +122,8 @@
 		  (format "-Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
                            -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true %s " 
 			  host port
-			  nost port
-			  (malabar-run-groovy-proxy-user))))
+			  host port
+			  (malabar-run-groovy-proxy-user user pass)))))
     (unless (file-executable-p exec)
       (error "groovysh executable  (see malabar-groovy-groovysh) is not found or is not executable %s" exec))
     (run-groovy (format "%s %s %s" exec debug proxy))))
