@@ -78,26 +78,64 @@
 ;;;
 
 
+(defun malabar-get-proxy-info ()
+  "Gradle, bless its little heart, does not handle the http proxy properly so we need to get it outselves"
+  (interactive)
+  (let* ((target-host "repo.gradle.org")
+	 (target (format "http://%s/gradle/libs-releases-local" target-host))
+	 (proxy-url (url-find-proxy-for-url (url-generic-parse-url target) target-host)))
+    (when proxy-url
+      
+      (let* ((url-using-proxy proxy-url)
+	     (_ (url-proxy (url-generic-parse-url target) (lambda (_))))
+	     (proxy (url-generic-parse-url proxy-url))
+	     (host (url-host proxy))
+	     (port (url-port proxy))
+	     (auth-rec (assoc (format "%s:%s" host port) url-http-proxy-basic-auth-storage)))
+	(if auth-rec
+	  (let* ((encoded (cdadr  auth-rec))
+		 (clear (base64-decode-string encoded))
+		 (parts (split-string clear ":"))
+		 (user (car parts))
+		 (pass (cadr parts)))
+	    (list host port user pass))
+	  (list host port))))))
+
+
+(defun malabar-run-groovy-proxy-user( user pass)
+  (if (not user) ""
+    (format " -Dhttp.proxyUser=%s -Dhttp.proxyPassword=%s -Dhttps.proxyUser=%s -Dhttps.proxyPassword=%s "
+	    user pass user pass)))
+
 (defun malabar-run-groovy ()
+  
   (interactive)
 
-  (let ((exec (expand-file-name malabar-groovy-grooysh))
-	(debug (if malabar-groovy-grooysh-debug "-Dgroovy.grape.report.downloads=true" ""))
-	(proxy (if (equal malabar-groovy-proxy-host "") ""
-		 (format "-Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
-                          -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true" 
-			 malabar-groovy-proxy-host malabar-groovy-proxy-port 
-			 malabar-groovy-proxy-host malabar-groovy-proxy-port))))
+  (let* ((exec (expand-file-name malabar-groovy-grooysh))
+	 (debug (if malabar-groovy-grooysh-debug " -d -Dgroovy.grape.report.downloads=true " ""))
+	 (proxy-info (malabar-get-proxy-info))
+	 (host (nth 0 proxy-info))
+	 (port (nth 1 proxy-info))
+	 (user (nth 2 proxy-info))
+	 (pass (nth 3 proxy-info))
+	 (proxy (if (not proxy-info)  ""
+		  (format "-Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
+                           -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true %s " 
+			  host port
+			  nost port
+			  (malabar-run-groovy-proxy-user))))
     (unless (file-executable-p exec)
       (error "groovysh executable  (see malabar-groovy-groovysh) is not found or is not executable %s" exec))
     (run-groovy (format "%s %s %s" exec debug proxy))))
 
 
-(defun forward-gav ( &optional arg)
-  (interactive)
-  (let ((sentence-end "[\"']"))
+(defun forward-gav ( arg)
+  "For use with `thing-at-point' to find a GAV at point"
+  (interactive "p")
+  (let ((sentence-end "[\"'[:space:]]"))
     (forward-sentence arg)
-    (left-char 1)))
+    (when (>= arg 0)
+      (left-char 1))))
 
 
 (defun interactive-region-or-string (prompt &optional hist)
@@ -114,10 +152,10 @@
 (defun malabar-groovy-grab-artifact-gav (gav)
   "Fetch from the repo the specified atifact and load it into the running groovy shell.
 
-    Defaults to the currently selected region.
+    Defaults to the thing at point (see `forward-gav').
 
     GAV is a single string separated by colon GROUP:ARTIFACT:VERSION"
-  (interactive (interactive-region-or-string "sGROUP:ARTIFACT:VERSION :"))
+  (interactive (list (read-string "GROUP:ARTIFACT:VERSION :" (thing-at-point 'gav))))
   (apply 'malabar-groovy-grab-artifact (split-string gav ":")))
 
 (defun malabar-groovy-send-string (str)
