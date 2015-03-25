@@ -89,7 +89,7 @@
     (when proxy-url
       
       (let* ((url-using-proxy proxy-url)
-	     (_ (url-proxy (url-generic-parse-url target) (lambda (_))))
+	     (_ (url-retrieve-synchronously target))
 	     (proxy (url-generic-parse-url proxy-url))
 	     (host (url-host proxy))
 	     (port (url-port proxy))
@@ -121,7 +121,7 @@
 	 (user (nth 2 proxy-info))
 	 (pass (nth 3 proxy-info))
 	 (proxy (if (not proxy-info)  ""
-		  (format "-Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
+		  (format "-Dhttp.nonProxyHosts=localhost -Dhttp.proxyHost=%s  -Dhttp.proxyPort=%s \
                            -Dhttps.proxyHost=%s -Dhttps.proxyPort=%s -Djava.net.useSystemProxies=true %s " 
 			  host port
 			  host port
@@ -160,9 +160,14 @@
   (interactive (list (read-string "GROUP:ARTIFACT:VERSION :" (thing-at-point 'gav))))
   (apply 'malabar-groovy-grab-artifact (split-string gav ":")))
 
+(defun malabar-groovy-send-region (begin end)
+  "Send the current region to the Groovy process"
+  (interactive "r")
+  (malabar-groovy-send-string (buffer-substring begin end)))
+  
 (defun malabar-groovy-send-string (str)
   "Send a string to the inferior Groovy process."
-  (interactive "r")
+  (interactive "sGroovy Expression: ")
 
   (save-excursion
     (save-restriction
