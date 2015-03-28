@@ -149,6 +149,9 @@ The malabar minor mode has three different integrations: an interactive groovy s
 
 Here is a list of available interactive commands by integration, with default keybindings where applicable:
 
+| Functionality | repl | service | pm |
+|---------------+------+---------+----+
+| Test| 
 
 
 <dl>
