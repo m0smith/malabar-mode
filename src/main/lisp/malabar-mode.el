@@ -1606,18 +1606,19 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
   "Keymap of `malabar-mode'.")
 
 (defun malabar-mode-body ()
-  (semantic-mode)
-  (ede-minor-mode)
-  (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
-
-  (let ((project-dir (ede-find-project-root "pom.xml")))
-    (setq malabar-mode-project-dir project-dir )
-    (setq malabar-mode-project-manager "maven" )
-    (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
-    (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
-  
-  (malabar-post-additional-classpath)
-  (malabar-abbrevs-setup))
+  (when (buffer-file-name (current-buffer))
+    (semantic-mode)
+    (ede-minor-mode)
+    (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
+    
+    (let ((project-dir (ede-find-project-root "pom.xml")))
+      (setq malabar-mode-project-dir project-dir )
+      (setq malabar-mode-project-manager "maven" )
+      (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
+      (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
+    
+    (malabar-post-additional-classpath)
+    (malabar-abbrevs-setup)))
 
 
 ;;;###autoload

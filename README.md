@@ -143,8 +143,15 @@ Update:  malabar-mode now has a menu.  Yay!
 
 - unit testing a class or method
 
-Here is a list of available interactive commands, with default
-keybindings where applicable:
+### The 3 faces of malabar-mode
+
+The malabar minor mode has three different integrations: an interactive groovy shell (repl), a malabar HTTP server (service), and the external project manager like maven or gradle (pm).  Each of the integrations is managed seperately.  That is, compiling a file using the service will not load that class into the repl.  As such, the functions will be named so it is obvious which integration is used:  `malabar-repl-` , `malabar-service-`, or `malabar-pm-`
+
+Here is a list of available interactive commands by integration, with default keybindings where applicable:
+
+Unit Test
+
+
 
 <dl>
 

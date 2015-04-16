@@ -77,6 +77,7 @@
 (defclass ede-malabar-maven2-project (ede-maven2-project)
   ((tracking-symbol :initform 'ede-maven2-project-list)
    (file-header-line :initform ";; EDE Maven2 project wrapper")
+   (current-targets :initform nil :initarg :current-targets)
    (pom :initform nil
 	:initarg :pom
 	:documentation "Parsed pom.xml file")
