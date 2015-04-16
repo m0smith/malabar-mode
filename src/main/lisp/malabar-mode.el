@@ -88,20 +88,10 @@
 	 (proxy-url (url-find-proxy-for-url (url-generic-parse-url target) target-host)))
     (when proxy-url
       
-      (let* ((url-using-proxy proxy-url)
-	     (_ (url-retrieve-synchronously target))
-	     (proxy (url-generic-parse-url proxy-url))
+      (let* ((proxy (url-generic-parse-url proxy-url))
 	     (host (url-host proxy))
-	     (port (url-port proxy))
-	     (auth-rec (assoc (format "%s:%s" host port) url-http-proxy-basic-auth-storage)))
-	(if auth-rec
-	  (let* ((encoded (cdadr  auth-rec))
-		 (clear (base64-decode-string encoded))
-		 (parts (split-string clear ":"))
-		 (user (car parts))
-		 (pass (cadr parts)))
-	    (list host port user pass))
-	  (list host port))))))
+	     (port (url-port proxy)))
+	(list host port)))))
 
 
 (defun malabar-run-groovy-proxy-user( user pass)
@@ -986,6 +976,8 @@ was called."
 	 (pmfile (or pmfile malabar-mode-project-file))
 	 (pm (or pm malabar-mode-project-manager)))
 	 
+    (unless pm (error "pm is required"))
+    (unless pmfile (error "pmfile is required"))
     (malabar-unittest-list (malabar-service-call "test"
 						 (list "repo"   repo
 						       "pm"     pm
