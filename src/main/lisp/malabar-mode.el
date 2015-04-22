@@ -627,13 +627,16 @@ install locations in addition to the directories in
 	 (jdk-home (cadr (assoc jdk jdk-alist)))
 	 (cwd (ede-find-project-root "pom.xml"))
 	 (rtnval (malabar-service-call "spawn"
-				       (list "port" (number-to-string port)
-					     "version" malabar-server-jar-version
-					     "jdk" jdk-home
-					     "cwd" cwd
-					     "class" "com.software_ninja.malabar.Malabar"))))
+				       (list 
+					"pm" "maven" ;; just a place holder
+					"pmfile" "none" ;; just place holder
+					"port" (number-to-string port)
+					"version" malabar-server-jar-version
+					"jdk" jdk-home
+					"cwd" cwd
+					"class" "com.software_ninja.malabar.Malabar"))))
     (malabar-project-update-service-info malabar-mode-project-file port jdk-home)
-    (malabar-post-additional-classpath)
+    (malabar-post-additional-classpath "maven" "none")
     ;; Reparse all file buffers in the project using the new jdk
     (mapc #'malabar-project-parse-file-async
 	  (-filter (lambda (b) (malabar-project-buffer-p malabar-mode-project-file b)) 
@@ -674,13 +677,13 @@ install locations in addition to the directories in
   (kill-buffer (current-buffer)))
 
 
-(defun malabar-post-additional-classpath ()
+(defun malabar-post-additional-classpath ( &optional pm pmfile)
   (let ((url (format "http://%s:%s/add/"
 		     malabar-server-host 
 		     (malabar-project-port malabar-mode-project-file))))
     (malabar-url-http-post url (list
-				(cons "pm"        malabar-mode-project-manager)
-				(cons "pmfile"     malabar-mode-project-file)
+				(cons "pm"        (or pm malabar-mode-project-manager))
+				(cons "pmfile"    (or pmfile malabar-mode-project-file))
 				(cons "relative"  (json-encode malabar-package-additional-classpath))))))
  
 
