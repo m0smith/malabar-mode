@@ -21,7 +21,7 @@
 
 | Binding     | Function                | Description                            |
 |-------------+-------------------------+----------------------------------------|
-| C-c C-v C-c | malabar-compile-file    | Compile the file in the current buffer |
+| C-c C-v C-c | malabar-http-compile-file    | Compile the file in the current buffer |
 | C-c C-v p   | malabar-package-project | Run 'mvn package'                      |
 | C-c C-v C-b | malabar-install-project | Run 'mvn install'                      |
 | C-c C-v M-t | malabar-run-all-tests   | Run 'mvn test'                         |

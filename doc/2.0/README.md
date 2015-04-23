@@ -105,7 +105,7 @@ malabar-mode should work fine with the embedded CEDET.
 
         (add-hook 'malabar-mode-hook
              (lambda () 
-               (add-hook 'after-save-hook 'malabar-compile-file-silently
+               (add-hook 'after-save-hook 'malabar-http-compile-file-silently
                           nil t)))
           
 # Usage
@@ -116,7 +116,7 @@ Here is a list of available interactive commands, with default
 keybindings where applicable:
 
 <dl>
-<dt>malabar-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
+<dt>malabar-http-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
 <dd>Compiles the current file.</dd>
 
 <dt>malabar-clear-typecache</dt>
@@ -180,7 +180,7 @@ keybindings where applicable:
   same as where we started) and runs the now-current buffer as a
   standalone JUnit test.</dd>
   
-<dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
+<dt>malabar-http-run-test <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the corresponding test to this buffer using Maven (<code>mvn test -Dtest=classname</code>)</dd>
 
 <dt>malabar-update-package</dt>

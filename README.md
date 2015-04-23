@@ -126,7 +126,7 @@ development now targets Emacs 24.
 
         (add-hook 'malabar-mode-hook
              (lambda () 
-               (add-hook 'after-save-hook 'malabar-compile-file-silently
+               (add-hook 'after-save-hook 'malabar-http-compile-file-silently
                           nil t)))
           
 # Usage
@@ -155,7 +155,7 @@ Unit Test
 
 <dl>
 
-<dt><b>malabar-run-test</b> <span class="classifier">(C-c C-v t)</span></dt>
+<dt><b>malabar-http-run-test</b> <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the unit tests in the current class.  With a prefix args, ask for a method name and only run that test</dd>
 
 <dt><b>semantic-ia-describe-class</b> <span class="classifier">(C-c C-v i)</span></dt>
@@ -190,13 +190,13 @@ Unit Test
   searching upwards in the directory structure.</dd>
 
 <dt><b>malabar-repl-send-buffer</b> <span class="classifier">(C-c C-v C-k)</span></dt>
-<dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-mode-load-class</code></dd>
+<dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-repl-mode-load-class</code></dd>
 
 <dt><b>malabar-stack-trace-buffer</b> <span class="classifier">(C-c C-v C-#)</span></dt>
 <dd>Create a new stack trace buffer and optional copy the current region into it.  A stack trace buffer parses the stack trace and allows jumping directly to the error in the source file.  The stack trace buffer will parse whatever stack trace is pasted into it</dd>
 
 <dt><b>malabar-repl-send-classpath-of-buffer</b> <span class="classifier">(C-c C-v s)</span></dt>
-<dd>For use with <code>malabar-repl-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
+<dd>For use with <code>malabar-repl-send-buffer</code> and <code>malabar-repl-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
 
 <dt><b>malabar-repl-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
 <dd>Add a jar, zip or directory to the running groovy buffer</dd>
@@ -233,7 +233,7 @@ The following are either not in 2.0 yet or are only partially working.  If you u
 
 <dl>
 
-<dt>malabar-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
+<dt>malabar-http-compile-file <span class="classifier">(C-c C-v C-c)</span></dt>
 <dd>Compiles the current file.</dd>
 
 <dt>malabar-clear-typecache</dt>
@@ -277,7 +277,7 @@ The following are either not in 2.0 yet or are only partially working.  If you u
   same as where we started) and runs the now-current buffer as a
   standalone JUnit test.</dd>
   
-<dt>malabar-run-test <span class="classifier">(C-c C-v t)</span></dt>
+<dt>malabar-http-run-test <span class="classifier">(C-c C-v t)</span></dt>
 <dd>Runs the corresponding test to this buffer using Maven (<code>mvn test -Dtest=classname</code>)</dd>
 
 <dt>malabar-visit-corresponding-test</dt>

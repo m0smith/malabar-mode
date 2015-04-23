@@ -66,7 +66,7 @@
 				   (malabar-ert-dir "test/project/basic/src/test/java/com/software_ninja")))
 	(buffer (find-file-noselect source)))
     (with-current-buffer buffer
-      (should (equal 1 (length (malabar-run-test nil)))))))
+      (should (equal 1 (length (malabar-http-run-test nil)))))))
 
 
 

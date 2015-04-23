@@ -7,7 +7,7 @@
 ;;     Espen Wiborg <espenhw@grumblesmurf.org>
 ;;     Matthew Smith <matt@m0smith.com>
 ;; URL: http://www.github.com/m0smith/malabar-mode
-;; Version: 2.0.1
+;; Version: 2.5.1
 ;; Package-Requires: ((fringe-helper "1.0.1"))
 ;; Keywords: java, maven, groovy, language, malabar
 
@@ -204,7 +204,7 @@
 
 
 
-(defun malabar-mode-load-class (&optional buffer)
+(defun malabar-repl-mode-load-class (&optional buffer)
   "Load the file pointed to by BUFFER (default current-buffer) into the running *groovy*"
   (interactive)
   (with-current-buffer (or buffer (current-buffer))
@@ -432,7 +432,7 @@ See `json-read-string'"
 ;;(lambda (_status) (kill-buffer (current-buffer)))
 
 ;;;###autoload
-(defun malabar-compile-file (&optional buffer)
+(defun malabar-http-compile-file (&optional buffer)
   "Compile the current buffer.  If there are errors open them up into a list-buffer"
   (interactive)
   (with-current-buffer (or buffer (current-buffer))
@@ -960,7 +960,7 @@ was called."
     results))
 
 
-(defun malabar-run-test (use-method &optional buffer repo pm pmfile )
+(defun malabar-http-run-test (use-method &optional buffer repo pm pmfile )
   "Runs the current buffer as a unit test, using jUnit.  
 
    USE-METHOD: if USE-METHOD is non-nil or With a  prefix arg, 
@@ -1537,13 +1537,16 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
 					  (cons "pm" malabar-mode-project-manager)
 					  (cons "pmfile" (expand-file-name malabar-mode-project-file))))))
 
+
+(defalias 'malabar-pm-compile-taret 'ede-compile-target)
+
 (defvar malabar-command-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [?p] 'ede-compile-target)
+    (define-key map [?p] 'malabar-pm-compile-target)
     ;; (define-key map [?\C-b] 'malabar-install-project)
-    (define-key map [?\C-c] 'malabar-compile-file)
+    (define-key map [?\C-c] 'malabar-http-compile-file)
     ;; (define-key map [?\C-g] 'malabar-insert-getset)
-    (define-key map [?t]    'malabar-run-test)
+    (define-key map [?t]    'malabar-http-run-test)
     (define-key map [?\?]   'malabar-cheatsheet)
     ;; (define-key map [?\C-t] 'malabar-run-junit-test)
     ;; (define-key map [?\M-t] 'malabar-run-all-tests)
@@ -1573,7 +1576,7 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
     (define-key map (kbd "C-#") 'malabar-stack-trace-buffer)
     (define-key map "s" 'malabar-repl-send-classpath-of-buffer)
     (define-key map "S" 'malabar-repl-send-classpath-element)
-    (define-key map "l" 'malabar-mode-load-class)
+    (define-key map "l" 'malabar-repl-mode-load-class)
     (define-key map "V" 'malabar-version)
     (define-key map "D" 'malabar-jdb)
     map)
