@@ -30,11 +30,11 @@ SCOPE is either 'test or 'runtime
 
 ;;;***
 
-;;;### (autoloads (malabar-service-call) "malabar-service" "malabar-service.el"
+;;;### (autoloads (malabar-http-call) "malabar-http" "malabar-http.el"
 ;;;;;;  (21647 600 0 0))
-;;; Generated autoloads from malabar-service.el
+;;; Generated autoloads from malabar-http.el
 
-(autoload 'malabar-service-call "malabar-service" "\
+(autoload 'malabar-http-call "malabar-http" "\
 SERVICE is a known service to the malabat server 
 
    ARGS-PLIST is a list of '(key val key val ...). If pm is not

@@ -83,7 +83,7 @@
       (or (malabar--get-class-info-from-source classname buffer)
 	  (let* ((repo  (expand-file-name malabar-package-maven-repo))
 		 (readtable (cons  '(?\" malabar-json-read-string) json-readtable)))
-	    (malabar-service-call "tags" (list "repo" repo 
+	    (malabar-http-call "tags" (list "repo" repo 
 					       "pm"   malabar-mode-project-manager
 					       "pmfile" (expand-file-name malabar-mode-project-file)
 					       "class" classname)
@@ -138,7 +138,7 @@
 	(repo (or repo (expand-file-name malabar-package-maven-repo))))
     (unless pmfile
       (error "The malabar project file is not set"))
-    (let ((rtnval (malabar-service-call "pi" (list 
+    (let ((rtnval (malabar-http-call "pi" (list 
 					      "repo" repo 
 					      "pm" pm 
 					      "pmfile" (expand-file-name pmfile)))))
@@ -447,7 +447,7 @@ e.g. `malabar-choose'."
   "A list of all matching classes or nil"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer 
-      (let* ((result-array (malabar-service-call "resource" 
+      (let* ((result-array (malabar-http-call "resource" 
 						 (list 
 						  "pm" malabar-mode-project-manager
 						  "pmfile" (expand-file-name malabar-mode-project-file)
@@ -463,7 +463,7 @@ e.g. `malabar-choose'."
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((result-array (malabar-service-call "resource" 
+    (let* ((result-array (malabar-http-call "resource" 
 					       (list 
 						"pm" malabar-mode-project-manager
 						"pmfile" (expand-file-name malabar-mode-project-file)
