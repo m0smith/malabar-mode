@@ -92,40 +92,40 @@ smallest"
 			       'version-to-list
 			       (--mapcat (last (split-string it "[/]")) files)))))
 
-(defun malabar-groovy-groovysh-guess* ()
+(defun malabar-repl-groovysh-guess* ()
   (let ((execs '("bin/groovysh" "bin/groovysh.bat"))
 	(version-dirs (sort  (directory-files "~/.gvm/groovy" t "[0-9]$") 'malabar-groovysh-version-dir->)))
     (car
      (-filter 'file-executable-p
 	      (-table-flat 'expand-file-name execs version-dirs)))))
 
-(defun malabar-groovy-groovysh-guess ()
+(defun malabar-repl-groovysh-guess ()
   "On Windows the ~/.gvm/groovy/current might be a unfollowable symlink."
   (let ((exec "~/.gvm/groovy/current/bin/groovysh"))
     (if (file-executable-p (expand-file-name exec))
 	exec
-      (or (malabar-groovy-groovysh-guess*) exec))))
+      (or (malabar-repl-groovysh-guess*) exec))))
 
-(defcustom malabar-groovy-grooysh (malabar-groovy-groovysh-guess)
+(defcustom malabar-repl-grooysh (malabar-repl-groovysh-guess)
   "Where to find the groovysh executable"
   :group 'malabar
   :package-version '(malabar . "2.0")
   :type 'string)
 
-(defcustom malabar-groovy-grooysh-debug nil
+(defcustom malabar-repl-grooysh-debug nil
   "If non-nil, turn on debugging of the groovysh"
   :group 'malabar
   :package-version '(malabar . "2.0")
   :type 'boolean)
 
-(defcustom malabar-groovy-proxy-host ""
-  "Proxy host for Groovy/Grape/Ivy to use to find dependencies.   Also see `malabar-groovy-proxy-port'"
+(defcustom malabar-repl-proxy-host ""
+  "Proxy host for Groovy/Grape/Ivy to use to find dependencies.   Also see `malabar-repl-proxy-port'"
   :group 'malabar
   :package-version '(malabar . "2.0")
   :type 'string)
 
-(defcustom malabar-groovy-proxy-port ""	
-  "Proxy port for Groovy/Grape/Ivy to use to find dependencies.  Also see `malabar-groovy-proxy-host'"
+(defcustom malabar-repl-proxy-port ""	
+  "Proxy port for Groovy/Grape/Ivy to use to find dependencies.  Also see `malabar-repl-proxy-host'"
   :group 'malabar
   :package-version '(malabar . "2.0")
   :type 'string)
@@ -230,7 +230,7 @@ magically make it happen.  This is used mostly for pick lists."
 (defvar malabar-mode-project-service-alist nil
   "An alist of PM to a list of:
     ( PORT )" )
-(defvar malabar-groovy-compilation-buffer-name nil)
+(defvar malabar-repl-compilation-buffer-name nil)
 
 ;; 
 ;; External references
