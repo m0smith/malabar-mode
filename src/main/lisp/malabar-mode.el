@@ -42,7 +42,7 @@
   (require 'cl))
 (require 'gud)
 (require 'inf-groovy)
-(require 'semantic/db-javap)
+;(require 'semantic/db-javap)
 (require 'url-vars)
 (require 'ede/maven2)
 (require 'pulse)
