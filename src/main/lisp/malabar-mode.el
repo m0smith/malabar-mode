@@ -53,7 +53,7 @@
 (require 'malabar-abbrevs)
 (require 'malabar-project)
 (require 'malabar-reflection)
-(require 'malabar-service)
+(require 'malabar-http)
 (require 'malabar-ede-maven)
 (require 'malabar-mode-autoloads)
 
@@ -103,8 +103,8 @@
   
   (interactive)
 
-  (let* ((exec (expand-file-name malabar-groovy-grooysh))
-	 (debug (if malabar-groovy-grooysh-debug " -d -Dgroovy.grape.report.downloads=true " ""))
+  (let* ((exec (expand-file-name malabar-repl-grooysh))
+	 (debug (if malabar-repl-grooysh-debug " -d -Dgroovy.grape.report.downloads=true " ""))
 	 (proxy-info (malabar-get-proxy-info))
 	 (host (nth 0 proxy-info))
 	 (port (nth 1 proxy-info))
@@ -117,7 +117,7 @@
 			  host port
 			  (malabar-run-groovy-proxy-user user pass)))))
     (unless (file-executable-p exec)
-      (error "groovysh executable  (see malabar-groovy-groovysh) is not found or is not executable %s" exec))
+      (error "groovysh executable  (see malabar-repl-groovysh) is not found or is not executable %s" exec))
     (run-groovy (format "%s %s %s" exec debug proxy))))
 
 
@@ -136,26 +136,26 @@
     (list (read-string prompt default hist))))
 
 
-(defun malabar-groovy-grab-artifact (group artifact version)
+(defun malabar-repl-grab-artifact (group artifact version)
   "Fetch from the repo the specified atifact and load it into the running groovy shell."
-  (malabar-groovy-send-string "import groovy.grape.Grape")
-  (malabar-groovy-send-string (format "Grape.grab(group:'%s', module:'%s', version:'%s')" group artifact version)))
+  (malabar-repl-send-string "import groovy.grape.Grape")
+  (malabar-repl-send-string (format "Grape.grab(group:'%s', module:'%s', version:'%s')" group artifact version)))
 
-(defun malabar-groovy-grab-artifact-gav (gav)
+(defun malabar-repl-grab-artifact-gav (gav)
   "Fetch from the repo the specified atifact and load it into the running groovy shell.
 
     Defaults to the thing at point (see `forward-gav').
 
     GAV is a single string separated by colon GROUP:ARTIFACT:VERSION"
   (interactive (list (read-string "GROUP:ARTIFACT:VERSION :" (thing-at-point 'gav))))
-  (apply 'malabar-groovy-grab-artifact (split-string gav ":")))
+  (apply 'malabar-repl-grab-artifact (split-string gav ":")))
 
-(defun malabar-groovy-send-region (begin end)
+(defun malabar-repl-send-region (begin end)
   "Send the current region to the Groovy process"
   (interactive "r")
-  (malabar-groovy-send-string (buffer-substring begin end)))
+  (malabar-repl-send-string (buffer-substring begin end)))
   
-(defun malabar-groovy-send-string (str)
+(defun malabar-repl-send-string (str)
   "Send a string to the inferior Groovy process."
   (interactive "sGroovy Expression: ")
 
@@ -187,12 +187,12 @@
     'running - The groovy process is running and initialized")
 
 
-(defun malabar-groovy-init-hook ()
+(defun malabar-repl-init-hook ()
   "Called when the inferior groovy is started"
   (interactive)
   (message "Starting malabar server")
   (setq malabar-mode-post-groovy-to-be-called 'init)
-  (malabar-groovy-send-string 
+  (malabar-repl-send-string 
    (format "
      malabar = { classLoader = new groovy.lang.GroovyClassLoader(); 
          Map[] grapez = [[group: 'com.software-ninja' , module:'malabar', version:'%s']]; 
@@ -200,7 +200,7 @@
          classLoader.loadClass('com.software_ninja.malabar.MalabarStart').newInstance().startCL(classLoader); }; 
      malabar();" malabar-server-jar-version)))
 
-(add-hook 'inferior-groovy-mode-hook 'malabar-groovy-init-hook)
+(add-hook 'inferior-groovy-mode-hook 'malabar-repl-init-hook)
 
 
 
@@ -209,26 +209,26 @@
   (interactive)
   (with-current-buffer (or buffer (current-buffer))
     (let ((name (cl-gensym)))
-      (malabar-groovy-send-string 
+      (malabar-repl-send-string 
        (format "%s = { def cl = this.getClass().classLoader; cl.clearCache(); def cls = cl.parseClass(new File('%s')); cl.setClassCacheEntry(cls); cls};%s();" name (buffer-file-name) name))
       (switch-to-groovy t))))
 
-(defun malabar-groovy-send-classpath-element  (element)
+(defun malabar-repl-send-classpath-element  (element)
   "Send a JAR, ZIP or DIR to the classpath of the running *groovy*"
   (interactive "fJAR, ZIP or DIR:")
-  (malabar-groovy-send-string 
+  (malabar-repl-send-string 
    (format "this.getClass().classLoader.rootLoader.addURL(new File('%s').toURL())" 
 	   (expand-file-name element))))
 
-(defun malabar-groovy-send-classpath  (pm pmfile &optional repo)
+(defun malabar-repl-send-classpath  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
   (interactive (list
 		(completing-read "Project Manager: " malabar-known-project-managers)
 		(read-file-name  "Project file (pom, build.gradle):")))
-  (mapcar 'malabar-groovy-send-classpath-element 
+  (mapcar 'malabar-repl-send-classpath-element 
 	  (malabar-project-classpath-list (malabar-project-info pm pmfile repo) 'test)))
 
-(defun malabar-groovy-classpath-string  (pm pmfile &optional repo)
+(defun malabar-repl-classpath-string  (pm pmfile &optional repo)
   "Add the classpath for POM to the runnning *groovy*."
   (interactive (list
 		(completing-read "Project Manager: " malabar-known-project-managers)
@@ -237,22 +237,22 @@
 	     path-separator))
 
 
-(defun malabar-groovy-classpath-string-of-buffer  ( &optional buffer repo)
+(defun malabar-repl-classpath-string-of-buffer  ( &optional buffer repo)
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
       (let ((pom malabar-mode-project-file))
-	(malabar-groovy-classpath-string pom repo)))))
+	(malabar-repl-classpath-string pom repo)))))
 
-(defun malabar-groovy-send-classpath-of-buffer  ( &optional buffer repo)
+(defun malabar-repl-send-classpath-of-buffer  ( &optional buffer repo)
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
       (let ((pmfile malabar-mode-project-file)
 	    (pm malabar-mode-project-manager))
-	(malabar-groovy-send-classpath pm pmfile repo)))))
+	(malabar-repl-send-classpath pm pmfile repo)))))
 
-(defun malabar-groovy-send-buffer (&optional buffer)
+(defun malabar-repl-send-buffer (&optional buffer)
   (interactive)
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
@@ -612,7 +612,7 @@ install locations in addition to the directories in
     (when port
       (message "Stopping %s port %s" malabar-mode-project-name port)
       (condition-case err
-	  (malabar-service-call "stop" (list 
+	  (malabar-http-call "stop" (list 
 					"pm" pm
 					"pmfile" pmfile))
 	(error err (message "%s" err)))
@@ -626,7 +626,7 @@ install locations in addition to the directories in
 	 (port (+ 49152 (random (- 65535 49152))))
 	 (jdk-home (cadr (assoc jdk jdk-alist)))
 	 (cwd (ede-find-project-root "pom.xml"))
-	 (rtnval (malabar-service-call "spawn"
+	 (rtnval (malabar-http-call "spawn"
 				       (list 
 					"pm" "maven" ;; just a place holder
 					"pmfile" "none" ;; just place holder
@@ -981,7 +981,7 @@ was called."
 	 
     (unless pm (error "pm is required"))
     (unless pmfile (error "pmfile is required"))
-    (malabar-unittest-list (malabar-service-call "test"
+    (malabar-unittest-list (malabar-http-call "test"
 						 (list "repo"   repo
 						       "pm"     pm
 						       "pmfile" (expand-file-name pmfile)
@@ -990,7 +990,7 @@ was called."
 						       "method" (if use-method (read-string "Method Name:") nil)))
 			   buffer)))
 
-(defun malabar-groovy-run-main ( args-in &optional class-name-in)
+(defun malabar-repl-run-main ( args-in &optional class-name-in)
   "Run the main methoff of a class.  Look at the *groovy* buffer for output.  
 
    ARGS-IN is a string of arguments separated by spaces, quotes are respected
@@ -1003,7 +1003,7 @@ was called."
 	 (repo    (expand-file-name malabar-package-maven-repo))
 	 (class-name (or class-name-in (malabar-get-fully-qualified-class-name)))
 	 (pom     malabar-mode-project-file))
-    (malabar-service-call "exec"
+    (malabar-http-call "exec"
 			  (append (list "repo"   repo
 					"pm"     (expand-file-name pom)
 					"class" class-name)
@@ -1031,7 +1031,7 @@ was called."
   "Start the JDB debugger for the class in the current buffer."
 
   (interactive "nPort:")
-  (let* ((classpath (malabar-groovy-classpath-string-of-buffer))
+  (let* ((classpath (malabar-repl-classpath-string-of-buffer))
 	 (gud-jdb-classpath classpath)
 	 (sourcepath (malabar-util-reverse-slash (malabar-util-string-join (malabar-project-sourcepath) path-separator))))
     (append-to-file (format "use %s\n" sourcepath) nil (expand-file-name ".jdbrc"))
@@ -1045,7 +1045,7 @@ was called."
   "Start the JDB debugger for the class in the current buffer.
 The current buffer must have a java file with a main method"
   (interactive)
-  (let ((classpath (malabar-groovy-classpath-string-of-buffer))
+  (let ((classpath (malabar-repl-classpath-string-of-buffer))
 	(classname (malabar-get-fully-qualified-class-name)))
     (jdb (format "%s -classpath%s %s" gud-jdb-command-name classpath classname))))
 
@@ -1569,10 +1569,10 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
     ;; (define-key map "\M-n" 'next-error)
     ;; (define-key map "\M-p" 'previous-error)
     (define-key map ":" 'malabar-electric-colon)
-    (define-key map (kbd "C-k") 'malabar-groovy-send-buffer)
+    (define-key map (kbd "C-k") 'malabar-repl-send-buffer)
     (define-key map (kbd "C-#") 'malabar-stack-trace-buffer)
-    (define-key map "s" 'malabar-groovy-send-classpath-of-buffer)
-    (define-key map "S" 'malabar-groovy-send-classpath-element)
+    (define-key map "s" 'malabar-repl-send-classpath-of-buffer)
+    (define-key map "S" 'malabar-repl-send-classpath-element)
     (define-key map "l" 'malabar-mode-load-class)
     (define-key map "V" 'malabar-version)
     (define-key map "D" 'malabar-jdb)
@@ -1586,9 +1586,9 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
    '(["Enable JVM Support" malabar-mode
       :style toggle :selected malabar-mode
       :enable  malabar-mode ]
-     ["Send classpath" malabar-groovy-send-classpath-of-buffer malabar-mode]
-     ["Send classpath element" malabar-groovy-send-classpath-element malabar-mode]
-     ["Send buffer" malabar-groovy-send-buffer malabar-mode]
+     ["Send classpath" malabar-repl-send-classpath-of-buffer malabar-mode]
+     ["Send classpath element" malabar-repl-send-classpath-element malabar-mode]
+     ["Send buffer" malabar-repl-send-buffer malabar-mode]
      "---"
      ["Show Malabar version" malabar-version t]))
 

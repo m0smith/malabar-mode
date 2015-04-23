@@ -189,16 +189,16 @@ Unit Test
 <dd>Visit the project file, that is the closest file named <code>pom.xml</code>
   searching upwards in the directory structure.</dd>
 
-<dt><b>malabar-groovy-send-buffer</b> <span class="classifier">(C-c C-v C-k)</span></dt>
+<dt><b>malabar-repl-send-buffer</b> <span class="classifier">(C-c C-v C-k)</span></dt>
 <dd>Send the contents of the current buffer to the running groovy instance.  If the buffer is a class rather than a script, prefer <code>malabar-mode-load-class</code></dd>
 
 <dt><b>malabar-stack-trace-buffer</b> <span class="classifier">(C-c C-v C-#)</span></dt>
 <dd>Create a new stack trace buffer and optional copy the current region into it.  A stack trace buffer parses the stack trace and allows jumping directly to the error in the source file.  The stack trace buffer will parse whatever stack trace is pasted into it</dd>
 
-<dt><b>malabar-groovy-send-classpath-of-buffer</b> <span class="classifier">(C-c C-v s)</span></dt>
-<dd>For use with <code>malabar-groovy-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
+<dt><b>malabar-repl-send-classpath-of-buffer</b> <span class="classifier">(C-c C-v s)</span></dt>
+<dd>For use with <code>malabar-repl-send-buffer</code> and <code>malabar-mode-load-class</code>, it loads the classpath of the current project into the running groovy buffer.  This allows for code in the current project to be used interactively.</dd>
 
-<dt><b>malabar-groovy-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
+<dt><b>malabar-repl-send-classpath-element</b> <span class="classifier">(C-c C-v s)</span></dt>
 <dd>Add a jar, zip or directory to the running groovy buffer</dd>
 
 <dt><b>malabar-jdb</b> <span class="classifier">(C-c C-v J)</span></dt>
@@ -245,10 +245,10 @@ The following are either not in 2.0 yet or are only partially working.  If you u
   abstract methods and accessible constructors and inserts the
   appropriate extends clause.</dd>
   
-<dt>malabar-groovy-start</dt>
+<dt>malabar-repl-start</dt>
 <dd>Start the Groovy console, or pop to it if it is running.</dd>
 
-<dt>malabar-groovy-stop</dt>
+<dt>malabar-repl-stop</dt>
 <dd>Kill the Groovy console process.</dd>
   
 <dt>malabar-run-maven-command</dt>
