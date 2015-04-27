@@ -910,6 +910,65 @@ was called."
 	      (goto-char start))))))))
 	  
 
+
+;;;
+;;; Camel Case List Mode
+;;;
+
+(define-derived-mode malabar-camel-case-list-mode tabulated-list-mode "camel-case-mode" 
+  "Used by `malabar-camel-case' to show the test failures"
+  (setq tabulated-list-format [("Class" 90 t)
+                               ("Jar/Zip" 80 nil)
+			       ])
+  (setq tabulated-list-padding 2)
+  (setq tabulated-list-sort-key (cons "Class" nil))
+  (tabulated-list-init-header))
+
+
+(defun malabar-camel-case-list (results-in buffer)
+  (interactive)
+  (let ((results (mapcar (lambda (r) 
+			   (let ((rtnval (vector "" ""))
+				 (class (car r))
+				 (jar   (cdr r)))
+
+			     (when class (aset rtnval 0 class))
+			     (when jar (aset rtnval 1 jar))
+			     (list (format "%s|%s" class jar) rtnval)))
+			 
+			     ;(aset r 0 (cons id (list 'action 'malabar-unittest-show-stacktrace )))
+			 results-in)))
+    (if (= (length results) 0)
+	(message "Success")
+      (with-current-buffer buffer
+	(pop-to-buffer (format "*Malabar Camel Case Results<%s>*" malabar-mode-project-name) nil)
+	(malabar-camel-case-list-mode)
+	(malabar-project-copy-buffer-locals buffer)
+	(setq tabulated-list-entries results)
+	(tabulated-list-print t)))
+    results))
+
+(defun malabar-http-camel-case (camel-case-spec &optional buffer )
+  ".  
+
+   CAMEL-CASE-SPEC: 
+
+
+   BUFFER: the buffer or default to (current-buffer)
+"
+
+
+  (interactive "sCamel Case:")
+  (let* ((buffer (or buffer (current-buffer))))
+    
+    (malabar-camel-case-list (malabar-camel-case-class-name camel-case-spec buffer) buffer )))
+
+
+;;;
+;;;
+;;;
+
+
 (define-derived-mode malabar-unittest-list-mode tabulated-list-mode "malabar-mode" 
   "Used by `malabar-test-run' to show the test failures"
   (setq tabulated-list-format [("Desc" 50 t)
@@ -989,6 +1048,7 @@ was called."
 						       "parser" malabar-mode-project-parser
 						       "method" (if use-method (read-string "Method Name:") nil)))
 			   buffer)))
+
 
 (defun malabar-repl-run-main ( args-in &optional class-name-in)
   "Run the main methoff of a class.  Look at the *groovy* buffer for output.  
