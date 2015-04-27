@@ -460,6 +460,24 @@ e.g. `malabar-choose'."
 	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
 
 
+(define-cached-function malabar-camel-case-class-name (camel-class-spec &optional buffer)
+  "A list of all matching classes or nil"
+  (let ((buffer (or buffer (current-buffer))))
+    (with-current-buffer buffer 
+      (let* ((result-array (malabar-http-call "resource" 
+						 (list 
+						  "pm" malabar-mode-project-manager
+						  "pmfile" (expand-file-name malabar-mode-project-file)
+						  "repo"(expand-file-name malabar-package-maven-repo)
+						  "pattern" (format "%s.*" (replace-regexp-in-string "\\([A-Z]\\)" ".*\\1" camel-class-spec))
+						  "isClass" "true"
+						  "useRegex" "true"
+						  "max" "100")
+						 buffer)))
+	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
+
+
+
 (define-cached-function malabar-reflection-which (unqualified &optional buffer)
   "The first matching class or nil"
   (with-current-buffer (or buffer (current-buffer))
