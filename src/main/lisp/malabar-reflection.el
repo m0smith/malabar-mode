@@ -461,7 +461,7 @@ e.g. `malabar-choose'."
 
 
 (defun malabar-camel-case-class-name (camel-class-spec &optional buffer)
-  "A list of all matching classes or nil"
+  "An alist of all matching classes (CLASS . JAR) or nil"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer 
       (let* ((result-array (malabar-http-call "resource" 
@@ -474,7 +474,10 @@ e.g. `malabar-choose'."
 						  "useRegex" "true"
 						  "max" "100")
 						 buffer)))
-	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
+	(mapcar (lambda (e) 
+		  (when (assoc 'key e)
+		    (cons (cdr (assoc 'key e)) (cdr (assoc 'value e)))))
+		result-array)))))
 
 
 
