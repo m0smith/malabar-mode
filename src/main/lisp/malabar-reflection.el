@@ -460,7 +460,7 @@ e.g. `malabar-choose'."
 	(mapcar (lambda (e) (cdr (assoc 'key e))) result-array)))))
 
 
-(define-cached-function malabar-camel-case-class-name (camel-class-spec &optional buffer)
+(defun malabar-camel-case-class-name (camel-class-spec &optional buffer)
   "A list of all matching classes or nil"
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer 
