@@ -948,7 +948,7 @@ was called."
 	(tabulated-list-print t)))
     results))
 
-(defun malabar-http-camel-case (camel-case-spec &optional buffer )
+(defun malabar-camel-case (camel-case-spec &optional buffer )
   ".  
 
    CAMEL-CASE-SPEC: 
@@ -961,7 +961,7 @@ was called."
   (interactive "sCamel Case:")
   (let* ((buffer (or buffer (current-buffer))))
     
-    (malabar-camel-case-list (malabar-camel-case-class-name camel-case-spec buffer) buffer )))
+    (malabar-camel-case-list (malabar-http-camel-case-class-name camel-case-spec buffer) buffer )))
 
 
 ;;;
