@@ -915,8 +915,38 @@ was called."
 ;;; Camel Case List Mode
 ;;;
 
+
+(defun malabar-camel-case-find-jar ()
+  "Open the jar file of the current line"
+  (interactive)
+  (let* ((entry (tabulated-list-get-entry))
+	 (class (elt entry 0))
+	 (jar (elt entry 1)))
+    (find-file-other-window jar)
+    (re-search-forward (format "%s[.]class" class))))
+
+(defun malabar-camel-case-add-to-kill-ring ()
+  "Open the jar file of the current line"
+  (interactive)
+  (let* ((entry (tabulated-list-get-entry))
+	 (class (elt entry 0)))
+    (kill-new class)
+    (message "Copied %s" class)))
+
+(defun malabar-camel-case-import ()
+  "Open the jar file of the current line"
+  (interactive)
+  (let* ((entry (tabulated-list-get-entry))
+	 (class (elt entry 0))
+	 (buffer (get 'tabulated-list-entries 'buffer)))
+    (with-current-buffer buffer
+	(malabar-import-insert-imports (list class)))))
+
 (define-derived-mode malabar-camel-case-list-mode tabulated-list-mode "camel-case-mode" 
   "Used by `malabar-camel-case' to show the test failures"
+  (define-key malabar-camel-case-list-mode-map [?i] 'malabar-camel-case-import)
+  (define-key malabar-camel-case-list-mode-map [?*] 'malabar-camel-case-add-to-kill-ring)
+  (define-key malabar-camel-case-list-mode-map [?f] 'malabar-camel-case-find-jar)
   (setq tabulated-list-format [("Class" 90 t)
                                ("Jar/Zip" 80 nil)
 			       ])
@@ -945,6 +975,7 @@ was called."
 	(malabar-camel-case-list-mode)
 	(malabar-project-copy-buffer-locals buffer)
 	(setq tabulated-list-entries results)
+	(put 'tabulated-list-entries 'buffer buffer)
 	(tabulated-list-print t)))
     results))
 
