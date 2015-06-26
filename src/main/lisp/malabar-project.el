@@ -146,8 +146,8 @@
 
 (defun malabar--project-file (dir)
   "Return the directory containing the project file"
-  (ede-find-project-root "pom.xml" dir))
-  
+  (let ((project-instance (ede-current-project)))
+	 (oref  project-instance file)))
 
 
 (defun malabar-project-populate-buffer-locals (&optional dir buffer)

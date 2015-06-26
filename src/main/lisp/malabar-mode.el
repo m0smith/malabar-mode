@@ -626,7 +626,8 @@ install locations in addition to the directories in
   (let* ((jdk-alist (malabar-jdk-installed-jvms))
 	 (port (+ 49152 (random (- 65535 49152))))
 	 (jdk-home (cadr (assoc jdk jdk-alist)))
-	 (cwd (ede-find-project-root "pom.xml"))
+	 (project-instance (ede-current-project))
+	 (cwd (oref  project-instance file))
 	 (rtnval (malabar-http-call "spawn"
 				       (list 
 					"pm" "maven" ;; just a place holder
@@ -1709,10 +1710,12 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
     (ede-minor-mode)
     (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
     
-    (let ((project-dir (ede-find-project-root "pom.xml")))
+    (let* ((project-instance (ede-current-project))
+	   (project-file (oref  project-instance file))
+	   (project-dir (file-name-directory project-file)))
       (setq malabar-mode-project-dir project-dir )
       (setq malabar-mode-project-manager "maven" )
-      (setq malabar-mode-project-file (format "%spom.xml" project-dir ))
+      (setq malabar-mode-project-file project-file)
       (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
     
     (malabar-post-additional-classpath)
