@@ -1,12 +1,13 @@
 ;;; elk-test.el --- Emacs Lisp testing framework
 ;;
-;; Copyright (C) 2006,2008 Nikolaj Schumacher
+;; Copyright (C) 2006-2009 Nikolaj Schumacher
 ;;
 ;; Author: Nikolaj Schumacher <bugs * nschum de>
-;; Version: 0.3
+;; Version: 0.3.2
 ;; Keywords: lisp
 ;; URL: http://nschum.de/src/emacs/guess-style/
-;; Compatibility: GNU Emacs 22.x
+;; Compatibility: GNU Emacs 22.x, GNU Emacs 23.x
+;; Package-Requires: ((fringe-helper "0.1.1"))
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;
@@ -25,7 +26,7 @@
 ;;
 ;;; Commentary:
 ;;
-;; elk-test requires fringe-helper.el, which is available at:
+;; For best visualization, install fringe-helper, which is available at:
 ;; http://nschum.de/src/emacs/fringe-helper/
 ;;
 ;; Use `deftest' to define a test and `elk-test-group' to define test groups.
@@ -83,6 +84,12 @@
 ;;
 ;;; Change Log:
 ;;
+;; 2009-03-21 (0.3.2)
+;;    Made fringe-helper dependency optional.
+;;    Removed dependency on CL functions.
+;;    Fixed deftest highlighting.
+;;    Added `elk-test-result-context-lines'.
+;;
 ;; 2008-06-15 (0.3)
 ;;    Added `elk-test-result-follow-mode'.
 ;;    Switched to using button package for links.
@@ -110,7 +117,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))
-(require 'fringe-helper)
+(require 'fringe-helper nil t)
 (require 'newcomment)
 (require 'eldoc)
 (require 'compile)
@@ -186,6 +193,12 @@
   :type '(choice (const :tag "Off" nil)
                  (const :tag "On" t)))
 
+(defcustom elk-test-result-context-lines compilation-context-lines
+  "Display this many lines of leading context before the current message.
+See `compilation-context-lines'."
+  :group 'test-case
+  :type '(choice integer (const :tag "No window scrolling" nil)))
+
 (defvar elk-test-result-mode-map
   (let ((keymap (make-sparse-keymap)))
     (define-key keymap "q" 'bury-buffer)
@@ -199,6 +212,9 @@
   "Remove all tests from memory."
   (setq elk-test-alist nil))
 
+(defsubst elk-test-mapcan (func sequence)
+  (apply 'nconc (mapcar func sequence)))
+
 (defun elk-test-run (name &optional string-result)
   "Run the test case defined as NAME.
 The result is a list of errors strings, unless STRING-RESULT is set, in which
@@ -211,9 +227,9 @@ case a message describing the errors or success is displayed and returned."
         (error "Undefined test <%s>" name)
       (setq error-list (if (equal (car test-or-group) 'group)
                            ;; is test group
-                           (mapcar 'elk-test-run (cdr test-or-group))
+                           (elk-test-mapcan 'elk-test-run (cdr test-or-group))
                          ;; is simple test
-                         (cons name (elk-test-run-internal test-or-group))))
+                         (elk-test-run-internal test-or-group)))
       (if (or string-result (interactive-p))
           (message (if error-list
                        (mapconcat 'identity error-list "\n")
@@ -422,7 +438,7 @@ The resulting group can be run by calling `elk-test-run' with parameter NAME."
     name))
 
 (defconst elk-test-font-lock-keywords
-  `(("(\\_<\\(deftest\\)\\_>" 1 'font-lock-deftest)
+  `(("(\\_<\\(deftest\\)\\_>" 1 'elk-test-deftest)
     (,(concat "(\\_<" (regexp-opt '("assert-equal" "assert-eq" "assert-eql"
                                     "assert-nonnil" "assert-t" "assert-nil"
                                     "assert-error" "assert-that") t)
@@ -493,25 +509,26 @@ If the state is set to 'success, a hook will be installed to switch to
                           :visible `(buffer-live-p ,buf)))
                 (elk-test-buffer-list))
       "-" .
-      ,(mapcan (lambda (buffer-errors)
-                 (mapcar (lambda (err)
-                           (vector
-                            (concat (cadr err) " - "
-                                    (elk-test-shorten-string (cdar (cddr err))))
-                            `(lambda ()
-                               (interactive)
-                               (push-mark)
-                               (switch-to-buffer ,(car buffer-errors))
-                               (goto-char ,(caar (cddr err))))))
-                         (cdr buffer-errors)))
-               errors)))
+      ,(elk-test-mapcan
+        (lambda (buffer-errors)
+          (mapcar (lambda (err)
+                    (vector
+                     (concat (cadr err) " - "
+                             (elk-test-shorten-string (cdar (cddr err))))
+                     `(lambda ()
+                        (interactive)
+                        (push-mark)
+                        (switch-to-buffer ,(car buffer-errors))
+                        (goto-char ,(caar (cddr err))))))
+                  (cdr buffer-errors)))
+        errors)))
   (easy-menu-add elk-test-menu))
 
 (defun elk-test-buffer-list ()
   "List all buffers in `elk-test-mode'."
-  (mapcan (lambda (b) (when (with-current-buffer b
-                              (eq major-mode 'elk-test-mode))
-                        (cons b nil)))
+  (elk-test-mapcan (lambda (b) (when (with-current-buffer b
+                                       (eq major-mode 'elk-test-mode))
+                                 (cons b nil)))
           (buffer-list)))
 
 (defun elk-test-run-all-buffers (&optional show-results)
@@ -539,11 +556,17 @@ If the state is set to 'success, a hook will be installed to switch to
 (defvar elk-test-fringe-regions nil)
 (make-variable-buffer-local 'elk-test-fringe-regions)
 
+(defvar elk-test-regions nil)
+(make-variable-buffer-local 'elk-test-regions)
+
 (defun elk-test-unmark-failures ()
   "Remove all highlighting from buffer."
   (interactive)
-  (while elk-test-fringe-regions
-    (fringe-helper-remove (pop elk-test-fringe-regions))))
+  (when (fboundp 'fringe-helper-remove)
+    (mapc 'fringe-helper-remove elk-test-fringe-regions))
+  (mapc 'delete-overlay elk-test-regions)
+  (setq elk-test-fringe-regions nil
+        elk-test-regions nil))
 
 (defun elk-test-mark-failures (failures which-side)
   "Highlight failed tests."
@@ -551,16 +574,16 @@ If the state is set to 'success, a hook will be installed to switch to
   (save-excursion
     (dolist (failure failures)
       (dolist (form (cddr failure))
-        (when (and which-side window-system)
-          (push (fringe-helper-insert-region (caar form) (cdar form)
-                                             'filled-square which-side
-                                             'elk-test-fringe)
-              elk-test-fringe-regions))
+        (and which-side window-system (fboundp 'fringe-helper-insert-region)
+             (push (fringe-helper-insert-region (caar form) (cdar form)
+                                                'filled-square which-side
+                                                'elk-test-fringe)
+                   elk-test-fringe-regions))
         (push (make-overlay (caar form) (cdar form))
-              elk-test-fringe-regions)
-        (overlay-put (car elk-test-fringe-regions)
+              elk-test-regions)
+        (overlay-put (car elk-test-regions)
                      'elk-test-error (cdr form))
-        (overlay-put (car elk-test-fringe-regions)
+        (overlay-put (car elk-test-regions)
                      'face 'elk-test-failed-region)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -644,7 +667,8 @@ This function is suitable for use as `eldoc-documentation-function'."
 (defun elk-test-jump (buffer region from)
   (let ((msg (copy-marker from))
         (mk (make-marker))
-        (end-mk (make-marker)))
+        (end-mk (make-marker))
+        (compilation-context-lines elk-test-result-context-lines))
     (set-marker mk (car region) buffer)
     (set-marker end-mk (cdr region) buffer)
     (compilation-goto-locus msg mk end-mk)

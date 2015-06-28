@@ -205,7 +205,7 @@
  (ede-project-autoload "malabar-maven2"
 		       :name "MALABAR MAVEN2"
 		       :file 'ede/maven2
-		       ;:proj-file "pom.xml"
+		       :proj-file  "pom.xml"
 		       ;:proj-root 'ede-maven2-project-root
 		       ;:load-type 'malabar-maven2-load
 		       ;:class-sym 'ede-malabar-maven2-project

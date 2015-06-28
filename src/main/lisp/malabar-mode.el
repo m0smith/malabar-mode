@@ -41,6 +41,7 @@
 (eval-when-compile 
   (require 'cl))
 (require 'gud)
+(require 'dash)
 (require 'inf-groovy)
 ;(require 'semantic/db-javap)
 (require 'url-vars)
@@ -54,8 +55,8 @@
 (require 'malabar-project)
 (require 'malabar-reflection)
 (require 'malabar-http)
-(require 'malabar-ede-maven)
-(require 'malabar-ede-gradle)
+;(require 'malabar-ede-maven)
+;(require 'malabar-ede-gradle)
 (require 'malabar-mode-autoloads)
 
 

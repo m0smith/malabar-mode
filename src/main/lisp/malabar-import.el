@@ -234,7 +234,7 @@ in the list."
   (let ((a-package (malabar-get-package-of class-a))
         (b-package (malabar-get-package-of class-b)))
     (let ((a-package-successors (member a-package malabar-import-precedence-order))
-          (b-package-successors (member b-package malabar-import-precedence-order)))
+         (b-package-successors (member b-package malabar-import-precedence-order)))
       (or (member b-package a-package-successors)
           (and a-package-successors
                (null b-package-successors))))))

@@ -1,0 +1,68 @@
+;;; -*- emacs-lisp -*-
+;; Copyright (c) 2009 Espen Wiborg <espenhw@grumblesmurf.org>
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of the
+;; License, or (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+;; 02110-1301 USA.
+;;
+
+;; Stub
+(provide 'semantic)
+
+(deftest "buffer name"
+  (with-current-buffer (get-buffer "App.java")
+    (assert-equal "App.java" (buffer-name))))
+
+(deftest "malabar-project variable malabar-mode-project-name"
+    (with-current-buffer (get-buffer "App.java")
+      (assert-equal "basic" malabar-mode-project-name)))
+
+(deftest "malabar-project variable malabar-mode-project-manager"
+    (with-current-buffer (get-buffer "App.java")
+      (assert-equal "maven" malabar-mode-project-manager)))
+
+(deftest "malabar-project variable malabar-mode-project-dir"
+    (with-current-buffer (get-buffer "App.java")
+      (assert-equal (expand-file-name "src/test/project/basic/" (getenv "PWD"))
+		    (expand-file-name malabar-mode-project-dir))))
+
+(deftest "malabar-project variable malabar-mode-project-parser"
+    (with-current-buffer (get-buffer "App.java")
+      (assert-equal "java" malabar-mode-project-parser)))
+
+
+
+
+(deftest "malabar-fully-qualified-class-name-kill-ring-save"
+  (with-current-buffer (get-buffer "App.java")
+    (assert-equal "Copied com.software_ninja.App" (malabar-fully-qualified-class-name-kill-ring-save))))
+
+
+;;;
+;;;  HTTP Stuff
+;;;
+
+(deftest "malabar-http-compile-file App.java"
+  (with-current-buffer (get-buffer "App.java")
+    (let ((result-buffer  (malabar-http-compile-file)))
+      (with-current-buffer result-buffer
+	(assert-equal "" (buffer-string))))))
+
+
+(deftest "malabar-http-compile-file App.java fail"
+  (with-current-buffer (get-buffer "App.java")
+
+    (let ((result-buffer  (malabar-http-compile-file)))
+      (with-current-buffer result-buffer
+	(assert-equal "" (buffer-string))))))
