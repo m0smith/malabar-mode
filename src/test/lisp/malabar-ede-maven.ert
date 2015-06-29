@@ -26,20 +26,23 @@
       (getenv "PWD")
     (expand-file-name "../../..")))
 
-
-
 (ert-deftest malabar-ede-maven-doh ()
   (should (= 1 1)))
 
 
 (ert-deftest malabar-ede-maven-classpath ()
   (with-temp-buffer
-    (require 'malabar-ede-maven)
+    (add-to-list 'load-path (expand-file-name "src/main/lisp/" (malabar-ede-maven-project-dir)))
+    (message "Load %s" (load "malabar-ede-maven.el"))
     (let ((file-name (expand-file-name java-file (malabar-ede-maven-project-dir))))
-      (insert-file-contents-literally file-name)
+      (insert-file-contents-literally file-name t)
       (setq buffer-file-name file-name)
       (setq default-directory (file-name-directory file-name))
       (java-mode)
       (malabar-java-mode)
-      (should (equal "hasmter" (aref (ede-current-project) 2))))))
+      (let ((ede-project (ede-current-project)))
+	(message "%s" (object-print ede-project))
+	(should (equal "Malabar Maven<basic>"  (oref ede-project name)))
+	(should (equal 'malabar-ede-maven2-project (object-class  ede-project)))
+	(should (equal "hamster" (ede-java-classpath ede-project)))))))
   

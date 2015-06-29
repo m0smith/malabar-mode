@@ -30,7 +30,7 @@ test: test-elk test-ert
 
 test-elk:
 #	cd $(mkfile_dir) && $(EMACS) -Q --batch -l src/test/lisp/init.el -l src/test/lisp/all-tests.el
-	cd $(mkfile_dir) && $(EMACS) -Q --batch -f toggle-debug-on-error -l src/test/lisp/init.el -l src/test/lisp/init-malabar.el -l src/test/lisp/all-tests.el
+	cd $(mkfile_dir) && $(EMACS) -Q --batch -f toggle-debug-on-error -l src/test/lisp/init.el  -l src/test/lisp/all-tests.el
 
 test-ert:
 	cd $(mkfile_dir) && $(EMACS) -Q --batch  -l ert -l src/test/lisp/init.el -l src/test/lisp/init-malabar.el  \

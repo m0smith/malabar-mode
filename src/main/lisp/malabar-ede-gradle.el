@@ -206,7 +206,6 @@
 		       :name "MALABAR GRADLE"
 		       :file 'ede/gradle
 		       :proj-file  "build.gradle"
-		       ;:proj-root 'ede-maven2-project-root
 		       :load-type 'malabar-gradle-load
 		       :class-sym 'ede-malabar-gradle-project
 		       :new-p nil
