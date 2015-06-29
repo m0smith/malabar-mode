@@ -24,9 +24,17 @@ EMACS=emacs
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(dir $(mkfile_path))
 
-all: testr
+all: test
 
-testr:
+test: test-elk test-ert
+
+test-elk:
 #	cd $(mkfile_dir) && $(EMACS) -Q --batch -l src/test/lisp/init.el -l src/test/lisp/all-tests.el
 	cd $(mkfile_dir) && $(EMACS) -Q --batch -f toggle-debug-on-error -l src/test/lisp/init.el -l src/test/lisp/init-malabar.el -l src/test/lisp/all-tests.el
+
+test-ert:
+	cd $(mkfile_dir) && $(EMACS) -Q --batch  -l ert -l src/test/lisp/init.el -l src/test/lisp/init-malabar.el  \
+	         -l src/test/lisp/malabar-mode.ert \
+	         -l src/test/lisp/malabar-ede-maven.ert \
+                 -f ert-run-tests-batch-and-exit
 
