@@ -32,17 +32,18 @@
   (should (= 1 1)))
 
 
-(ert-deftest malabar-mode-classpath ()
-  (with-temp-buffer
-    (let ((file-name (expand-file-name java-file (malabar-mode-project-dir))))
-      (insert-file-contents-literally file-name)
-      (setq buffer-file-name file-name)
+(ert-deftest malabar-mode-project-info ()
+  (let* ((prj-dir2 (malabar-mode-project-dir))
+	 (file-name (expand-file-name java-file prj-dir2)))
+    (with-temp-buffer
+      (insert-file-contents-literally file-name t)
+      ;;;(setq buffer-file-name file-name)
       (setq default-directory (file-name-directory file-name))
       (java-mode)
       (malabar-java-mode)
       (should (equal "maven" malabar-mode-project-manager))
       (should (equal "java" malabar-mode-project-parser))
-      (should (equal (expand-file-name "src/test/project/basic/" (malabar-mode-project-dir))
+      (should (equal (expand-file-name "src/test/project/basic/" prj-dir2)
 		     (expand-file-name malabar-mode-project-dir)))
       (should (equal "basic" malabar-mode-project-name)))))
   
