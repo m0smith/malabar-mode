@@ -126,7 +126,8 @@
 
 (defmethod ede-java-classpath ((proj malabar-ede-maven2-project))
   "Get classpath for maven project"
-  "hamster")
+  (let ((pm (oref proj file)))
+    (malabar-maven2-extract-classpath pm)))
 
  ;; TODO: really should be based on content of pom.xml file. But we need parser for it...
  ;; TODO: add caching...
