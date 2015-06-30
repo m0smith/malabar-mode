@@ -33,7 +33,9 @@ test-elk:
 	cd $(mkfile_dir) && $(EMACS) -Q --batch -f toggle-debug-on-error -l src/test/lisp/init.el  -l src/test/lisp/all-tests.el
 
 test-ert:
-	cd $(mkfile_dir) && $(EMACS) -Q --batch  -l ert -l src/test/lisp/init.el -l src/test/lisp/init-malabar.el  \
+	cd $(mkfile_dir) && $(EMACS) -Q --batch  -l ert -l src/test/lisp/init.el \
+	         -l src/test/lisp/init-malabar.el  \
+	         -l src/test/lisp/malabar-test-util.el  \
 	         -l src/test/lisp/malabar-mode.ert \
 	         -l src/test/lisp/malabar-ede-maven.ert \
                  -f ert-run-tests-batch-and-exit
