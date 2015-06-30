@@ -73,6 +73,7 @@
 			(malabar-project-port malabar-mode-project-file)
 			service
 			args)))
+      (message "%s" url)
       (with-current-buffer (url-retrieve-synchronously url)
 	(goto-char url-http-end-of-headers)
 	(setq json-array-type (or array-type 'vector)
