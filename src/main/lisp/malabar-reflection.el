@@ -132,7 +132,7 @@
   "Get the project info for a project file"
   (interactive (list
 		(completing-read "Project Manager: " malabar-known-project-managers nil nil nil nil malabar-mode-project-manager)
-		(read-file-name  "Project file (pom, build.gradle):")))
+		(read-file-name  "Project file (pom.xml, build.gradle):")))
   (let ((pmfile (or pmfile malabar-mode-project-file))
 	(pm (or pm malabar-mode-project-manager))
 	(repo (or repo (expand-file-name malabar-package-maven-repo))))
