@@ -92,9 +92,17 @@ smallest"
 			       'version-to-list
 			       (--mapcat (last (split-string it "[/]")) files)))))
 
+(defun malabar-groovy-directories ()
+  (append 
+   (if (file-directory-p "~/.sdkman/groovy")
+       (directory-files "~/.sdkman/groovy" t "[0-9]$"))
+   (if (file-directory-p "~/.gvm/groovy")
+       (directory-files "~/.gvm/groovy" t "[0-9]$")))  
+  )
+
 (defun malabar-repl-groovysh-guess* ()
   (let ((execs '("bin/groovysh" "bin/groovysh.bat"))
-	(version-dirs (sort  (directory-files "~/.gvm/groovy" t "[0-9]$") 'malabar-groovysh-version-dir->)))
+	(version-dirs (sort (malabar-groovy-directories) 'malabar-groovysh-version-dir->)))
     (car
      (-filter 'file-executable-p
 	      (-table-flat 'expand-file-name execs version-dirs)))))
