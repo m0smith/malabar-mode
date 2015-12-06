@@ -207,7 +207,7 @@
 (ede-add-project-autoload
  (ede-project-autoload "malabar-gradle"
 		       :name "MALABAR GRADLE"
-		       :file 'ede/gradle
+		       :file 'malabar-ede-gradle
 		       :proj-file  "build.gradle"
 		       :load-type 'malabar-gradle-load
 		       :class-sym 'ede-malabar-gradle-project

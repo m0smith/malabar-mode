@@ -56,7 +56,7 @@
 (require 'malabar-reflection)
 (require 'malabar-http)
 ;(require 'malabar-ede-maven)
-;(require 'malabar-ede-gradle)
+(require 'malabar-ede-gradle)
 (require 'malabar-mode-autoloads)
 
 
