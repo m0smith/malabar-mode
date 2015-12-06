@@ -42,6 +42,9 @@
 (require 'malabar-project)
 (require 'malabar-reflection)
 
+(defvar ede-gradle-project-list nil
+  "List of projects created by option `ede-gradle'.")
+
 (defun malabar-gradle-extract-classpath (pom-file)
   (interactive "DProject dir:")
   (let ((pi (malabar-project-info "gradle" pom-file)))
