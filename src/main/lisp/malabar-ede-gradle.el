@@ -203,12 +203,16 @@
        (setq malabar-mode-project-manager "gradle"))
      rtnval))
 
+(defun ede-malabar-project-root (&optional dir)
+  "Get the root directory for DIR."
+  (ede-find-project-root "build.gradle" dir))
 
 (ede-add-project-autoload
  (ede-project-autoload "malabar-gradle"
 		       :name "MALABAR GRADLE"
 		       :file 'malabar-ede-gradle
 		       :proj-file  "build.gradle"
+		       :proj-root 'ede-malabar-project-root
 		       :load-type 'malabar-gradle-load
 		       :class-sym 'ede-malabar-gradle-project
 		       :new-p nil
