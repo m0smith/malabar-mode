@@ -18,7 +18,7 @@
 ;; 02110-1301 USA.
 ;;
 (require 'cl)
-;(require 'semantic)
+(require 'semantic/find)
 
 
 ;; (defun malabar-util-expand-file-name (f &optional DEFAULT-DIRECTORY)
