@@ -1712,10 +1712,13 @@ current buffer.  Also set the server logging level to FINEST.  See the *groovy* 
     (easy-menu-add-item nil '("Development") malabar-mode-menu-map "JVM")
     
     (let* ((project-instance (ede-current-project))
-	   (project-file (oref  project-instance file))
-	   (project-dir (file-name-directory project-file)))
+           (project-manager (if (eq (eieio-object-class (ede-current-project)) 'ede-malabar-gradle-project)
+                                "gradle"
+                              "maven"))
+           (project-file (oref  project-instance file))
+           (project-dir (file-name-directory project-file)))
       (setq malabar-mode-project-dir project-dir )
-      (setq malabar-mode-project-manager "maven" )
+      (setq malabar-mode-project-manager project-manager)
       (setq malabar-mode-project-file project-file)
       (setq malabar-mode-project-name (file-name-nondirectory (directory-file-name project-dir))))
     
