@@ -55,7 +55,7 @@ keybindings.  Changing this variable is at your own risk."
       (define-key malabar-mode-map key malabar-command-map))
     (set-default variable key)))
 
-(defcustom malabar-server-jar-version "2.3.1"
+(defcustom malabar-server-jar-version "2.3.3-SNAPSHOT"
   "The version of the malabar-mode-jar to fetch when starting"
   :group 'malabar
   :package-version '(malabar . "2.0")
@@ -80,6 +80,11 @@ keybindings.  Changing this variable is at your own risk."
   :package-version '(malabar . "2.0")
   :type 'string)
 
+(defcustom malabar-groovysh-manager-dir "~/.sdkman/candidates"
+  "Where to find the groovy manager SDK installation of groovy."
+  :group 'malabar
+  :package-version '(malabar . "2.0")
+  :type 'directory)
 
 
 (defun malabar-groovysh-version-dir-> ( &rest files)
@@ -101,10 +106,11 @@ smallest"
 
 (defun malabar-repl-groovysh-guess ()
   "On Windows the ~/.gvm/groovy/current might be a unfollowable symlink."
-  (let ((exec "~/.gvm/groovy/current/bin/groovysh"))
-    (if (file-executable-p (expand-file-name exec))
-	exec
-      (or (malabar-repl-groovysh-guess*) exec))))
+  (let* ((exec "groovy/current/bin/groovysh")
+	 (expanded (expand-file-name exec malabar-groovysh-manager-dir)))
+    (if (file-executable-p expanded)
+	expanded
+      (or (malabar-repl-groovysh-guess*) expanded))))
 
 (defcustom malabar-repl-grooysh (malabar-repl-groovysh-guess)
   "Where to find the groovysh executable"
