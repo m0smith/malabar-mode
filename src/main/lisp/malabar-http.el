@@ -73,8 +73,10 @@
 			(malabar-project-port malabar-mode-project-file)
 			service
 			args)))
-      (message "%s" url)
+      (message "Fetching %s ..." url)
       (with-current-buffer (url-retrieve-synchronously url)
+	;(message "malabar-http-call buffer:[%s]" (current-buffer))
+	;(message "malabar-http-call content:%s" (buffer-substring (point-min) (point-max)))
 	(goto-char url-http-end-of-headers)
 	(setq json-array-type (or array-type 'vector)
 	      json-object-type (or object-type 'alist))
