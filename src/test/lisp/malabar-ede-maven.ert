@@ -31,11 +31,11 @@
   (let ((basic-project-dir  (expand-file-name "src/test/project/basic" malabar-project-dir)))
 	
 	(list (expand-file-name "src/test/java" basic-project-dir)
-	      (expand-file-name "src/main/java" basic-project-dir)
-	      (expand-file-name "target/test-classes" basic-project-dir)
-	      (expand-file-name "target/classes" basic-project-dir)
-	      (expand-file-name "target/classes" basic-project-dir)
-	      (expand-file-name "junit/junit/3.8.1/junit-3.8.1.jar" repo))))
+	      (expand-file-name "src/main/java" basic-project-dir))))
+;	      (expand-file-name "target/test-classes" basic-project-dir)
+;	      (expand-file-name "target/classes" basic-project-dir)
+;	      (expand-file-name "target/classes" basic-project-dir)
+;	      (expand-file-name "junit/junit/3.8.1/junit-3.8.1.jar" repo))))
 
 
 (ert-deftest malabar-ede-maven-classpath ()
