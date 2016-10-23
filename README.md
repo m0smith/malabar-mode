@@ -3,6 +3,17 @@
 
 EMACS integration with the JVM.
 
+## malabar is moving to JDEE
+
+As of Octerber 21, 2016, malabar mode is uniting with https://github.com/jdee-emacs/jdee. No more work will be done on malabar and all
+the useful functionality has been or will be moved to JDEE.  I recommend using JDEE instead of malabar (I have).
+
+If there is malabar functionality missing from JDEE, please create an issue at https://github.com/jdee-emacs/jdee/issues with "from malabar" in the title specifying the missing functionality.
+
+I will leave this project up for reference but no issues are being worked and no updates will be made.  My efforts will go to improving JDEE.
+
+## Summary
+
 
 malabar-mode is a monir-mode with hooks into Maven that makes
 it easy to compile files on the fly and execute Maven build
