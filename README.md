@@ -5,7 +5,7 @@ EMACS integration with the JVM.
 
 ## malabar is moving to JDEE
 
-As of Octerber 21, 2016, malabar mode is uniting with https://github.com/jdee-emacs/jdee. No more work will be done on malabar and all
+As of October 21, 2016, malabar mode is uniting with https://github.com/jdee-emacs/jdee. No more work will be done on malabar and all
 the useful functionality has been or will be moved to JDEE.  I recommend using JDEE instead of malabar (I have).
 
 If there is malabar functionality missing from JDEE, please create an issue at https://github.com/jdee-emacs/jdee/issues with "from malabar" in the title specifying the missing functionality.
