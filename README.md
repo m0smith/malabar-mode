@@ -15,7 +15,7 @@ I will leave this project up for reference but no issues are being worked and no
 ## Summary
 
 
-malabar-mode is a monir-mode with hooks into Maven that makes
+malabar-mode is a minor-mode with hooks into Maven that makes
 it easy to compile files on the fly and execute Maven build
 commands.
 
