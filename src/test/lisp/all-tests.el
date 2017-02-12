@@ -21,7 +21,7 @@
                                                     (file-name-directory load-file-name)
                                                     t t)))
 
-(require 'elk-test)
+(load (expand-file-name "elk-test.el" (file-name-directory load-file-name)))
 
 (setq elk-test-run-on-define nil)
 
